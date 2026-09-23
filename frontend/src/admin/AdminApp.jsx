@@ -12,6 +12,7 @@ import Dashboard from "./paginas/Dashboard.jsx";
 import Peluqueros from "./paginas/Peluqueros.jsx";
 import Servicios from "./paginas/Servicios.jsx";
 import Horarios from "./paginas/Horarios.jsx";
+import Opiniones from "./paginas/Opiniones.jsx";
 
 /**
  * Panel de gestión (escritorio, desde 1024px — RNF-10). Se carga aparte del
@@ -31,6 +32,7 @@ export default function AdminApp() {
           <Route path="peluqueros" element={<SoloDueno><Peluqueros /></SoloDueno>} />
           <Route path="servicios" element={<SoloDueno><Servicios /></SoloDueno>} />
           <Route path="horarios" element={<Horarios />} />
+          <Route path="opiniones" element={<Opiniones />} />
           <Route path="*" element={<Navigate to="agenda" replace />} />
         </Route>
       </Routes>

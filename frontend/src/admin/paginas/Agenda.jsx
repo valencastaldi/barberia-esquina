@@ -85,7 +85,7 @@ export default function Agenda() {
           <button type="button" className="mini" onClick={() => setFecha(moverPeriodo(fecha, periodo, 1))} aria-label="Siguiente">›</button>
         </div>
         <Segmentos opciones={PERIODOS} valor={periodo} alCambiar={setPeriodo} etiqueta="Período" />
-        <button type="button" className="btn btn-secundario" onClick={() => setBloqueando(true)}>Bloquear franja</button>
+        {esDueno && <button type="button" className="btn btn-secundario" onClick={() => setBloqueando(true)}>Bloquear franja</button>}
       </Cabecera>
 
       {activos.length > 1 && (
@@ -119,7 +119,7 @@ export default function Agenda() {
           <div key={dia}>
             {periodo !== "dia" && <h3 className="separador-dia">{fechaLarga(dia)}</h3>}
             {filas.map((f) => f.tipo === "bloqueo"
-              ? <FilaBloqueo key={`b${f.b.id}`} b={f.b} puedeQuitar={esDueno || f.b.idBarbero === usuario.id}
+              ? <FilaBloqueo key={`b${f.b.id}`} b={f.b} puedeQuitar={esDueno}
                              alQuitar={() => accion(() => pedir(`/bloqueos/${f.b.id}`, { metodo: "DELETE" }))} />
               : <FilaTurno key={f.t.id} t={f.t} puedeTocar={esDueno || f.t.barbero.id === usuario.id}
                            alCompletar={() => setCobrando({ turno: f.t, completar: true })}

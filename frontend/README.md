@@ -43,15 +43,17 @@ o `santiago@barberiaesquina.com` / `esquina1290` (barbero). Solo desarrollo.
 | Ruta | Pantalla | Quién |
 |---|---|---|
 | `/admin/login` | Ingreso (JWT, vence a las 8 h) | Todos |
-| `/admin/agenda` | Día / semana / mes, filtro por peluquero, completar con cobro, ausente, cancelar, bloquear franjas (RF-12) | Todos |
-| `/admin/horarios` | Semana de cada peluquero y slot base ("Mis horarios" para el barbero) | Cada uno el suyo; el dueño, todos |
+| `/admin/agenda` | Día / semana / mes, filtro por peluquero, completar con cobro, ausente, cancelar | Todos (el barbero, sus turnos) |
+| `/admin/opiniones` | Encuestas: promedio de cada peluquero y comentarios, con filtros | Todos |
+| `/admin/horarios` | Semana de cada peluquero y slot base; bloquear franjas (RF-12) se hace desde la agenda | Edita el dueño; el barbero ve "Mis horarios" |
 | `/admin/pagos` | Cobrado, medios de pago, liquidación por peluquero, cobros pendientes | Dueño |
 | `/admin/clientes` | Buscador, filtros, paginado y ficha con historial | Dueño |
 | `/admin/dashboard` | KPIs, gráfico diario, estrellas, comentarios, rendimiento por peluquero | Dueño |
 | `/admin/peluqueros` | Equipo: alta, edición, servicios, activar/desactivar | Dueño |
 | `/admin/servicios` | Catálogo: alta, edición, ocultar, borrar si no tiene turnos | Dueño |
 
-**El barbero** ve la agenda de todo el equipo pero solo toca y cobra sus turnos. De los turnos ajenos
+**El barbero** ve la agenda de todo el equipo pero solo toca y cobra sus turnos. No cambia horarios ni bloquea franjas.
+Ve las opiniones de todo el equipo (las suyas y las de los demás). De los turnos ajenos
 no recibe el contacto del cliente, el cobro ni la calificación (lo filtra la API, no solo la pantalla),
 y los números de la agenda son solo los suyos.
 

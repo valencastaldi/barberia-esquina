@@ -103,6 +103,40 @@ class SeguridadTest extends PruebaDeIntegracion {
     }
 
     @Test
+    void unBarberoNoCambiaHorariosNiBloqueaFranjas() throws Exception {
+        String barbero = login("santiago@test.com");
+        mvc.perform(conToken(get("/api/v1/horarios").param("barbero", santiago.getId().toString()), barbero))
+                .andExpect(status().isOk());
+        mvc.perform(json(conToken(put("/api/v1/horarios"), barbero), """
+                        {"dias": [{"diaSemana": 1, "horaInicio": "10:00", "horaFin": "20:00", "duracionSlotMin": 30, "activo": true}]}"""))
+                .andExpect(status().isForbidden());
+        mvc.perform(json(conToken(post("/api/v1/bloqueos"), barbero), """
+                        {"fecha": "%s", "horaInicio": "13:00", "horaFin": "14:00"}""".formatted(HOY.plusDays(7))))
+                .andExpect(status().isForbidden());
+
+        mvc.perform(json(conToken(post("/api/v1/bloqueos"), login("agustin@test.com")), """
+                        {"idBarbero": %d, "fecha": "%s", "horaInicio": "13:00", "horaFin": "14:00"}""".formatted(santiago.getId(), HOY.plusDays(7))))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
+    void todoElEquipoVeLasOpiniones() throws Exception {
+        Turno t = turnoGuardado(agustin, corte, HOY, "10:00", EstadoTurno.COMPLETADO);
+        jdbc.update("insert into encuesta (id_turno, calificacion, comentario, fecha_respuesta) values (?, 5, 'Excelente', ?)",
+                t.getId(), AHORA);
+
+        mvc.perform(conToken(get("/api/v1/opiniones"), login("santiago@test.com")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.cantidad").value(1))
+                .andExpect(jsonPath("$.opiniones[0].barbero.nombre").value("Agustín"))
+                .andExpect(jsonPath("$.opiniones[0].cliente").value("Mateo G."))
+                .andExpect(jsonPath("$.opiniones[0].comentario").value("Excelente"))
+                .andExpect(jsonPath("$.porBarbero[?(@.nombre == 'Agustín')].promedio").value(5.0))
+                .andExpect(jsonPath("$.porBarbero[?(@.nombre == 'Santiago')].cantidad").value(0));
+        mvc.perform(get("/api/v1/opiniones")).andExpect(status().isUnauthorized());
+    }
+
+    @Test
     void unBarberoSoloCobraSusTurnos() throws Exception {
         Turno deAgustin = turnoGuardado(agustin, corte, HOY, "10:00", EstadoTurno.COMPLETADO);
         Turno deSantiago = turnoGuardado(santiago, corte, HOY, "10:30", EstadoTurno.COMPLETADO);

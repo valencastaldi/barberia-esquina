@@ -5,6 +5,7 @@ import com.barberiaesquina.turnos.servicio.HorarioServicio;
 import com.barberiaesquina.turnos.web.dto.HorarioDtos.Dia;
 import com.barberiaesquina.turnos.web.dto.HorarioDtos.Pedido;
 import jakarta.validation.Valid;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -28,8 +29,9 @@ public class HorarioControlador {
         return barbero == null ? horarios.deLaBarberia() : horarios.deBarbero(barbero);
     }
 
-    /** Sin ?barbero se guarda el horario de quien está logueado. */
+    /** Los horarios los define el dueño. Sin ?barbero se guarda el suyo. */
     @PutMapping
+    @PreAuthorize("hasRole('DUENO')")
     public List<Dia> guardar(@RequestParam(required = false) Long barbero, @Valid @RequestBody Pedido pedido) {
         return horarios.guardar(barbero != null ? barbero : sesion.idBarbero(), pedido.dias());
     }

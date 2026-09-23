@@ -45,7 +45,7 @@ y en el [del front](frontend/README.md).
 ## Estado
 
 - [x] Maqueta de todas las pantallas
-- [x] API completa: 19 endpoints de la documentación + extensión (peluqueros, clientes, pagos, bloqueos) · 34 tests
+- [x] API completa: 19 endpoints de la documentación + extensión (peluqueros, clientes, pagos, bloqueos) · 36 tests
 - [x] Sitio del cliente: inicio, reserva en 3 pasos, confirmación, cancelación, encuesta
 - [x] Panel de gestión: agenda, pagos, clientes, dashboard, peluqueros, servicios, horarios
 - [ ] Datos reales de la barbería (precios, dirección, teléfono)

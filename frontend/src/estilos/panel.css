@@ -95,3 +95,32 @@ body.admin {
 .btn[disabled] { cursor: default; }
 
 }
+
+/* ---------- Opiniones ---------- */
+body.admin {
+  .opiniones-equipo { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .tarjeta-opinion {
+    gap: 4px;
+    text-align: left;
+    cursor: pointer;
+    color: inherit;
+    transition: border-color .14s ease, background .14s ease;
+  }
+  .tarjeta-opinion:hover { border-color: var(--borde-fuerte); }
+  .tarjeta-opinion[aria-pressed="true"] {
+    border-color: var(--azul-claro);
+    background: linear-gradient(180deg, var(--azul-tenue), var(--superficie));
+  }
+  .tarjeta-opinion:focus-visible { outline: 2px solid var(--azul-claro); outline-offset: 2px; }
+  .tarjeta-opinion .nombre { font-size: 13.5px; color: var(--texto-2); }
+  .tarjeta-opinion .promedio { font-family: var(--display); font-size: 32px; font-weight: 700; line-height: 1.1; color: var(--ambar); }
+  .tarjeta-opinion .promedio small { font-size: 18px; }
+  .tarjeta-opinion .cantidad { font-size: 12.5px; color: var(--texto-3); }
+  .mini-dist { display: grid; gap: 3px; margin-top: 10px; }
+  .mini-dist span { height: 4px; border-radius: 2px; background: rgba(255,255,255,.07); overflow: hidden; }
+  .mini-dist i { display: block; height: 100%; background: var(--ambar); }
+
+  .lista-opiniones { padding-top: 4px; }
+  .comentario .puntaje .apagadas { color: rgba(255,255,255,.15); }
+  .comentario .sin-comentario { font-style: italic; color: var(--texto-3); }
+}

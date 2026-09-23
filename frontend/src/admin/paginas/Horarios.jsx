@@ -7,7 +7,7 @@ const NOMBRES_DIA = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Vier
 const ORDEN_DIAS = [1, 2, 3, 4, 5, 6, 0];
 const SLOTS = [15, 30, 45, 60].map((m) => ({ valor: m, texto: `${m} min` }));
 
-/** RF-24, RF-25, RF-26: horario semanal de cada peluquero y slot base. */
+/** RF-24, RF-25, RF-26: horario semanal de cada peluquero y slot base. Lo edita el dueño; el barbero solo mira el suyo. */
 export default function Horarios() {
   const { pedir, usuario, esDueno } = useSesion();
   const equipo = usePedidoAdmin("/barberos");   // lista pública: nombres de los activos
@@ -19,7 +19,7 @@ export default function Horarios() {
   // Copia editable de lo que vino de la API.
   useEffect(() => { if (guardado.datos) setSemana(guardado.datos); }, [guardado.datos]);
 
-  const puedeEditar = esDueno || idBarbero === usuario.id;
+  const puedeEditar = esDueno;
   const cambios = semana && guardado.datos && JSON.stringify(semana) !== JSON.stringify(guardado.datos);
   const slot = semana?.find((d) => d.activo)?.duracionSlotMin ?? 30;
 
@@ -46,7 +46,7 @@ export default function Horarios() {
 
   return (
     <>
-      <Cabecera titulo={esDueno ? "Horarios de atención" : "Mis horarios"} bajada="De acá sale la disponibilidad que ve el cliente al reservar.">
+      <Cabecera titulo={esDueno ? "Horarios de atención" : "Mis horarios"} bajada={esDueno ? "De acá sale la disponibilidad que ve el cliente al reservar." : "Los días y horarios en los que tomás turnos. Si necesitás cambiarlos, pedíselo al dueño."}>
         {puedeEditar && (
           <>
             <button type="button" className="btn btn-secundario" disabled={!cambios} onClick={() => setSemana(guardado.datos)}>Deshacer</button>

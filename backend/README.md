@@ -52,7 +52,7 @@ ejemplo (3 peluqueros, 150 clientes, ~550 turnos de las últimas 6 semanas y la 
 ./mvnw test
 ```
 
-34 tests de integración sobre H2 con un reloj fijo (martes 22/09/2026 11:00):
+36 tests de integración sobre H2 con un reloj fijo (martes 22/09/2026 11:00):
 disponibilidad, reserva, reservas simultáneas, cancelación, encuesta, pagos, permisos por rol y rate limiting.
 
 ## Arquitectura en capas
@@ -87,7 +87,7 @@ Todo bajo `/api/v1`. 🔓 = público (lo usa el cliente sin cuenta) · 🔑 = co
 | | `PATCH /servicios/{id}/estado` | 👑 | `{"activo": false}` lo oculta |
 | | `DELETE /servicios/{id}` | 👑 | Solo si nunca tuvo turnos (si no, 409: desactivarlo) |
 | M3 Horarios | `GET /horarios` | 🔓 | De la barbería; `?barbero=ID` el de un peluquero |
-| | `PUT /horarios` | 🔑 | Semana propia; el dueño puede `?barbero=ID` |
+| | `PUT /horarios` | 👑 | Semana de un peluquero (`?barbero=ID`) |
 | M4 Disponibilidad | `GET /disponibilidad?servicio=&fecha=[&barbero=]` | 🔓 | Horarios del día, libres y ocupados |
 | M5 Turnos | `POST /turnos` | 🔓 | Reserva (máx. 10 por IP por hora) |
 | | `GET /turnos?desde=&hasta=&barbero=&estado=` | 🔑 | Agenda (por defecto, hoy). Un barbero no recibe contacto, cobro ni calificación de turnos ajenos |
@@ -105,7 +105,8 @@ Todo bajo `/api/v1`. 🔓 = público (lo usa el cliente sin cuenta) · 🔑 = co
 | `GET /disponibilidad/dias?servicio=[&barbero=][&cantidad=14]` | 🔓 | Selector de días del paso 2: cuántos horarios libres tiene cada día |
 | `GET /resenas` | 🔓 | Home del cliente: satisfacción promedio, atendidos del mes y 3 comentarios buenos (nombre corto) |
 | `GET /turnos/cancelar/{token}` | 🔓 | La pantalla de cancelación necesita mostrar el turno antes de cancelar |
-| `GET /bloqueos` · `POST /bloqueos` · `DELETE /bloqueos/{id}` | 🔑 | RF-12 (bloquear franjas) no tenía endpoint |
+| `GET /bloqueos` (🔑) · `POST /bloqueos` · `DELETE /bloqueos/{id}` (👑) | 🔑/👑 | RF-12 (bloquear franjas) no tenía endpoint |
+| `GET /opiniones?desde=&hasta=&barbero=` | 🔑 | Encuestas respondidas con promedio por peluquero: las ve todo el equipo |
 | `GET /barberos` | 🔓 | *Extensión:* el cliente elige con quién atenderse |
 | `GET /barberos/equipo` · `POST` · `PUT /{id}` · `PATCH /{id}/estado` | 👑 | *Extensión:* equipo de peluqueros |
 | `GET /clientes?q=&filtro=&pagina=&tamano=` · `GET /clientes/{id}` | 👑 | *Extensión:* listado con filtros y ficha con historial |

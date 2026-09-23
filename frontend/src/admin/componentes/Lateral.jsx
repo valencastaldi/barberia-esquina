@@ -9,6 +9,7 @@ const ICONOS = {
   pagos: "M4 5h16a2 2 0 012 2v10a2 2 0 01-2 2H4a2 2 0 01-2-2V7a2 2 0 012-2zM2 10h20M6 15h4",
   clientes: "M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM22 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75",
   peluqueros: "M12 3a4 4 0 100 8 4 4 0 000-8zM5.5 21a6.5 6.5 0 0113 0M9 14.5l3 3 3-3",
+  opiniones: "M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3-5.8 3 1.1-6.5L2.6 9.4l6.5-.9z",
   salir: "M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9",
 };
 
@@ -29,6 +30,7 @@ const GRUPOS = [
   ] },
   { titulo: "Negocio", secciones: [
     { id: "dashboard", txt: "Dashboard", soloDueno: true },
+    { id: "opiniones", txt: "Opiniones" },
     { id: "peluqueros", txt: "Peluqueros", soloDueno: true },
     { id: "servicios", txt: "Servicios", soloDueno: true },
     { id: "horarios", txt: "Horarios", txtBarbero: "Mis horarios" },
