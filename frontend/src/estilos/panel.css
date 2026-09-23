@@ -1,0 +1,97 @@
+/* Agregados del panel en React (lo que no estaba en la maqueta). Todo bajo body.admin. */
+
+body.admin {
+
+/* Botón de cerrar sesión con la misma pinta que los links del menú */
+.nav .nav-boton {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: none;
+  font-size: 14.5px;
+  color: var(--texto-2);
+  text-align: left;
+}
+.nav .nav-boton:hover { background: rgba(255,255,255,.05); color: var(--texto); }
+.nav a:focus-visible, .nav .nav-boton:focus-visible,
+.mini:focus-visible, .btn:focus-visible, .segmentos button:focus-visible {
+  outline: 2px solid var(--azul-claro);
+  outline-offset: 2px;
+}
+
+/* Avisos de error / éxito arriba de la pantalla */
+.aviso-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border: 1px solid rgba(228, 50, 43, .4);
+  border-radius: var(--r-sm);
+  background: var(--rojo-tenue);
+  color: #FF8983;
+  font-size: 14px;
+}
+.aviso-panel.ok { border-color: rgba(47,191,113,.35); background: var(--verde-tenue); color: #6FE0A6; }
+.aviso-panel .cerrar { float: none; margin: 0; color: inherit; }
+.modal .aviso-panel { margin: 4px 0 0; }
+.aviso-error-login { background: var(--rojo-tenue); border-color: rgba(228,50,43,.4); color: #FF8983; }
+
+/* Navegación de fechas en la agenda */
+.navegador { display: flex; gap: 6px; align-items: center; }
+.navegador .mini { height: 42px; min-width: 42px; font-size: 14px; }
+.navegador .mini[disabled] { opacity: .45; cursor: default; }
+
+.separador-dia {
+  padding: 12px 20px 8px;
+  border-bottom: 1px solid var(--borde);
+  background: rgba(255,255,255,.02);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--texto-3);
+}
+
+/* Franja bloqueada dentro de la lista de turnos */
+.turno.bloqueo {
+  background: repeating-linear-gradient(135deg, rgba(255,255,255,.025) 0 8px, transparent 8px 16px);
+}
+.turno.bloqueo .hora, .turno.bloqueo .quien b { color: var(--texto-2); }
+.turno .quien .calif { color: var(--ambar); letter-spacing: 1px; }
+
+/* Paginador de clientes */
+.paginador {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 20px;
+  border-top: 1px solid var(--borde);
+  font-size: 13.5px;
+  color: var(--texto-2);
+}
+.paginador span { margin-right: auto; }
+.mini[disabled] { opacity: .4; cursor: default; }
+
+.nota-grande { font-family: var(--display); font-size: 26px; font-weight: 700; color: var(--ambar); }
+.texto-ayuda { margin-bottom: 14px; font-size: 13.5px; line-height: 1.55; color: var(--texto-2); }
+.texto-ambar { color: var(--ambar); }
+.nota-maqueta a { color: var(--azul-claro); }
+
+/* Horarios: el nombre del día va dentro del interruptor. Con poco ancho,
+   las columnas se apilan para que los horarios no se corten. */
+@media (max-width: 1199px) {
+  .columnas.horarios { grid-template-columns: 1fr; }
+}
+.dia-fila .switch { font-size: 14.5px; color: var(--texto); font-weight: 500; }
+.dia-fila.apagado .switch { color: var(--texto-2); }
+
+.btn[disabled] { cursor: default; }
+
+}

@@ -15,7 +15,7 @@ Hoy los turnos se coordinan por WhatsApp y llamadas. Con este sistema:
 | Carpeta | Qué es | Stack |
 |---|---|---|
 | [`backend/`](backend/) | API REST `/api/v1` | Java 21 · Spring Boot 4 · Spring Security (JWT) · JPA · Flyway · MySQL 8 |
-| [`frontend/`](frontend/) | SPA del cliente (y del panel, en progreso) | React 18 · Vite 5 · React Router |
+| [`frontend/`](frontend/) | SPA: sitio del cliente y panel de gestión | React 18 · Vite 5 · React Router |
 | [`maqueta/`](maqueta/) | Prototipo navegable de todas las pantallas | HTML · CSS · JS |
 
 ## Cómo correrlo
@@ -34,7 +34,7 @@ Requisitos: Java 21, Node 18+, MySQL 8.
    npm install
    npm run dev
    ```
-4. Abrir <http://localhost:5173>.
+4. Abrir <http://localhost:5173> (sitio del cliente) o <http://localhost:5173/admin> (panel).
 
 La primera vez se cargan datos de ejemplo (3 peluqueros, 150 clientes, ~550 turnos).
 Usuario del panel: `agustin@barberiaesquina.com` / `esquina1290`, **solo para desarrollo**.
@@ -47,5 +47,5 @@ y en el [del front](frontend/README.md).
 - [x] Maqueta de todas las pantallas
 - [x] API completa: 19 endpoints de la documentación + extensión (peluqueros, clientes, pagos, bloqueos) · 31 tests
 - [x] Sitio del cliente: inicio, reserva en 3 pasos, confirmación, cancelación, encuesta
-- [ ] Panel de gestión en React
+- [x] Panel de gestión: agenda, pagos, clientes, dashboard, peluqueros, servicios, horarios
 - [ ] Datos reales de la barbería (precios, dirección, teléfono)

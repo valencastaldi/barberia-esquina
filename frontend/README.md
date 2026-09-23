@@ -35,6 +35,25 @@ Detalles:
 - Los datos del cliente se recuerdan en el navegador para la próxima reserva (`localStorage`, opcional).
 - Los datos del local que no están en la base (dirección, teléfono) viven en `src/config.js` y **son de relleno**.
 
+## Panel de gestión (escritorio, desde 1024px)
+
+Entrar en <http://localhost:5173/admin> con `agustin@barberiaesquina.com` / `esquina1290` (dueño)
+o `santiago@barberiaesquina.com` / `esquina1290` (barbero). Solo desarrollo.
+
+| Ruta | Pantalla | Quién |
+|---|---|---|
+| `/admin/login` | Ingreso (JWT, vence a las 8 h) | Todos |
+| `/admin/agenda` | Día / semana / mes, filtro por peluquero, completar con cobro, ausente, cancelar, bloquear franjas (RF-12) | Todos (el barbero solo toca sus turnos) |
+| `/admin/pagos` | Cobrado, medios de pago, liquidación por peluquero, cobros pendientes | Dueño |
+| `/admin/clientes` | Buscador, filtros, paginado y ficha con historial | Todos |
+| `/admin/dashboard` | KPIs, gráfico diario, estrellas, comentarios, rendimiento por peluquero | Todos |
+| `/admin/peluqueros` | Equipo: alta, edición, servicios, activar/desactivar | Editar: dueño |
+| `/admin/servicios` | Catálogo: alta, edición, ocultar, borrar si no tiene turnos | Editar: dueño |
+| `/admin/horarios` | Semana de cada peluquero y slot base | Cada uno el suyo; el dueño, todos |
+
+El panel se carga aparte (`React.lazy`): quien reserva desde el celular no descarga su código.
+`cliente.css` y `admin.css` viven bajo `body.cliente` / `body.admin` para que no se pisen.
+
 ## Estructura
 
 ```
@@ -43,10 +62,11 @@ src/
 ├── lib/          formato (fechas, precios) · horarios (abierto/cerrado) · memoria (localStorage)
 ├── componentes/  Iconos · cliente/ (layout, barra inferior, resumen, tarjeta de servicio)
 ├── paginas/      cliente/ (Inicio, Reservar, Confirmacion, Cancelar, Encuesta)
-├── estilos/      base.css (design system) · cliente.css
+├── admin/        panel: sesion.jsx (login y token) · componentes/ · paginas/ (Agenda, Pagos, Clientes, …)
+├── estilos/      base.css (design system) · cliente.css · admin.css + panel.css
 └── config.js     datos fijos del local
 ```
 
 ## Pendiente
 
-- Panel de gestión (`/admin`): login, agenda, pagos, clientes, dashboard, peluqueros, servicios, horarios.
+- Datos reales del local en `src/config.js`.
