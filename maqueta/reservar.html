@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#08090B">
+<title>Reservar turno — Barbería Esquina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/cliente.css">
+</head>
+<body class="cliente">
+
+<main class="app">
+
+  <header class="topbar">
+    <button class="volver" id="btn-volver" aria-label="Volver">
+      <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+    </button>
+    <span class="titulo">Reservar turno</span>
+  </header>
+
+  <div class="pasos" aria-hidden="true">
+    <div class="paso activo" data-paso="1"></div>
+    <div class="paso" data-paso="2"></div>
+    <div class="paso" data-paso="3"></div>
+  </div>
+  <div class="pasos-txt">
+    <span>Paso <strong id="paso-num">1</strong> de 3</span>
+    <span id="paso-nombre">Servicio</span>
+  </div>
+
+  <!-- ============ PASO 1 · SERVICIO ============ -->
+  <section class="vista activa" id="vista-1" aria-labelledby="t1">
+    <h2 id="t1">¿Qué te hacés hoy?</h2>
+    <p class="bajada">Elegí el servicio. La duración define los horarios que te vamos a ofrecer.</p>
+    <div class="servicios" id="lista-servicios" role="group" aria-label="Servicios disponibles"></div>
+  </section>
+
+  <!-- ============ PASO 2 · FECHA Y HORA ============ -->
+  <section class="vista" id="vista-2" aria-labelledby="t2">
+    <h2 id="t2">Elegí día y horario</h2>
+    <p class="bajada" id="bajada-2">Disponibilidad en tiempo real.</p>
+
+    <div class="dias" id="lista-dias" role="group" aria-label="Días disponibles"></div>
+    <div id="lista-horarios"></div>
+  </section>
+
+  <!-- ============ PASO 3 · DATOS ============ -->
+  <section class="vista" id="vista-3" aria-labelledby="t3">
+    <h2 id="t3">Confirmá tu turno</h2>
+    <p class="bajada">Te mandamos la confirmación por email. No hace falta crear cuenta.</p>
+
+    <div class="resumen" id="resumen-turno"></div>
+
+    <form id="form-datos" novalidate>
+      <label class="campo">
+        <span>Nombre</span>
+        <input type="text" name="nombre" autocomplete="given-name" placeholder="Agustín" required>
+      </label>
+      <label class="campo">
+        <span>Apellido</span>
+        <input type="text" name="apellido" autocomplete="family-name" placeholder="Rosas" required>
+      </label>
+      <label class="campo">
+        <span>Email</span>
+        <input type="email" name="email" inputmode="email" autocomplete="email" placeholder="tuemail@gmail.com" required>
+      </label>
+      <label class="campo">
+        <span>Teléfono</span>
+        <input type="tel" name="telefono" inputmode="tel" autocomplete="tel" placeholder="351 000-0000" required>
+      </label>
+      <p class="nota-maqueta">Usamos tus datos solo para confirmarte el turno y enviarte la encuesta.</p>
+    </form>
+  </section>
+
+</main>
+
+<div class="barra-cta">
+  <div>
+    <div class="info" id="cta-info" hidden>
+      <small id="cta-detalle"></small>
+      <strong id="cta-titulo"></strong>
+    </div>
+    <button class="btn btn-primario" id="btn-siguiente" style="flex:1" disabled>Continuar</button>
+  </div>
+</div>
+
+<script src="assets/js/datos.js"></script>
+<script src="assets/js/reservar.js"></script>
+</body>
+</html>

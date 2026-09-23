@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#08090B">
+<title>Cancelar turno — Barbería Esquina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/cliente.css">
+</head>
+<body class="cliente">
+
+<main class="app">
+
+  <header class="topbar">
+    <a class="marca" href="index.html">
+      <img src="assets/img/logo.jpg" alt="">
+      <strong>Barbería Esquina</strong>
+    </a>
+  </header>
+
+  <!-- Estado A: el link del email es válido, pedimos confirmación -->
+  <section class="vista activa" id="vista-confirmar">
+    <section class="resultado">
+      <div class="icono neutro">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5v.01"/></svg>
+      </div>
+      <h1>¿Cancelás este turno?</h1>
+      <p>El horario vuelve a quedar libre para otro cliente.</p>
+    </section>
+
+    <div class="resumen" id="resumen-turno" style="margin-top:28px"></div>
+    <p class="nota-maqueta" style="text-align:center">
+      Entraste con el link único del email, no hace falta iniciar sesión.
+    </p>
+  </section>
+
+  <!-- Estado B: turno cancelado -->
+  <section class="vista" id="vista-listo">
+    <section class="resultado">
+      <div class="icono alerta">
+        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </div>
+      <h1>Turno cancelado</h1>
+      <p>Listo. Cuando quieras volvés a reservar en 3 pasos.</p>
+    </section>
+  </section>
+
+</main>
+
+<div class="barra-cta">
+  <div id="cta-confirmar">
+    <a class="btn btn-secundario" href="index.html" style="flex:1">Mantenerlo</a>
+    <button class="btn btn-peligro" id="btn-cancelar" style="flex:1">Sí, cancelar</button>
+  </div>
+  <div id="cta-listo" hidden>
+    <a class="btn btn-primario btn-block" href="reservar.html">Reservar otro turno</a>
+  </div>
+</div>
+
+<script src="assets/js/datos.js"></script>
+<script>
+  // En la app real: GET del turno por token_cancelacion (RNF-07).
+  var servicio = SERVICIOS[2];
+  var d = new Date();
+  d.setDate(d.getDate() + 1);
+
+  document.getElementById("resumen-turno").innerHTML =
+    '<div class="fila"><span>Servicio</span><strong>' + servicio.nombre + "</strong></div>" +
+    '<div class="fila"><span>Día</span><strong>' + fechaLarga(d) + "</strong></div>" +
+    '<div class="fila"><span>Horario</span><strong>15:00 a 16:00</strong></div>' +
+    '<div class="fila"><span>Estado</span><strong><span class="estado estado-pendiente">Pendiente</span></strong></div>';
+
+  document.getElementById("btn-cancelar").addEventListener("click", function () {
+    // PATCH /api/v1/turnos/cancelar/:token_cancelacion
+    document.getElementById("vista-confirmar").classList.remove("activa");
+    document.getElementById("vista-listo").classList.add("activa");
+    document.getElementById("cta-confirmar").hidden = true;
+    document.getElementById("cta-listo").hidden = false;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+</script>
+</body>
+</html>

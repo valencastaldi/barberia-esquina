@@ -1,0 +1,208 @@
+/* =========================================================
+   BARBERÍA ESQUINA — Design System
+   Identidad tomada del logo: negro profundo, blanco hueso,
+   azul royal del cintillo y rojo como acento puntual.
+   ========================================================= */
+
+:root {
+  /* --- Color --- */
+  --negro:        #08090B;
+  --negro-2:      #0E1013;
+  --superficie:   #14171C;
+  --superficie-2: #1B1F26;
+  --borde:        rgba(255, 255, 255, 0.09);
+  --borde-fuerte: rgba(255, 255, 255, 0.18);
+
+  --azul:         #1E46D2;
+  --azul-claro:   #4B78FF;
+  --azul-tenue:   rgba(30, 70, 210, 0.16);
+
+  --rojo:         #E4322B;
+  --rojo-tenue:   rgba(228, 50, 43, 0.14);
+
+  --verde:        #2FBF71;
+  --verde-tenue:  rgba(47, 191, 113, 0.14);
+
+  --ambar:        #E0A93B;
+  --ambar-tenue:  rgba(224, 169, 59, 0.14);
+
+  --celeste:      #3FB8E6; /* solo Mercado Pago, en los cobros */
+
+  --blanco:       #F3F1ED;
+  --texto:        #F3F1ED;
+  --texto-2:      #A7ADB8;
+  --texto-3:      #8A909C;
+
+  /* --- Tipografía --- */
+  --display: "Playfair Display", "Georgia", "Times New Roman", serif;
+  --sans: "Inter", -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+
+  /* --- Medidas --- */
+  --r-sm: 10px;
+  --r-md: 14px;
+  --r-lg: 20px;
+  --r-full: 999px;
+
+  --sombra: 0 18px 40px -18px rgba(0, 0, 0, 0.9);
+  --sombra-elev: 0 10px 24px -12px rgba(0, 0, 0, 0.85);
+
+  --app: 430px; /* ancho de la columna mobile del cliente */
+}
+
+* { box-sizing: border-box; }
+
+/* El atributo hidden tiene que ganarle a cualquier display: flex/grid. */
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--negro);
+  color: var(--texto);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1, h2, h3, h4 { margin: 0; font-weight: 600; letter-spacing: -0.01em; }
+p { margin: 0; }
+a { color: inherit; text-decoration: none; }
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+img { display: block; max-width: 100%; }
+ul { margin: 0; padding: 0; list-style: none; }
+
+/* --- Tipos de display --- */
+.display {
+  font-family: var(--display);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.eyebrow {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--texto-3);
+}
+
+/* --- Botones --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 50px;
+  padding: 0 22px;
+  border: 1px solid transparent;
+  border-radius: var(--r-full);
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  transition: transform .15s ease, background .15s ease, border-color .15s ease, opacity .15s ease;
+}
+.btn:active { transform: scale(0.985); }
+
+.btn-primario {
+  background: var(--azul);
+  color: #fff;
+  box-shadow: var(--sombra-elev);
+}
+.btn-primario:hover { background: #2450E8; }
+
+.btn-secundario {
+  background: transparent;
+  border-color: var(--borde-fuerte);
+  color: var(--texto);
+}
+.btn-secundario:hover { background: rgba(255,255,255,0.05); }
+
+.btn-peligro {
+  background: var(--rojo-tenue);
+  border-color: rgba(228, 50, 43, 0.4);
+  color: #FF8983;
+}
+.btn-peligro:hover { background: rgba(228, 50, 43, 0.22); }
+
+.btn-block { width: 100%; }
+
+.btn[disabled], .btn[aria-disabled="true"] {
+  opacity: .38;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+/* --- Chips de estado --- */
+.estado {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: var(--r-full);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.estado::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.estado-pendiente  { background: var(--azul-tenue);  color: #8FAAFF; }
+.estado-completado { background: var(--verde-tenue); color: #6FE0A6; }
+.estado-ausente    { background: var(--rojo-tenue);  color: #FF8983; }
+.estado-cancelado  { background: rgba(255,255,255,.07); color: var(--texto-3); }
+.estado-activo     { background: var(--verde-tenue); color: #6FE0A6; }
+.estado-inactivo   { background: rgba(255,255,255,.07); color: var(--texto-3); }
+
+/* --- Campos --- */
+.campo { display: block; margin-bottom: 14px; }
+.campo > span {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--texto-2);
+}
+.campo input,
+.campo select,
+.campo textarea {
+  width: 100%;
+  height: 50px;
+  padding: 0 15px;
+  background: var(--superficie);
+  border: 1px solid var(--borde);
+  border-radius: var(--r-md);
+  outline: none;
+  transition: border-color .15s ease, background .15s ease;
+}
+.campo textarea { height: auto; padding: 14px 15px; resize: vertical; min-height: 104px; line-height: 1.5; }
+.campo input::placeholder, .campo textarea::placeholder { color: var(--texto-3); }
+.campo input:focus,
+.campo select:focus,
+.campo textarea:focus {
+  border-color: var(--azul-claro);
+  background: var(--superficie-2);
+}
+
+/* --- Utilidades --- */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.nota-maqueta {
+  margin-top: 8px;
+  font-size: 12.5px;
+  color: var(--texto-3);
+}

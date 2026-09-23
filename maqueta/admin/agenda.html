@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#08090B">
+<title>Agenda — Barbería Esquina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body class="admin">
+
+<div class="panel">
+  <aside class="lateral"></aside>
+
+  <main class="contenido">
+
+    <header class="cabecera">
+      <div>
+        <h1>Agenda</h1>
+        <p id="fecha-hoy"></p>
+      </div>
+      <div class="acciones">
+        <div class="segmentos" id="filtro-periodo">
+          <button aria-pressed="true">Día</button>
+          <button aria-pressed="false">Semana</button>
+          <button aria-pressed="false">Mes</button>
+        </div>
+        <button class="btn btn-secundario">Bloquear franja</button>
+      </div>
+    </header>
+
+    <div class="barra-filtros filtro-equipo">
+      <div class="segmentos chico" id="filtro-pelu"></div>
+    </div>
+
+    <section class="kpis">
+      <div class="kpi destacado">
+        <div class="etiqueta">Turnos de hoy</div>
+        <div class="valor" id="kpi-total"></div>
+        <div class="delta" id="kpi-restantes"></div>
+      </div>
+      <div class="kpi">
+        <div class="etiqueta">Completados</div>
+        <div class="valor" id="kpi-completados"></div>
+        <div class="delta sube">Encuesta enviada a cada uno</div>
+      </div>
+      <div class="kpi">
+        <div class="etiqueta">Ausentes</div>
+        <div class="valor" id="kpi-ausentes"></div>
+        <div class="delta baja" id="kpi-ausentes-pct"></div>
+      </div>
+      <div class="kpi">
+        <div class="etiqueta">Cobrado hoy</div>
+        <div class="valor" id="kpi-plata"></div>
+        <div class="delta" id="kpi-plata-est"></div>
+      </div>
+    </section>
+
+    <section class="bloque">
+      <header>
+        <div>
+          <h2>Turnos del día</h2>
+          <p>Marcar un turno como completado dispara el email con la encuesta de satisfacción.</p>
+        </div>
+        <span class="eyebrow" id="cant-turnos"></span>
+      </header>
+      <div id="lista-turnos"></div>
+    </section>
+
+  </main>
+</div>
+
+<dialog class="modal" id="modal-cobro">
+  <form class="modal-cuerpo" method="dialog" id="form-cobro">
+    <button class="cerrar" type="button" aria-label="Cerrar" data-cerrar>&times;</button>
+    <h2 id="cobro-titulo">Turno completado</h2>
+    <p class="bajada" id="cobro-bajada"></p>
+    <div class="cobro-resumen" id="cobro-resumen"></div>
+    <div class="campo"><span>¿Cómo pagó?</span>
+      <div class="pastillas grandes" id="cobro-medios"></div>
+    </div>
+    <div class="modal-pie">
+      <button class="btn btn-secundario" type="submit" value="despues" id="btn-despues">Cobrar después</button>
+      <button class="btn btn-primario" type="submit" value="cobrar">Registrar cobro</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/js/datos.js"></script>
+<script src="../assets/js/admin.js"></script>
+<script>
+  pintarLateral("agenda");
+
+  var hoy = new Date();
+  document.getElementById("fecha-hoy").textContent =
+    DIAS_CORTOS[hoy.getDay()] + " " + hoy.getDate() + " de " + MESES[hoy.getMonth()] +
+    " · atención de " + (HORARIOS[hoy.getDay()].inicio || "--") + " a " + (HORARIOS[hoy.getDay()].fin || "--");
+
+  var turnos = TURNOS_HOY;
+  var filtroPelu = 0;   // 0 = todo el equipo
+  var cobrando = null;
+
+  var ETIQUETA = {
+    pendiente: "Pendiente", completado: "Completado",
+    ausente: "Ausente", cancelado: "Cancelado",
+  };
+
+  // Solo los peluqueros que tienen turnos hoy.
+  var deHoy = PELUQUEROS.filter(function (p) {
+    return turnos.some(function (t) { return t.peluquero === p.id; });
+  });
+  document.getElementById("filtro-pelu").innerHTML =
+    '<button aria-pressed="true" data-id="0">Todo el equipo</button>' +
+    deHoy.map(function (p) {
+      return '<button aria-pressed="false" data-id="' + p.id + '">' + p.nombre + "</button>";
+    }).join("");
+
+  function pintarTurnos() {
+    var lista = turnos.filter(function (t) { return !filtroPelu || t.peluquero === filtroPelu; });
+
+    document.getElementById("lista-turnos").innerHTML = lista.map(function (t) {
+      var cerrado = t.estado !== "pendiente";
+      var acciones;
+      if (!cerrado) {
+        acciones = '<div class="acciones-turno">' +
+            '<button class="mini ok" data-id="' + t.id + '" data-estado="completado">Completado</button>' +
+            '<button class="mini" data-id="' + t.id + '" data-estado="ausente">Ausente</button>' +
+            '<button class="mini no" data-id="' + t.id + '" data-estado="cancelado">Cancelar</button>' +
+          "</div>";
+      } else if (t.estado === "completado" && !t.medio) {
+        acciones = '<button class="mini cobrar" data-cobrar="' + t.id + '">Registrar cobro</button>' +
+                   '<span class="estado estado-completado">Completado</span>';
+      } else if (t.estado === "completado") {
+        acciones = chipMedio(t.medio) + '<span class="estado estado-completado">Completado</span>';
+      } else {
+        acciones = '<span class="estado estado-' + t.estado + '">' + ETIQUETA[t.estado] + "</span>";
+      }
+
+      return '<article class="turno' + (cerrado ? " cerrado" : "") + '">' +
+               '<div class="hora">' + t.hora + "<small>a " + t.fin + "</small></div>" +
+               '<div class="quien"><b>' + t.cliente + "</b>" +
+                 "<p>" + t.servicio + " · con " + peluquero(t.peluquero).nombre + " · " + t.telefono + "</p></div>" +
+               '<div class="derecha">' +
+                 '<span class="monto">' + pesos(t.precio) + "</span>" + acciones +
+               "</div>" +
+             "</article>";
+    }).join("");
+
+    var pend = lista.filter(function (t) { return t.estado === "pendiente"; }).length;
+    var comp = lista.filter(function (t) { return t.estado === "completado"; }).length;
+    var aus  = lista.filter(function (t) { return t.estado === "ausente"; }).length;
+    var cobrado = lista.filter(function (t) { return t.medio; })
+                       .reduce(function (a, t) { return a + t.precio; }, 0);
+    var estimado = lista.filter(function (t) { return t.estado === "pendiente" || t.estado === "completado"; })
+                        .reduce(function (a, t) { return a + t.precio; }, 0);
+
+    document.getElementById("kpi-total").textContent = lista.length;
+    document.getElementById("kpi-restantes").textContent = pend + " por atender";
+    document.getElementById("kpi-completados").textContent = comp;
+    document.getElementById("kpi-ausentes").textContent = aus;
+    document.getElementById("kpi-ausentes-pct").textContent =
+      (lista.length ? (aus / lista.length * 100).toFixed(1).replace(".", ",").replace(",0", "") : "0") + "% del día";
+    document.getElementById("kpi-plata").textContent = pesos(cobrado);
+    document.getElementById("kpi-plata-est").textContent = "De " + pesos(estimado) + " estimados";
+    document.getElementById("cant-turnos").textContent = lista.length + " turnos";
+  }
+
+  var modal = document.getElementById("modal-cobro");
+  var form = document.getElementById("form-cobro");
+
+  // Se abre al marcar "Completado" y también para cobrar uno que quedó pendiente.
+  function abrirCobro(t) {
+    cobrando = t;
+    var yaCompletado = t.estado === "completado";
+    document.getElementById("cobro-titulo").textContent = yaCompletado ? "Registrar cobro" : "Turno completado";
+    document.getElementById("cobro-bajada").textContent = yaCompletado
+      ? "El turno ya está completado; falta registrar el pago."
+      : "Se le envía la encuesta de satisfacción por email.";
+    document.getElementById("btn-despues").textContent = yaCompletado ? "Cancelar" : "Cobrar después";
+    document.getElementById("cobro-resumen").innerHTML =
+      "<b>" + t.cliente + "</b> · " + t.servicio + " con " + peluquero(t.peluquero).nombre + " · <b>" + pesos(t.precio) + "</b>";
+    document.getElementById("cobro-medios").innerHTML = Object.keys(MEDIOS).map(function (m, i) {
+      return '<label class="pastilla"><input type="radio" name="medio" value="' + m + '"' + (i === 0 ? " checked" : "") +
+             "><span>" + MEDIOS[m] + "</span></label>";
+    }).join("");
+    modal.returnValue = "";
+    modal.showModal();
+  }
+
+  // PATCH /api/v1/turnos/:id_turno/estado  +  POST /api/v1/pagos
+  modal.addEventListener("close", function () {
+    if (!cobrando) return;
+    if (modal.returnValue === "cobrar" || modal.returnValue === "despues") {
+      cobrando.estado = "completado";
+      if (modal.returnValue === "cobrar") cobrando.medio = form.elements.medio.value;
+    }
+    cobrando = null;
+    pintarTurnos();
+  });
+
+  modal.addEventListener("click", function (e) {
+    if (e.target.closest("[data-cerrar]")) modal.close();
+  });
+
+  document.getElementById("lista-turnos").addEventListener("click", function (e) {
+    var cobrar = e.target.closest("[data-cobrar]");
+    if (cobrar) { abrirCobro(turnos.find(function (x) { return x.id === Number(cobrar.dataset.cobrar); })); return; }
+
+    var btn = e.target.closest(".mini[data-estado]");
+    if (!btn) return;
+    var t = turnos.find(function (x) { return x.id === Number(btn.dataset.id); });
+    if (btn.dataset.estado === "completado") { abrirCobro(t); return; }
+    // PATCH /api/v1/turnos/:id_turno/estado
+    t.estado = btn.dataset.estado;
+    pintarTurnos();
+  });
+
+  document.getElementById("filtro-pelu").addEventListener("click", function (e) {
+    if (e.target.tagName !== "BUTTON") return;
+    this.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", String(b === e.target)); });
+    filtroPelu = Number(e.target.dataset.id);
+    pintarTurnos();
+  });
+
+  document.getElementById("filtro-periodo").addEventListener("click", function (e) {
+    if (e.target.tagName !== "BUTTON") return;
+    this.querySelectorAll("button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b === e.target));
+    });
+  });
+
+  pintarTurnos();
+</script>
+</body>
+</html>

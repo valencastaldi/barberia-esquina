@@ -1,0 +1,24 @@
+# --- Documentación privada (nombre, DNI, links de Drive): queda solo en la PC ---
+*.pdf
+CONTEXTO.md
+WhatsApp Image*.jpeg
+
+# --- Herramientas locales ---
+.claude/
+.impeccable/
+.idea/
+.vscode/
+*.iml
+.DS_Store
+Thumbs.db
+
+# --- Se regeneran ---
+node_modules/
+dist/
+target/
+backend/data/
+*.log
+
+# --- Secretos ---
+.env
+.env.*

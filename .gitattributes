@@ -1,0 +1,8 @@
+# Saltos de línea normalizados en el repo (LF); los scripts de Windows quedan en CRLF.
+* text=auto eol=lf
+*.cmd text eol=crlf
+*.bat text eol=crlf
+*.jpg binary
+*.jpeg binary
+*.png binary
+*.jar binary

@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#08090B">
+<title>¿Cómo estuvo? — Barbería Esquina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/cliente.css">
+</head>
+<body class="cliente">
+
+<main class="app">
+
+  <header class="topbar">
+    <a class="marca" href="index.html">
+      <img src="assets/img/logo.jpg" alt="">
+      <strong>Barbería Esquina</strong>
+    </a>
+  </header>
+
+  <!-- Estado A: encuesta sin responder -->
+  <section class="vista activa" id="vista-encuesta">
+    <section class="resultado" style="padding-bottom:0">
+      <h1 style="margin-top:12px">¿Cómo estuvo?</h1>
+      <p id="contexto">Corte + Barba del martes 23.</p>
+    </section>
+
+    <div class="estrellas" id="estrellas" role="radiogroup" aria-label="Calificación de 1 a 5"></div>
+    <p class="leyenda-estrellas" id="leyenda">Tocá las estrellas para calificar</p>
+
+    <form id="form-encuesta" style="margin-top:26px">
+      <label class="campo">
+        <span>Comentario <em style="font-style:normal;color:var(--texto-3)">(opcional)</em></span>
+        <textarea name="comentario" maxlength="500" placeholder="¿Qué salió bien? ¿Qué mejorarías?"></textarea>
+      </label>
+      <p class="nota-maqueta">Lo lee solo el barbero. Máximo 500 caracteres.</p>
+    </form>
+  </section>
+
+  <!-- Estado B: gracias -->
+  <section class="vista" id="vista-gracias">
+    <section class="resultado">
+      <div class="icono">
+        <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+      </div>
+      <h1>¡Gracias!</h1>
+      <p>Tu opinión va directo al panel del barbero.</p>
+    </section>
+  </section>
+
+</main>
+
+<div class="barra-cta">
+  <div id="cta-encuesta">
+    <button class="btn btn-primario btn-block" id="btn-enviar" disabled>Enviar</button>
+  </div>
+  <div id="cta-gracias" hidden>
+    <a class="btn btn-primario btn-block" href="reservar.html">Reservar el próximo</a>
+  </div>
+</div>
+
+<script src="assets/js/datos.js"></script>
+<script>
+  var LEYENDAS = {
+    1: "Muy malo — contanos qué pasó",
+    2: "Podría estar mejor",
+    3: "Estuvo bien",
+    4: "Muy bueno",
+    5: "Excelente, volvería",
+  };
+
+  var calificacion = 0;
+  var cont = document.getElementById("estrellas");
+
+  var estrellaSVG = '<svg width="34" height="34" viewBox="0 0 24 24" fill="currentColor">' +
+    '<path d="M12 2.6l2.9 5.9 6.5.9-4.7 4.6 1.1 6.5-5.8-3-5.8 3 1.1-6.5L2.6 9.4l6.5-.9z"/></svg>';
+
+  cont.innerHTML = [1, 2, 3, 4, 5].map(function (n) {
+    return '<button type="button" class="estrella" data-valor="' + n + '" role="radio" aria-checked="false" ' +
+           'aria-label="' + n + ' de 5">' + estrellaSVG + "</button>";
+  }).join("");
+
+  cont.addEventListener("click", function (e) {
+    var btn = e.target.closest(".estrella");
+    if (!btn) return;
+    calificacion = Number(btn.dataset.valor);
+    document.querySelectorAll(".estrella").forEach(function (b) {
+      var v = Number(b.dataset.valor);
+      b.classList.toggle("marcada", v <= calificacion);
+      b.setAttribute("aria-checked", String(v === calificacion));
+    });
+    document.getElementById("leyenda").textContent = LEYENDAS[calificacion];
+    document.getElementById("btn-enviar").disabled = false;
+  });
+
+  document.getElementById("btn-enviar").addEventListener("click", function () {
+    // POST /api/v1/encuestas/:id_turno
+    document.getElementById("vista-encuesta").classList.remove("activa");
+    document.getElementById("vista-gracias").classList.add("activa");
+    document.getElementById("cta-encuesta").hidden = true;
+    document.getElementById("cta-gracias").hidden = false;
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+
+  // Contexto del turno (GET /api/v1/encuestas/:id_turno)
+  var ayer = new Date();
+  ayer.setDate(ayer.getDate() - 1);
+  document.getElementById("contexto").textContent =
+    "Corte + Barba del " + fechaLarga(ayer) + ".";
+</script>
+</body>
+</html>

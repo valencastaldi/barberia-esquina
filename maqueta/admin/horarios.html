@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#08090B">
+<title>Horarios — Barbería Esquina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body class="admin">
+
+<div class="panel">
+  <aside class="lateral"></aside>
+
+  <main class="contenido">
+
+    <header class="cabecera">
+      <div>
+        <h1>Horarios de atención</h1>
+        <p>De acá sale la disponibilidad que ve el cliente en el calendario.</p>
+      </div>
+      <div class="acciones">
+        <button class="btn btn-secundario" id="btn-deshacer">Deshacer</button>
+        <button class="btn btn-primario" id="btn-guardar">Guardar cambios</button>
+      </div>
+    </header>
+
+    <div class="columnas">
+
+      <section class="bloque">
+        <header><div><h2>Semana</h2><p>Apagá un día para cerrarlo sin borrar la configuración.</p></div></header>
+        <div id="semana"></div>
+      </section>
+
+      <div>
+        <section class="bloque">
+          <header><div><h2>Duración del slot base</h2></div></header>
+          <div class="cuerpo">
+            <p style="font-size:13.5px;color:var(--texto-2);margin-bottom:14px">
+              Unidad mínima con la que se arma el calendario. Las duraciones de los
+              servicios tienen que ser múltiplo de este valor.
+            </p>
+            <div class="segmentos" id="slot">
+              <button aria-pressed="false" data-min="15">15 min</button>
+              <button aria-pressed="true"  data-min="30">30 min</button>
+              <button aria-pressed="false" data-min="45">45 min</button>
+              <button aria-pressed="false" data-min="60">60 min</button>
+            </div>
+          </div>
+        </section>
+
+        <section class="bloque">
+          <header><div><h2>Resumen vigente</h2></div></header>
+          <div class="cuerpo">
+            <div class="estrellas-dist" id="resumen" style="gap:9px"></div>
+          </div>
+        </section>
+
+        <section class="bloque">
+          <header><div><h2>Al guardar</h2></div></header>
+          <div class="cuerpo">
+            <p style="font-size:13.5px;color:var(--texto-2);line-height:1.55">
+              Si algún turno ya reservado queda fuera del nuevo horario, el sistema
+              le avisa por email al cliente afectado y te muestra cuántos fueron.
+            </p>
+          </div>
+        </section>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<script src="../assets/js/datos.js"></script>
+<script src="../assets/js/admin.js"></script>
+<script>
+  pintarLateral("horarios");
+
+  var horarios = HORARIOS.map(function (h) { return Object.assign({}, h); });
+  var ORDEN = [1, 2, 3, 4, 5, 6, 0]; // lunes primero
+
+  function pintar() {
+    document.getElementById("semana").innerHTML = ORDEN.map(function (i) {
+      var h = horarios[i];
+      return '<div class="dia-fila' + (h.activo ? "" : " apagado") + '">' +
+        '<label class="switch">' +
+          '<input type="checkbox" data-dia="' + i + '"' + (h.activo ? " checked" : "") + ">" +
+          '<span class="pista"></span>' +
+          "<span style=\"color:var(--texto);font-weight:500\">" + h.nombre + "</span>" +
+        "</label>" +
+        '<div class="rangos">' +
+          '<input type="time" value="' + (h.inicio || "10:00") + '" data-dia="' + i + '" data-campo="inicio"' + (h.activo ? "" : " disabled") + ">" +
+          '<span class="a">a</span>' +
+          '<input type="time" value="' + (h.fin || "20:00") + '" data-dia="' + i + '" data-campo="fin"' + (h.activo ? "" : " disabled") + ">" +
+          (h.activo ? '<span class="a" style="margin-left:8px">' + horasDia(h) + "</span>" : '<span class="estado estado-inactivo" style="margin-left:8px">Cerrado</span>') +
+        "</div>" +
+      "</div>";
+    }).join("");
+
+    document.getElementById("resumen").innerHTML = ORDEN.map(function (i) {
+      var h = horarios[i];
+      return '<div class="linea" style="grid-template-columns:96px 1fr">' +
+               "<span>" + h.nombre + "</span>" +
+               '<span class="cant" style="text-align:right">' +
+                 (h.activo ? h.inicio + " a " + h.fin : "Cerrado") +
+               "</span>" +
+             "</div>";
+    }).join("");
+  }
+
+  function horasDia(h) {
+    var a = h.inicio.split(":").map(Number);
+    var b = h.fin.split(":").map(Number);
+    return ((b[0] * 60 + b[1] - a[0] * 60 - a[1]) / 60) + " h de atención";
+  }
+
+  document.getElementById("semana").addEventListener("change", function (e) {
+    var dia = Number(e.target.dataset.dia);
+    if (e.target.type === "checkbox") {
+      horarios[dia].activo = e.target.checked;
+      if (e.target.checked && !horarios[dia].inicio) {
+        horarios[dia].inicio = "10:00";
+        horarios[dia].fin = "20:00";
+      }
+    } else {
+      horarios[dia][e.target.dataset.campo] = e.target.value;
+    }
+    pintar();
+  });
+
+  document.getElementById("slot").addEventListener("click", function (e) {
+    if (e.target.tagName !== "BUTTON") return;
+    this.querySelectorAll("button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b === e.target));
+    });
+  });
+
+  // PUT /api/v1/horarios
+  document.getElementById("btn-guardar").addEventListener("click", function () {
+    alert("Maqueta: PUT /api/v1/horarios — 0 turnos quedaron fuera del nuevo horario.");
+  });
+  document.getElementById("btn-deshacer").addEventListener("click", function () {
+    horarios = HORARIOS.map(function (h) { return Object.assign({}, h); });
+    pintar();
+  });
+
+  pintar();
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#08090B">
+<title>Ingresar al panel — Barbería Esquina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body class="login">
+
+<main class="caja-login">
+  <img class="sello" src="../assets/img/logo.jpg" alt="Barbería Esquina 1290">
+  <h1>Panel del barbero</h1>
+  <p>Ingresá con tu cuenta para ver la agenda del día.</p>
+
+  <div class="aviso">
+    Maqueta: con cualquier dato entrás. En la app real esto pega a
+    <code>POST /api/v1/auth/login</code> y devuelve un JWT.
+  </div>
+
+  <form id="form-login" novalidate>
+    <label class="campo">
+      <span>Email</span>
+      <input type="email" name="email" autocomplete="username" placeholder="agustin@barberiaesquina.com" required>
+    </label>
+    <label class="campo">
+      <span>Contraseña</span>
+      <input type="password" name="password" autocomplete="current-password" placeholder="••••••••" required>
+    </label>
+    <button type="submit" class="btn btn-primario btn-block" style="margin-top:8px">Ingresar</button>
+  </form>
+
+  <p class="pie-login"><a href="../index.html">← Volver al sitio</a></p>
+</main>
+
+<script>
+  document.getElementById("form-login").addEventListener("submit", function (e) {
+    e.preventDefault();
+    window.location.href = "agenda.html";
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#08090B">
+<title>Servicios — Barbería Esquina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body class="admin">
+
+<div class="panel">
+  <aside class="lateral"></aside>
+
+  <main class="contenido">
+
+    <header class="cabecera">
+      <div>
+        <h1>Servicios</h1>
+        <p>Lo que ve el cliente al reservar. La duración define los slots disponibles.</p>
+      </div>
+      <div class="acciones">
+        <button class="btn btn-primario" id="btn-nuevo">+ Nuevo servicio</button>
+      </div>
+    </header>
+
+    <section class="bloque">
+      <header>
+        <div><h2>Catálogo</h2></div>
+        <span class="eyebrow" id="cant-activos"></span>
+      </header>
+      <table class="datos">
+        <thead>
+          <tr>
+            <th>Servicio</th>
+            <th>Duración</th>
+            <th>Precio</th>
+            <th>Visible al cliente</th>
+            <th class="fin">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-servicios"></tbody>
+      </table>
+    </section>
+
+    <p class="nota-maqueta">
+      Un servicio con turnos históricos no se elimina: se desactiva, así el historial
+      y las métricas no pierden la referencia.
+    </p>
+
+  </main>
+</div>
+
+<dialog class="modal" id="modal-serv">
+  <form class="modal-cuerpo" method="dialog" id="form-serv">
+    <button class="cerrar" type="button" aria-label="Cerrar" data-cerrar>&times;</button>
+    <h2 id="modal-titulo">Nuevo servicio</h2>
+    <p class="bajada">Así lo ve el cliente cuando elige qué hacerse.</p>
+    <label class="campo"><span>Nombre</span><input name="nombre" required maxlength="60"></label>
+    <label class="campo"><span>Descripción corta</span><input name="descripcion" maxlength="80"></label>
+    <div class="fila-campos">
+      <label class="campo"><span>Duración</span>
+        <select name="duracion">
+          <option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option>
+          <option value="60">60 min</option><option value="75">75 min</option><option value="90">90 min</option>
+        </select>
+      </label>
+      <label class="campo"><span>Precio ($)</span><input name="precio" type="number" min="0" step="500" required></label>
+    </div>
+    <div class="modal-pie">
+      <button class="btn btn-secundario" type="button" data-cerrar>Cancelar</button>
+      <button class="btn btn-primario" type="submit">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/js/datos.js"></script>
+<script src="../assets/js/admin.js"></script>
+<script>
+  pintarLateral("servicios");
+
+  var servicios = SERVICIOS.map(function (s) { return Object.assign({}, s); });
+
+  function pintar() {
+    document.getElementById("tabla-servicios").innerHTML = servicios.map(function (s) {
+      return "<tr>" +
+        "<td><b>" + s.nombre + "</b><span class=\"sub\">" + s.descripcion + "</span></td>" +
+        '<td class="num">' + s.duracion + " min</td>" +
+        '<td class="num">' + pesos(s.precio) + "</td>" +
+        "<td>" +
+          '<label class="switch">' +
+            '<input type="checkbox" data-id="' + s.id + '"' + (s.activo ? " checked" : "") + ">" +
+            '<span class="pista"></span>' +
+            "<span>" + (s.activo ? "Activo" : "Oculto") + "</span>" +
+          "</label>" +
+        "</td>" +
+        '<td class="fin"><button class="mini" data-editar="' + s.id + '">Editar</button></td>' +
+      "</tr>";
+    }).join("");
+
+    var activos = servicios.filter(function (s) { return s.activo; }).length;
+    document.getElementById("cant-activos").textContent =
+      activos + " de " + servicios.length + " visibles";
+  }
+
+  // PATCH /api/v1/servicios/:id_servicio/estado
+  document.getElementById("tabla-servicios").addEventListener("change", function (e) {
+    if (e.target.type !== "checkbox") return;
+    var s = servicios.find(function (x) { return x.id === Number(e.target.dataset.id); });
+    s.activo = e.target.checked;
+    pintar();
+  });
+
+  var modal = document.getElementById("modal-serv");
+  var form = document.getElementById("form-serv");
+  var editando = null;
+
+  function abrir(s) {
+    editando = s;
+    form.reset();
+    document.getElementById("modal-titulo").textContent = s ? "Editar " + s.nombre : "Nuevo servicio";
+    var datos = s || { nombre: "", descripcion: "", duracion: 30, precio: "" };
+    form.elements.nombre.value = datos.nombre;
+    form.elements.descripcion.value = datos.descripcion;
+    form.elements.duracion.value = datos.duracion;
+    form.elements.precio.value = datos.precio;
+    modal.showModal();
+  }
+
+  // POST /api/v1/servicios · PUT /api/v1/servicios/:id_servicio
+  form.addEventListener("submit", function () {
+    var datos = {
+      nombre: form.elements.nombre.value.trim(),
+      descripcion: form.elements.descripcion.value.trim(),
+      duracion: Number(form.elements.duracion.value),
+      precio: Number(form.elements.precio.value),
+    };
+    if (editando) Object.assign(editando, datos);
+    else servicios.push(Object.assign({ id: servicios.length + 1, activo: true }, datos));
+    pintar();
+  });
+
+  modal.addEventListener("click", function (e) {
+    if (e.target.closest("[data-cerrar]")) modal.close();
+  });
+
+  document.getElementById("btn-nuevo").addEventListener("click", function () { abrir(null); });
+
+  document.getElementById("tabla-servicios").addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-editar]");
+    if (btn) abrir(servicios.find(function (s) { return s.id === Number(btn.dataset.editar); }));
+  });
+
+  pintar();
+</script>
+</body>
+</html>

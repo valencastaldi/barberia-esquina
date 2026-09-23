@@ -1,0 +1,43 @@
+# Configuración para desarrollo local con MySQL nativo (ver db/crear-base.sql).
+# En producción se activa el perfil "prod" y los secretos vienen de variables de entorno.
+
+spring:
+  application:
+    name: turnos
+  datasource:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/esquina_turnos?serverTimezone=America/Argentina/Cordoba}
+    username: ${DB_USER:esquina}
+    password: ${DB_PASSWORD:esquina}
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: none          # el esquema lo maneja Flyway (db/migration)
+  mail:
+    host: ${MAIL_HOST:localhost}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USER:}
+    password: ${MAIL_PASSWORD:}
+
+server:
+  port: ${PORT:8080}
+
+app:
+  zona-horaria: America/Argentina/Cordoba
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  origenes-permitidos: ${ORIGENES_PERMITIDOS:http://localhost:5173}
+  jwt:
+    secreto: ${JWT_SECRET:solo-para-desarrollo-cambiar-en-produccion-1290}
+    expiracion-minutos: 480     # una jornada de trabajo
+  turnos:
+    cancelacion-horas: 48
+    dias-anticipacion: 30
+    reservas-por-ip-hora: 10
+  admin:
+    email: ${ADMIN_EMAIL:agustin@barberiaesquina.com}
+    password: ${ADMIN_PASSWORD:esquina1290}
+    nombre: Agustín
+    apellido: Rosas
+  mail:
+    remitente: "Barbería Esquina <turnos@barberiaesquina.com>"
+    habilitado: ${MAIL_HABILITADO:false}   # sin SMTP en desarrollo: los emails se anotan en el log
+  datos-demo: ${DATOS_DEMO:true}

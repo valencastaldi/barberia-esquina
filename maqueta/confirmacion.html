@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#08090B">
+<title>Turno confirmado — Barbería Esquina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/cliente.css">
+</head>
+<body class="cliente">
+
+<main class="app">
+
+  <header class="topbar">
+    <a class="marca" href="index.html">
+      <img src="assets/img/logo.jpg" alt="">
+      <strong>Barbería Esquina</strong>
+    </a>
+  </header>
+
+  <section class="resultado">
+    <div class="icono">
+      <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+    </div>
+    <h1>Turno confirmado</h1>
+    <p id="saludo">Te esperamos.</p>
+  </section>
+
+  <div class="resumen" id="resumen-turno" style="margin-top:28px"></div>
+
+  <div class="local" style="margin-bottom:22px">
+    <div><span>Dirección</span><strong id="dir"></strong></div>
+    <div><span>Turno N°</span><strong id="nro"></strong></div>
+  </div>
+
+  <p class="nota-maqueta" style="text-align:center">
+    Te mandamos un email a <strong id="mail-destino">tu casilla</strong> con estos datos
+    y un link para cancelar si no podés venir.
+  </p>
+
+  <footer class="pie">
+    <p>¿Necesitás cambiar algo? Cancelá y reservá de nuevo, lleva 30 segundos.</p>
+  </footer>
+
+</main>
+
+<div class="barra-cta">
+  <div>
+    <a class="btn btn-secundario" href="cancelar.html" style="flex:1">Cancelar turno</a>
+    <a class="btn btn-primario" href="index.html" style="flex:1">Listo</a>
+  </div>
+</div>
+
+<script src="assets/js/datos.js"></script>
+<script>
+  var q = new URLSearchParams(location.search);
+  var servicio = SERVICIOS.find(function (s) { return s.id === Number(q.get("servicio")); }) || SERVICIOS[2];
+  var offset = Number(q.get("dia") || 1);
+  var hora = q.get("hora") || "15:00";
+  var nombre = q.get("nombre") || "";
+  var email = q.get("email") || "";
+
+  var d = new Date();
+  d.setDate(d.getDate() + offset);
+
+  if (nombre) document.getElementById("saludo").textContent = nombre + ", te esperamos.";
+  if (email) document.getElementById("mail-destino").textContent = email;
+
+  document.getElementById("resumen-turno").innerHTML =
+    '<div class="fila"><span>Servicio</span><strong>' + servicio.nombre + "</strong></div>" +
+    '<div class="fila"><span>Día</span><strong>' + fechaLarga(d) + "</strong></div>" +
+    '<div class="fila"><span>Horario</span><strong>' + hora + " a " + sumarMinutos(hora, servicio.duracion) + "</strong></div>" +
+    '<div class="fila"><span>Barbero</span><strong>' + BARBERIA.barbero.nombre + "</strong></div>" +
+    '<div class="fila total"><span>A pagar en el local</span><strong>' + pesos(servicio.precio) + "</strong></div>";
+
+  document.getElementById("dir").textContent = BARBERIA.direccion;
+  document.getElementById("nro").textContent = "#" + (126 + offset);
+</script>
+</body>
+</html>

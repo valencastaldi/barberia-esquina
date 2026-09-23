@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#08090B">
+<title>Dashboard — Barbería Esquina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+<style>
+  .envoltorio-grafico { position: relative; }
+  .tip {
+    position: absolute;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -100%);
+    padding: 9px 12px;
+    background: var(--superficie-2);
+    border: 1px solid var(--borde-fuerte);
+    border-radius: var(--r-sm);
+    font-size: 13px;
+    white-space: nowrap;
+    transition: opacity .12s ease;
+    box-shadow: var(--sombra);
+  }
+  .tip b { display: block; font-size: 15px; font-weight: 600; }
+  .tip span { color: var(--texto-2); font-size: 12.5px; }
+</style>
+</head>
+<body class="admin">
+
+<div class="panel">
+  <aside class="lateral"></aside>
+
+  <main class="contenido">
+
+    <header class="cabecera">
+      <div>
+        <h1>Dashboard</h1>
+        <p>Rendimiento y satisfacción del servicio.</p>
+      </div>
+      <div class="acciones">
+        <div class="segmentos" id="filtro-periodo">
+          <button aria-pressed="false" data-dias="7">Semana</button>
+          <button aria-pressed="true" data-dias="30">Mes</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="kpis">
+      <div class="kpi destacado">
+        <div class="etiqueta">Turnos del período</div>
+        <div class="valor" id="kpi-turnos">146</div>
+        <div class="delta sube" id="kpi-turnos-delta">+18 vs. período anterior</div>
+      </div>
+      <div class="kpi">
+        <div class="etiqueta">Satisfacción promedio</div>
+        <div class="valor">4,8<small> / 5</small></div>
+        <div class="delta">128 encuestas respondidas</div>
+      </div>
+      <div class="kpi">
+        <div class="etiqueta">Tasa de ausentismo</div>
+        <div class="valor">6,8<small>%</small></div>
+        <div class="delta baja">10 turnos marcados ausente</div>
+      </div>
+      <div class="kpi">
+        <div class="etiqueta">Ingresos estimados</div>
+        <div class="valor" id="kpi-ingresos"></div>
+        <div class="delta">Sobre turnos completados</div>
+      </div>
+    </section>
+
+    <div class="columnas">
+
+      <section class="bloque">
+        <header>
+          <div>
+            <h2>Turnos completados por día</h2>
+            <p id="sub-grafico">Últimos 30 días</p>
+          </div>
+        </header>
+        <div class="cuerpo envoltorio-grafico">
+          <svg class="grafico" id="grafico" role="img" aria-label="Turnos completados por día"></svg>
+          <div class="tip" id="tip"></div>
+          <p class="nota-maqueta">Pasá el mouse por una barra para ver el detalle del día.</p>
+        </div>
+      </section>
+
+      <div>
+        <section class="bloque">
+          <header>
+            <div>
+              <h2>Satisfacción</h2>
+              <p>Distribución de las 128 encuestas</p>
+            </div>
+            <span style="font-family:var(--display);font-size:26px;font-weight:700;color:var(--ambar)">4,8</span>
+          </header>
+          <div class="cuerpo">
+            <div class="estrellas-dist" id="dist"></div>
+          </div>
+        </section>
+
+        <section class="bloque">
+          <header><div><h2>Últimos comentarios</h2></div></header>
+          <div class="cuerpo" id="comentarios"></div>
+        </section>
+      </div>
+
+    </div>
+
+  </main>
+</div>
+
+<script src="../assets/js/datos.js"></script>
+<script src="../assets/js/admin.js"></script>
+<script>
+  pintarLateral("dashboard");
+
+  /* ---------- Serie de turnos por día (GET /api/v1/dashboard/evolucion) ---------- */
+  function serie(dias) {
+    var out = [];
+    for (var i = dias - 1; i >= 0; i--) {
+      var d = new Date();
+      d.setDate(d.getDate() - i);
+      var cerrado = !HORARIOS[d.getDay()].activo;
+      // Valor estable por fecha, para que la maqueta no cambie en cada recarga.
+      var semilla = (d.getDate() * 7 + d.getMonth() * 13 + d.getDay() * 5) % 9;
+      out.push({ fecha: d, cantidad: cerrado ? 0 : 3 + semilla });
+    }
+    return out;
+  }
+
+  /* Barra con esquinas superiores redondeadas, apoyada en la línea base. */
+  function barraPath(x, y, ancho, alto, r) {
+    r = Math.min(r, ancho / 2, alto);
+    return "M" + x + "," + (y + alto) +
+           "V" + (y + r) +
+           "a" + r + "," + r + " 0 0 1 " + r + "," + -r +
+           "h" + (ancho - 2 * r) +
+           "a" + r + "," + r + " 0 0 1 " + r + "," + r +
+           "V" + (y + alto) + "Z";
+  }
+
+  var svg = document.getElementById("grafico");
+  var tip = document.getElementById("tip");
+
+  function dibujar(dias) {
+    var datos = serie(dias);
+    var W = 640, H = 232;
+    var margen = { top: 16, right: 6, bottom: 30, left: 30 };
+    var anchoPlot = W - margen.left - margen.right;
+    var altoPlot = H - margen.top - margen.bottom;
+
+    var max = Math.max.apply(null, datos.map(function (d) { return d.cantidad; }));
+    var tope = Math.ceil(max / 3) * 3 || 3;
+
+    var paso = anchoPlot / datos.length;
+    var anchoBarra = Math.max(3, paso - 2); // 2px de aire entre barras
+
+    var partes = [];
+
+    // Grilla recesiva + eje de valores
+    [0, tope / 2, tope].forEach(function (v) {
+      var y = margen.top + altoPlot - (v / tope) * altoPlot;
+      partes.push('<line class="eje" x1="' + margen.left + '" x2="' + (W - margen.right) +
+                  '" y1="' + y + '" y2="' + y + '"/>');
+      partes.push('<text x="' + (margen.left - 8) + '" y="' + (y + 4) + '" text-anchor="end">' + v + "</text>");
+    });
+
+    // Barras
+    datos.forEach(function (d, i) {
+      var alto = (d.cantidad / tope) * altoPlot;
+      var x = margen.left + i * paso + (paso - anchoBarra) / 2;
+      var y = margen.top + altoPlot - alto;
+      if (d.cantidad === 0) return;
+      partes.push('<path class="barra" d="' + barraPath(x, y, anchoBarra, alto, 4) +
+                  '" data-i="' + i + '"/>');
+    });
+
+    // Etiquetas de fecha: solo algunas, para no saturar
+    var cada = dias > 14 ? 5 : 2;
+    datos.forEach(function (d, i) {
+      if (i % cada !== 0 && i !== datos.length - 1) return;
+      var x = margen.left + i * paso + paso / 2;
+      partes.push('<text x="' + x + '" y="' + (H - 10) + '" text-anchor="middle">' +
+                  d.fecha.getDate() + " " + MESES_CORTOS[d.fecha.getMonth()] + "</text>");
+    });
+
+    svg.setAttribute("viewBox", "0 0 " + W + " " + H);
+    svg.innerHTML = partes.join("");
+
+    // Capa de hover
+    svg.querySelectorAll(".barra").forEach(function (b) {
+      b.addEventListener("mouseenter", function () {
+        var d = datos[Number(b.dataset.i)];
+        var caja = b.getBoundingClientRect();
+        var padre = svg.parentElement.getBoundingClientRect();
+        tip.innerHTML = "<b>" + d.cantidad + " turnos</b><span>" +
+                        DIAS_CORTOS[d.fecha.getDay()] + " " + d.fecha.getDate() + " " +
+                        MESES_CORTOS[d.fecha.getMonth()] + "</span>";
+        tip.style.left = (caja.left - padre.left + caja.width / 2) + "px";
+        tip.style.top = (caja.top - padre.top - 8) + "px";
+        tip.style.opacity = "1";
+      });
+      b.addEventListener("mouseleave", function () { tip.style.opacity = "0"; });
+    });
+
+    var total = datos.reduce(function (a, d) { return a + d.cantidad; }, 0);
+    document.getElementById("kpi-turnos").textContent = total;
+    document.getElementById("kpi-ingresos").textContent = pesos(total * 11200);
+    document.getElementById("sub-grafico").textContent = "Últimos " + dias + " días";
+  }
+
+  document.getElementById("filtro-periodo").addEventListener("click", function (e) {
+    if (e.target.tagName !== "BUTTON") return;
+    this.querySelectorAll("button").forEach(function (b) {
+      b.setAttribute("aria-pressed", String(b === e.target));
+    });
+    dibujar(Number(e.target.dataset.dias));
+  });
+
+  dibujar(30);
+
+  /* ---------- Distribución de estrellas ---------- */
+  var DIST = [
+    { n: 5, cant: 104 }, { n: 4, cant: 17 }, { n: 3, cant: 5 },
+    { n: 2, cant: 1 },   { n: 1, cant: 1 },
+  ];
+  var maxDist = 104;
+  document.getElementById("dist").innerHTML = DIST.map(function (d) {
+    return '<div class="linea">' +
+             "<span>" + d.n + " ★</span>" +
+             '<span class="pista-barra"><i style="width:' + (d.cant / maxDist * 100) + '%"></i></span>' +
+             '<span class="cant">' + d.cant + "</span>" +
+           "</div>";
+  }).join("");
+
+  /* ---------- Comentarios ---------- */
+  var COMENTARIOS = [
+    { quien: "Bruno Actis",   puntaje: 5, cuando: "hace 2 h",  txt: "Impecable el fade y la toalla caliente. Ya reservé el próximo." },
+    { quien: "Mateo Giménez", puntaje: 5, cuando: "hace 5 h",  txt: "Rápido y prolijo, entré y salí en media hora." },
+    { quien: "Lucas Ferreyra",puntaje: 4, cuando: "ayer",      txt: "Muy bien el corte. Esperé unos minutos de más." },
+    { quien: "Iván Ledesma",  puntaje: 5, cuando: "hace 2 días", txt: "La barba quedó tal cual la pedí." },
+  ];
+  document.getElementById("comentarios").innerHTML = COMENTARIOS.map(function (c) {
+    return '<div class="comentario">' +
+             '<div class="top"><b>' + c.quien + "</b>" +
+               '<span class="puntaje">' + "★".repeat(c.puntaje) + "</span></div>" +
+             "<p>" + c.txt + "</p>" +
+             '<div class="top" style="margin:6px 0 0"><span>' + c.cuando + "</span></div>" +
+           "</div>";
+  }).join("");
+</script>
+</body>
+</html>

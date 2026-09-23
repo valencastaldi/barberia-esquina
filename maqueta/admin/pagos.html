@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#08090B">
+<title>Pagos — Barbería Esquina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body class="admin">
+
+<div class="panel">
+  <aside class="lateral"></aside>
+
+  <main class="contenido">
+
+    <header class="cabecera">
+      <div>
+        <h1>Pagos <span class="tag-ext">Extensión</span></h1>
+        <p>Lo cobrado por cada turno completado, cómo se pagó y cuánto le toca a cada peluquero.</p>
+      </div>
+      <div class="acciones">
+        <div class="segmentos" id="periodo">
+          <button aria-pressed="true"  data-dias="0">Hoy</button>
+          <button aria-pressed="false" data-dias="6">7 días</button>
+          <button aria-pressed="false" data-dias="29">30 días</button>
+        </div>
+      </div>
+    </header>
+
+    <section class="kpis">
+      <div class="kpi destacado">
+        <div class="etiqueta">Cobrado</div>
+        <div class="valor" id="kpi-cobrado"></div>
+        <div class="delta" id="kpi-cobros"></div>
+      </div>
+      <div class="kpi">
+        <div class="etiqueta">Ticket promedio</div>
+        <div class="valor" id="kpi-ticket"></div>
+        <div class="delta">Por turno cobrado</div>
+      </div>
+      <div class="kpi">
+        <div class="etiqueta">Para la casa</div>
+        <div class="valor" id="kpi-casa"></div>
+        <div class="delta">Después de comisiones</div>
+      </div>
+      <div class="kpi">
+        <div class="etiqueta">Sin cobrar</div>
+        <div class="valor" id="kpi-pendiente"></div>
+        <div class="delta" id="kpi-pendiente-cant"></div>
+      </div>
+    </section>
+
+    <div class="columnas pares">
+      <section class="bloque">
+        <header><div><h2>Por medio de pago</h2></div></header>
+        <div class="cuerpo"><div class="reparto" id="medios"></div></div>
+      </section>
+
+      <section class="bloque">
+        <header>
+          <div>
+            <h2>Liquidación</h2>
+            <p>Lo que le corresponde a cada peluquero según su comisión.</p>
+          </div>
+        </header>
+        <table class="datos">
+          <thead>
+            <tr><th>Peluquero</th><th>Facturó</th><th class="fin">Le toca</th></tr>
+          </thead>
+          <tbody id="liquidacion"></tbody>
+        </table>
+      </section>
+    </div>
+
+    <section class="bloque">
+      <header>
+        <div>
+          <h2>Movimientos</h2>
+          <p>Los turnos completados sin cobrar aparecen primero.</p>
+        </div>
+        <span class="eyebrow" id="cant"></span>
+      </header>
+      <table class="datos">
+        <thead>
+          <tr>
+            <th>Cuándo</th>
+            <th>Cliente</th>
+            <th>Servicio</th>
+            <th>Peluquero</th>
+            <th>Medio</th>
+            <th class="fin">Monto</th>
+          </tr>
+        </thead>
+        <tbody id="tabla"></tbody>
+      </table>
+      <div class="vacio" id="mas" hidden><button class="mini" id="btn-mas">Ver más movimientos</button></div>
+    </section>
+
+    <p class="nota-maqueta">
+      Requiere una tabla nueva, Pago (id_pago, id_turno, monto, medio, fecha), que no está en
+      el modelo de la documentación. Un turno completado puede quedar sin cobrar hasta que se registre el pago.
+    </p>
+
+  </main>
+</div>
+
+<dialog class="modal" id="modal-cobro">
+  <form class="modal-cuerpo" method="dialog" id="form-cobro">
+    <button class="cerrar" type="button" aria-label="Cerrar" data-cerrar>&times;</button>
+    <h2>Registrar cobro</h2>
+    <p class="bajada" id="cobro-bajada"></p>
+    <div class="campo"><span>¿Cómo pagó?</span>
+      <div class="pastillas grandes" id="cobro-medios"></div>
+    </div>
+    <label class="campo"><span>Monto cobrado</span><input name="monto" type="number" min="0" step="500" required></label>
+    <div class="modal-pie">
+      <button class="btn btn-secundario" type="button" data-cerrar>Cancelar</button>
+      <button class="btn btn-primario" type="submit">Registrar cobro</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/js/datos.js"></script>
+<script src="../assets/js/admin.js"></script>
+<script>
+  pintarLateral("pagos");
+
+  var COLOR_MEDIO = { efectivo: "var(--verde)", transferencia: "var(--azul-claro)", mercadopago: "var(--celeste)" };
+  var hasta = 0;      // días hacia atrás que abarca el período
+  var limite = 30;
+  var cobrando = null;
+
+  // GET /api/v1/pagos?desde=...&hasta=...
+  function delPeriodo() {
+    return TURNOS.filter(function (t) { return t.estado === "completado" && t.dias <= hasta; });
+  }
+
+  function pintar() {
+    var turnos = delPeriodo();
+    var cobrados = turnos.filter(function (t) { return t.medio; });
+    var sinCobrar = turnos.filter(function (t) { return !t.medio; });
+    var total = cobrados.reduce(function (a, t) { return a + t.monto; }, 0);
+
+    var casa = cobrados.reduce(function (a, t) {
+      return a + t.monto * (1 - peluquero(t.peluquero).comision / 100);
+    }, 0);
+
+    document.getElementById("kpi-cobrado").textContent = pesos(total);
+    document.getElementById("kpi-cobros").textContent = cobrados.length + " cobros";
+    document.getElementById("kpi-ticket").textContent = cobrados.length ? pesos(Math.round(total / cobrados.length)) : "—";
+    document.getElementById("kpi-casa").textContent = pesos(Math.round(casa));
+    document.getElementById("kpi-pendiente").textContent = pesos(sinCobrar.reduce(function (a, t) { return a + t.precio; }, 0));
+    var cantPend = document.getElementById("kpi-pendiente-cant");
+    cantPend.textContent = sinCobrar.length ? sinCobrar.length + (sinCobrar.length === 1 ? " turno por cobrar" : " turnos por cobrar") : "Todo cobrado";
+    cantPend.className = "delta" + (sinCobrar.length ? " falta" : " sube");
+
+    // Movimientos: sin cobrar arriba, después lo más reciente.
+    var filas = sinCobrar.concat(cobrados.slice().sort(function (a, b) {
+      return a.dias - b.dias || (a.hora < b.hora ? 1 : -1);
+    }));
+
+    document.getElementById("tabla").innerHTML = filas.slice(0, limite).map(function (t) {
+      var monto = t.medio
+        ? pesos(t.monto)
+        : '<button class="mini cobrar" data-cobrar="' + t.id + '">Cobrar ' + pesos(t.precio) + "</button>";
+      return "<tr>" +
+        '<td class="num">' + fechaRelativa(t.dias) + " · " + t.hora + "</td>" +
+        "<td><b>" + t.cliente + "</b></td>" +
+        "<td>" + t.servicio + "</td>" +
+        "<td>" + peluquero(t.peluquero).nombre + "</td>" +
+        "<td>" + chipMedio(t.medio) + "</td>" +
+        '<td class="num fin">' + monto + "</td>" +
+      "</tr>";
+    }).join("") || '<tr><td colspan="6" class="vacio">Todavía no hay turnos completados en este período.</td></tr>';
+
+    document.getElementById("cant").textContent = filas.length + " movimientos";
+    document.getElementById("mas").hidden = filas.length <= limite;
+
+    // Reparto por medio de pago
+    document.getElementById("medios").innerHTML = Object.keys(MEDIOS).map(function (m) {
+      var suma = cobrados.filter(function (t) { return t.medio === m; }).reduce(function (a, t) { return a + t.monto; }, 0);
+      var pct = total ? Math.round(suma / total * 100) : 0;
+      return '<div class="linea">' +
+        '<span class="medio medio-' + m + '">' + MEDIOS[m] + "</span>" +
+        "<b>" + pesos(suma) + "<small>" + pct + "%</small></b>" +
+        '<div class="pista-barra"><i style="width:' + pct + "%;background:" + COLOR_MEDIO[m] + '"></i></div>' +
+      "</div>";
+    }).join("");
+
+    // Liquidación por peluquero
+    document.getElementById("liquidacion").innerHTML = PELUQUEROS.map(function (p) {
+      var suyo = cobrados.filter(function (t) { return t.peluquero === p.id; });
+      var facturo = suyo.reduce(function (a, t) { return a + t.monto; }, 0);
+      if (!facturo && !p.activo) return "";
+      var detalle = p.rol === "Dueño" ? "Dueño" : "Comisión " + p.comision + "%";
+      return "<tr>" +
+        "<td><b>" + p.nombre + '</b><span class="sub">' + detalle + "</span></td>" +
+        '<td class="num">' + pesos(facturo) + "</td>" +
+        '<td class="num fin">' + (p.rol === "Dueño" ? "—" : "<b>" + pesos(Math.round(facturo * p.comision / 100)) + "</b>") + "</td>" +
+      "</tr>";
+    }).join("");
+  }
+
+  var modal = document.getElementById("modal-cobro");
+  var form = document.getElementById("form-cobro");
+
+  function abrirCobro(t) {
+    cobrando = t;
+    document.getElementById("cobro-bajada").textContent =
+      t.cliente + " · " + t.servicio + " con " + peluquero(t.peluquero).nombre + " · " + fechaRelativa(t.dias) + " " + t.hora;
+    document.getElementById("cobro-medios").innerHTML = Object.keys(MEDIOS).map(function (m, i) {
+      return '<label class="pastilla"><input type="radio" name="medio" value="' + m + '"' + (i === 0 ? " checked" : "") +
+             "><span>" + MEDIOS[m] + "</span></label>";
+    }).join("");
+    form.elements.monto.value = t.precio;
+    modal.showModal();
+  }
+
+  // POST /api/v1/pagos  { id_turno, monto, medio }
+  form.addEventListener("submit", function () {
+    cobrando.medio = form.elements.medio.value;
+    cobrando.monto = Number(form.elements.monto.value);
+    pintar();
+  });
+
+  modal.addEventListener("click", function (e) {
+    if (e.target.closest("[data-cerrar]")) modal.close();
+  });
+
+  document.getElementById("tabla").addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-cobrar]");
+    if (btn) abrirCobro(TURNOS.find(function (t) { return t.id === Number(btn.dataset.cobrar); }));
+  });
+
+  document.getElementById("periodo").addEventListener("click", function (e) {
+    if (e.target.tagName !== "BUTTON") return;
+    this.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", String(b === e.target)); });
+    hasta = Number(e.target.dataset.dias);
+    limite = 30;
+    pintar();
+  });
+
+  document.getElementById("btn-mas").addEventListener("click", function () { limite += 30; pintar(); });
+
+  // El monto cobrado arranca igual al precio del servicio.
+  TURNOS.forEach(function (t) { if (t.medio && t.monto === undefined) t.monto = t.precio; });
+
+  pintar();
+</script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#08090B">
+<title>Barbería Esquina — Reservá tu turno</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/css/base.css">
+<link rel="stylesheet" href="assets/css/cliente.css">
+</head>
+<body class="cliente">
+
+<main class="app">
+
+  <header class="hero">
+    <img class="sello" src="assets/img/logo.jpg" alt="Escudo de Barbería Esquina 1290">
+    <h1>Barbería Esquina<em>Esquina 1290</em></h1>
+    <p>Reservá tu turno en 3 pasos. Sin llamadas, sin cuenta, sin esperar respuesta.</p>
+    <div class="estado-local">
+      <span class="punto-vivo" aria-hidden="true"></span>
+      <span id="estado-horario">Abierto hoy hasta las 20:00</span>
+    </div>
+  </header>
+
+  <section class="seccion">
+    <div class="seccion-cab">
+      <h2>Servicios</h2>
+      <span class="eyebrow">Precios al día</span>
+    </div>
+    <div class="servicios" id="lista-servicios"></div>
+    <p class="nota-maqueta">Los precios y duraciones los edita el barbero desde el panel.</p>
+  </section>
+
+  <section class="seccion">
+    <div class="seccion-cab">
+      <h2>Lo que dicen</h2>
+      <span class="eyebrow">128 encuestas</span>
+    </div>
+    <div class="resumen" style="margin-bottom:0">
+      <div class="fila">
+        <span>Satisfacción promedio</span>
+        <strong style="color:var(--ambar)">★★★★★ 4,8</strong>
+      </div>
+      <div class="fila">
+        <span>Turnos atendidos este mes</span>
+        <strong>146</strong>
+      </div>
+    </div>
+  </section>
+
+  <section class="seccion">
+    <div class="seccion-cab"><h2>Dónde estamos</h2></div>
+    <div class="local">
+      <div><span>Dirección</span><strong id="dir"></strong></div>
+      <div><span>Horarios</span><strong id="horarios-semana"></strong></div>
+      <div><span>Teléfono</span><strong id="tel"></strong></div>
+    </div>
+  </section>
+
+  <footer class="pie">
+    <p>Barbería Esquina 1290 · Maqueta de interfaz</p>
+    <p style="margin-top:8px"><a href="admin/login.html">Acceso del barbero →</a></p>
+  </footer>
+
+</main>
+
+<div class="barra-cta">
+  <div>
+    <a class="btn btn-primario btn-block" href="reservar.html">Reservar turno</a>
+  </div>
+</div>
+
+<script src="assets/js/datos.js"></script>
+<script>
+  // Catálogo de servicios activos (GET /api/v1/servicios)
+  document.getElementById("lista-servicios").innerHTML = SERVICIOS
+    .filter(function (s) { return s.activo; })
+    .map(function (s) {
+      return '<a class="servicio" href="reservar.html?servicio=' + s.id + '">' +
+               '<h3>' + s.nombre + '</h3>' +
+               '<div class="precio">' + pesos(s.precio) + '</div>' +
+               '<p class="detalle">' + s.descripcion + '</p>' +
+               '<div class="duracion">' + s.duracion + ' min</div>' +
+             '</a>';
+    }).join("");
+
+  document.getElementById("dir").textContent = BARBERIA.direccion;
+  document.getElementById("tel").textContent = BARBERIA.telefono;
+
+  // Horario del local, derivado de Horario_Atencion
+  var hoy = HORARIOS[new Date().getDay()];
+  document.getElementById("estado-horario").textContent = hoy.activo
+    ? "Abierto hoy hasta las " + hoy.fin
+    : "Hoy cerrado · abrimos lunes 10:00";
+
+  document.getElementById("horarios-semana").innerHTML =
+    "Lun a Mié 10 a 20<br>Jue y Vie 10 a 21<br>Sáb 9 a 18 · Dom cerrado";
+</script>
+</body>
+</html>

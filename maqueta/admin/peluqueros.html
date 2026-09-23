@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#08090B">
+<title>Peluqueros — Barbería Esquina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body class="admin">
+
+<div class="panel">
+  <aside class="lateral"></aside>
+
+  <main class="contenido">
+
+    <header class="cabecera">
+      <div>
+        <h1>Peluqueros <span class="tag-ext">Extensión</span></h1>
+        <p>El equipo, qué días atiende cada uno y cómo le fue en los últimos 30 días.</p>
+      </div>
+      <div class="acciones">
+        <button class="btn btn-primario" id="btn-nuevo">+ Sumar peluquero</button>
+      </div>
+    </header>
+
+    <section class="equipo" id="equipo"></section>
+
+    <p class="nota-maqueta">
+      Un peluquero con turnos históricos no se borra: se desactiva. Deja de aparecer para
+      reservar, pero sus turnos y cobros pasados se conservan.
+    </p>
+
+  </main>
+</div>
+
+<dialog class="modal" id="modal-pelu">
+  <form class="modal-cuerpo" method="dialog" id="form-pelu">
+    <button class="cerrar" type="button" value="cancelar" aria-label="Cerrar" data-cerrar>&times;</button>
+    <h2 id="modal-titulo">Sumar peluquero</h2>
+    <p class="bajada">Con estos datos aparece como opción al reservar.</p>
+
+    <div class="fila-campos">
+      <label class="campo"><span>Nombre</span><input name="nombre" required></label>
+      <label class="campo"><span>Apellido</span><input name="apellido" required></label>
+    </div>
+    <div class="fila-campos">
+      <label class="campo"><span>Email (para su login)</span><input name="email" type="email" required></label>
+      <label class="campo"><span>Teléfono</span><input name="telefono" inputmode="tel"></label>
+    </div>
+    <div class="fila-campos">
+      <label class="campo"><span>Rol</span>
+        <select name="rol"><option>Barbero</option><option>Dueño</option></select>
+      </label>
+      <label class="campo"><span>Comisión del peluquero (%)</span><input name="comision" type="number" min="0" max="100" step="5"></label>
+    </div>
+
+    <div class="campo"><span>Días que atiende</span><div class="pastillas" id="f-dias"></div></div>
+    <div class="campo"><span>Servicios que hace</span><div class="pastillas" id="f-servicios"></div></div>
+
+    <div class="modal-pie">
+      <button class="btn btn-secundario" type="button" data-cerrar>Cancelar</button>
+      <button class="btn btn-primario" type="submit">Guardar</button>
+    </div>
+  </form>
+</dialog>
+
+<script src="../assets/js/datos.js"></script>
+<script src="../assets/js/admin.js"></script>
+<script>
+  pintarLateral("peluqueros");
+
+  var equipo = PELUQUEROS.map(function (p) { return Object.assign({}, p); });
+  var editando = null;
+  var LETRAS = ["D", "L", "M", "M", "J", "V", "S"];
+
+  // Lunes primero, como se lee una semana de trabajo.
+  var ORDEN_DIAS = [1, 2, 3, 4, 5, 6, 0];
+
+  function numeros(p) {
+    var turnos = TURNOS.filter(function (t) { return t.peluquero === p.id && t.dias <= 30; });
+    var hechos = turnos.filter(function (t) { return t.estado === "completado"; });
+    var notas = hechos.filter(function (t) { return t.calificacion; });
+    return {
+      turnos: hechos.length,
+      plata: hechos.reduce(function (a, t) { return a + t.precio; }, 0),
+      nota: notas.length ? notas.reduce(function (a, t) { return a + t.calificacion; }, 0) / notas.length : null,
+    };
+  }
+
+  function pintar() {
+    document.getElementById("equipo").innerHTML = equipo.map(function (p) {
+      var n = numeros(p);
+      var servs = p.servicios.map(function (id) { return servicio(id).nombre; }).join(" · ");
+      var rol = p.rol === "Dueño" ? "Dueño" : p.rol + " · comisión " + p.comision + "%";
+
+      return '<article class="tarjeta-pelu' + (p.activo ? "" : " inactivo") + '">' +
+        '<div class="persona">' +
+          '<span class="avatar">' + p.nombre[0] + p.apellido[0] + "</span>" +
+          "<span><b>" + p.nombre + " " + p.apellido + "</b><small>" + rol + "</small></span>" +
+        "</div>" +
+        '<div class="semana-mini" aria-label="Días que atiende">' +
+          ORDEN_DIAS.map(function (d) {
+            return '<span class="' + (p.dias.includes(d) ? "si" : "") + '" title="' + HORARIOS[d].nombre + '">' + LETRAS[d] + "</span>";
+          }).join("") +
+        "</div>" +
+        '<p class="servs">' + servs + "</p>" +
+        '<div class="numeros">' +
+          "<div><b>" + n.turnos + "</b>turnos</div>" +
+          "<div><b>" + pesos(n.plata) + "</b>facturado</div>" +
+          '<div><b class="estrella">' + (n.nota ? n.nota.toFixed(1).replace(".", ",") + " ★" : "—") + "</b>satisfacción</div>" +
+        "</div>" +
+        '<div class="pie">' +
+          '<label class="switch">' +
+            '<input type="checkbox" data-id="' + p.id + '"' + (p.activo ? " checked" : "") + (p.rol === "Dueño" ? " disabled" : "") + ">" +
+            '<span class="pista"></span><span>' + (p.activo ? "Toma turnos" : "No toma turnos") + "</span>" +
+          "</label>" +
+          '<button class="mini" data-editar="' + p.id + '">Editar</button>' +
+        "</div>" +
+      "</article>";
+    }).join("");
+  }
+
+  var modal = document.getElementById("modal-pelu");
+  var form = document.getElementById("form-pelu");
+
+  function abrir(p) {
+    editando = p;
+    document.getElementById("modal-titulo").textContent = p ? "Editar a " + p.nombre : "Sumar peluquero";
+    form.reset();
+    var datos = p || { rol: "Barbero", comision: 50, dias: [2, 3, 4, 5, 6], servicios: [1, 2, 4] };
+    ["nombre", "apellido", "email", "telefono", "rol", "comision"].forEach(function (k) {
+      if (datos[k] !== undefined) form.elements[k].value = datos[k];
+    });
+    document.getElementById("f-dias").innerHTML = ORDEN_DIAS.map(function (d) {
+      return '<label class="pastilla"><input type="checkbox" name="dias" value="' + d + '"' +
+             (datos.dias.includes(d) ? " checked" : "") + (HORARIOS[d].activo ? "" : " disabled") +
+             "><span>" + HORARIOS[d].nombre.slice(0, 3) + "</span></label>";
+    }).join("");
+    document.getElementById("f-servicios").innerHTML = SERVICIOS.map(function (s) {
+      return '<label class="pastilla"><input type="checkbox" name="servicios" value="' + s.id + '"' +
+             (datos.servicios.includes(s.id) ? " checked" : "") + "><span>" + s.nombre + "</span></label>";
+    }).join("");
+    modal.showModal();
+  }
+
+  // POST /api/v1/peluqueros · PUT /api/v1/peluqueros/:id
+  form.addEventListener("submit", function () {
+    var f = form.elements;
+    var marcados = function (nombre) {
+      return Array.from(form.querySelectorAll('input[name="' + nombre + '"]:checked')).map(function (i) { return Number(i.value); });
+    };
+    var datos = {
+      nombre: f.nombre.value.trim(), apellido: f.apellido.value.trim(),
+      email: f.email.value.trim(), telefono: f.telefono.value.trim(),
+      rol: f.rol.value, comision: Number(f.comision.value) || 0,
+      dias: marcados("dias"), servicios: marcados("servicios"),
+    };
+    if (editando) Object.assign(editando, datos);
+    else equipo.push(Object.assign({ id: equipo.length + 1, activo: true }, datos));
+    pintar();
+  });
+
+  modal.addEventListener("click", function (e) {
+    if (e.target.closest("[data-cerrar]")) modal.close();
+  });
+
+  document.getElementById("btn-nuevo").addEventListener("click", function () { abrir(null); });
+
+  document.getElementById("equipo").addEventListener("click", function (e) {
+    var btn = e.target.closest("[data-editar]");
+    if (btn) abrir(equipo.find(function (p) { return p.id === Number(btn.dataset.editar); }));
+  });
+
+  // PATCH /api/v1/peluqueros/:id/estado
+  document.getElementById("equipo").addEventListener("change", function (e) {
+    if (e.target.type !== "checkbox") return;
+    equipo.find(function (p) { return p.id === Number(e.target.dataset.id); }).activo = e.target.checked;
+    pintar();
+  });
+
+  pintar();
+</script>
+</body>
+</html>

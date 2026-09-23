@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#08090B">
+<title>Clientes — Barbería Esquina</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../assets/css/base.css">
+<link rel="stylesheet" href="../assets/css/admin.css">
+</head>
+<body class="admin">
+
+<div class="panel">
+  <aside class="lateral"></aside>
+
+  <main class="contenido">
+
+    <header class="cabecera">
+      <div>
+        <h1>Clientes <span class="tag-ext">Extensión</span></h1>
+        <p>Se registran solos la primera vez que reservan. Nadie tiene que cargarlos a mano.</p>
+      </div>
+    </header>
+
+    <section class="kpis">
+      <div class="kpi destacado">
+        <div class="etiqueta">Clientes</div>
+        <div class="valor" id="kpi-total"></div>
+        <div class="delta">Con al menos un turno</div>
+      </div>
+      <div class="kpi">
+        <div class="etiqueta">Nuevos</div>
+        <div class="valor" id="kpi-nuevos"></div>
+        <div class="delta">Primer turno en los últimos 30 días</div>
+      </div>
+      <div class="kpi">
+        <div class="etiqueta">Vuelven</div>
+        <div class="valor" id="kpi-vuelven"></div>
+        <div class="delta">Vinieron 2 veces o más</div>
+      </div>
+      <div class="kpi">
+        <div class="etiqueta">Dejaron de venir</div>
+        <div class="valor" id="kpi-perdidos"></div>
+        <div class="delta baja">Clientes fieles sin volver hace +3 semanas</div>
+      </div>
+    </section>
+
+    <section class="bloque">
+      <header>
+        <div class="barra-filtros">
+          <label class="buscador">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+            <span class="sr-only">Buscar cliente</span>
+            <input type="search" id="buscar" placeholder="Nombre o teléfono">
+          </label>
+          <div class="segmentos chico" id="filtro">
+            <button aria-pressed="true"  data-f="todos">Todos</button>
+            <button aria-pressed="false" data-f="frecuentes">Frecuentes</button>
+            <button aria-pressed="false" data-f="nuevos">Nuevos</button>
+            <button aria-pressed="false" data-f="ausencias">Con ausencias</button>
+            <button aria-pressed="false" data-f="perdidos">Dejaron de venir</button>
+          </div>
+        </div>
+        <span class="eyebrow" id="cant"></span>
+      </header>
+      <table class="datos">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Visitas</th>
+            <th>Última visita</th>
+            <th>Gastado</th>
+            <th>Ausencias</th>
+            <th>Se atiende con</th>
+          </tr>
+        </thead>
+        <tbody id="tabla"></tbody>
+      </table>
+      <div class="vacio" id="vacio" hidden>No hay clientes que coincidan con la búsqueda.</div>
+      <div class="vacio" id="mas" hidden><button class="mini" id="btn-mas">Ver más clientes</button></div>
+    </section>
+
+    <p class="nota-maqueta">
+      Los clientes no tienen cuenta: se identifican por email y teléfono al reservar
+      (tabla Cliente de la documentación). Esta pantalla solo los lee.
+    </p>
+
+  </main>
+</div>
+
+<dialog class="modal lado" id="ficha">
+  <div class="modal-cuerpo" id="ficha-cuerpo"></div>
+</dialog>
+
+<script src="../assets/js/datos.js"></script>
+<script src="../assets/js/admin.js"></script>
+<script>
+  pintarLateral("clientes");
+
+  // GET /api/v1/clientes (con el resumen ya calculado por la API)
+  var lista = CLIENTES.map(function (c) { return Object.assign({ r: resumenCliente(c.id) }, c); })
+                      .filter(function (c) { return c.r.turnos.length; });
+
+  var esFrecuente = function (c) { return c.r.visitas >= 4; };
+  var esNuevo     = function (c) { return c.r.primera <= 30; };
+  var esPerdido   = function (c) { return c.r.visitas >= 3 && c.r.ultima > 21 && !c.r.proximo; };
+
+  var FILTROS = {
+    todos: function () { return true; },
+    frecuentes: esFrecuente,
+    nuevos: esNuevo,
+    ausencias: function (c) { return c.r.ausencias > 0; },
+    perdidos: esPerdido,
+  };
+
+  var filtro = "todos";
+  var limite = 25;
+
+  document.getElementById("kpi-total").textContent = lista.length;
+  document.getElementById("kpi-nuevos").textContent = lista.filter(esNuevo).length;
+  document.getElementById("kpi-vuelven").innerHTML =
+    Math.round(lista.filter(function (c) { return c.r.visitas >= 2; }).length / lista.length * 100) + "<small>%</small>";
+  document.getElementById("kpi-perdidos").textContent = lista.filter(esPerdido).length;
+
+  function pintar() {
+    var q = document.getElementById("buscar").value.trim().toLowerCase();
+    var visibles = lista.filter(FILTROS[filtro]).filter(function (c) {
+      return !q || c.nombre.toLowerCase().includes(q) || c.telefono.replace(/\D/g, "").includes(q.replace(/\D/g, "") || "~");
+    }).sort(function (a, b) {
+      return (a.r.ultima === null ? 999 : a.r.ultima) - (b.r.ultima === null ? 999 : b.r.ultima) || b.r.visitas - a.r.visitas;
+    });
+
+    document.getElementById("tabla").innerHTML = visibles.slice(0, limite).map(function (c) {
+      return '<tr class="clic" data-id="' + c.id + '" tabindex="0">' +
+        '<td><div class="quien-celda"><span class="avatar chico gris">' + iniciales(c.nombre) + "</span>" +
+          "<div><b>" + c.nombre + '</b><span class="sub">' + c.telefono + "</span></div></div></td>" +
+        '<td class="num">' + c.r.visitas + "</td>" +
+        "<td>" + (c.r.ultima === null ? "—" : fechaRelativa(c.r.ultima)) + "</td>" +
+        '<td class="num">' + pesos(c.r.gasto) + "</td>" +
+        '<td class="num' + (c.r.ausencias >= 2 ? " alerta" : "") + '">' + c.r.ausencias + "</td>" +
+        "<td>" + (c.r.habitual ? c.r.habitual.nombre : "—") + "</td>" +
+      "</tr>";
+    }).join("");
+
+    document.getElementById("cant").textContent = visibles.length + " clientes";
+    document.getElementById("vacio").hidden = visibles.length > 0;
+    document.getElementById("mas").hidden = visibles.length <= limite;
+  }
+
+  // GET /api/v1/clientes/:id
+  function abrirFicha(id) {
+    var c = lista.find(function (x) { return x.id === id; });
+    var r = c.r;
+    var wa = "https://wa.me/549" + c.telefono.replace(/\D/g, "");
+
+    var proximo = r.proximo
+      ? '<div class="cobro-resumen">Próximo turno: <b>' + fechaRelativa(r.proximo.dias) + " a las " + r.proximo.hora +
+        "</b> · " + r.proximo.servicio + " con " + peluquero(r.proximo.peluquero).nombre + "</div>"
+      : "";
+
+    document.getElementById("ficha-cuerpo").innerHTML =
+      '<button class="cerrar" aria-label="Cerrar" data-cerrar>&times;</button>' +
+      '<div class="persona"><span class="avatar gris">' + iniciales(c.nombre) + "</span>" +
+        "<span><b>" + c.nombre + "</b><small>Cliente desde " + fechaRelativa(r.primera) + "</small></span></div>" +
+      '<div class="contacto"><span>' + c.telefono + "</span><span>" + c.email + "</span></div>" +
+      '<div class="contacto-acciones">' +
+        '<a class="btn btn-secundario" href="' + wa + '" target="_blank" rel="noopener">WhatsApp</a>' +
+        '<a class="btn btn-secundario" href="mailto:' + c.email + '">Email</a>' +
+      "</div>" +
+      '<div class="ficha-datos">' +
+        "<div>Visitas<b>" + r.visitas + "</b></div>" +
+        "<div>Gastado<b>" + pesos(r.gasto) + "</b></div>" +
+        "<div>Ausencias<b" + (r.ausencias >= 2 ? ' class="alerta"' : "") + ">" + r.ausencias + "</b></div>" +
+        "<div>Satisfacción<b>" + (r.promedio ? r.promedio.toFixed(1).replace(".", ",") + " ★" : "Sin encuestas") + "</b></div>" +
+      "</div>" +
+      proximo +
+      '<div class="historial"><h3>Historial</h3>' +
+        r.turnos.map(function (t) {
+          return '<div class="hist-item">' +
+            "<span>" + t.servicio + " <small>con " + peluquero(t.peluquero).nombre + "</small></span>" +
+            '<span class="estado estado-' + t.estado + '">' + t.estado + "</span>" +
+            "<small>" + fechaRelativa(t.dias) + " · " + t.hora + " · " + pesos(t.precio) + "</small>" +
+            "<small>" + (t.calificacion ? '<span class="notas">' + "★".repeat(t.calificacion) + "</span>" : "") + "</small>" +
+          "</div>";
+        }).join("") +
+      "</div>";
+
+    document.getElementById("ficha").showModal();
+  }
+
+  document.getElementById("buscar").addEventListener("input", function () { limite = 25; pintar(); });
+
+  document.getElementById("filtro").addEventListener("click", function (e) {
+    if (e.target.tagName !== "BUTTON") return;
+    this.querySelectorAll("button").forEach(function (b) { b.setAttribute("aria-pressed", String(b === e.target)); });
+    filtro = e.target.dataset.f;
+    limite = 25;
+    pintar();
+  });
+
+  document.getElementById("btn-mas").addEventListener("click", function () { limite += 25; pintar(); });
+
+  var tabla = document.getElementById("tabla");
+  tabla.addEventListener("click", function (e) {
+    var fila = e.target.closest("tr");
+    if (fila) abrirFicha(Number(fila.dataset.id));
+  });
+  tabla.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && e.target.dataset.id) abrirFicha(Number(e.target.dataset.id));
+  });
+
+  document.getElementById("ficha").addEventListener("click", function (e) {
+    if (e.target.closest("[data-cerrar]")) this.close();
+  });
+
+  pintar();
+</script>
+</body>
+</html>

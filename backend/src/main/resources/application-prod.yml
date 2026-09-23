@@ -1,0 +1,12 @@
+# Perfil de producción: SPRING_PROFILES_ACTIVE=prod
+# Sin valores por defecto para los secretos: si falta alguno, la app no arranca.
+
+server:
+  forward-headers-strategy: native   # detrás del proxy HTTPS: IP real para el límite de reservas
+
+app:
+  jwt:
+    secreto: ${JWT_SECRET}
+  admin:
+    password: ${ADMIN_PASSWORD}
+  datos-demo: false
