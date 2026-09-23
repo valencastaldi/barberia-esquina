@@ -94,6 +94,7 @@ export default function Inicio() {
 
       <footer className="pie">
         <p>{BARBERIA.nombre} · {BARBERIA.rotulo}</p>
+        <p style={{ marginTop: 8 }}><Link to="/admin">Acceso del equipo →</Link></p>
       </footer>
 
       <BarraCta>
