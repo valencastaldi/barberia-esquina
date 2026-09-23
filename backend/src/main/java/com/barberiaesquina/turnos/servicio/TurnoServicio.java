@@ -180,7 +180,13 @@ public class TurnoServicio {
         List<Turno> lista = turnos.entre(desde, hasta, idBarbero).stream()
                 .filter(t -> estado == null || t.getEstado() == estado)
                 .toList();
-        return detalles(lista);
+        List<Detalle> resultado = detalles(lista);
+        if (sesion.esDueno()) return resultado;
+        // Un barbero ve la agenda de todo el equipo, pero de los turnos ajenos no ve datos del negocio.
+        Long propio = sesion.idBarbero();
+        return resultado.stream()
+                .map(d -> d.barbero().id().equals(propio) ? d : d.sinDatosPrivados())
+                .toList();
     }
 
     public Detalle cambiarEstado(Long idTurno, EstadoTurno nuevo) {

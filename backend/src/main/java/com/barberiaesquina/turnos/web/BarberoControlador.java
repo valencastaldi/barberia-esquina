@@ -29,7 +29,9 @@ public class BarberoControlador {
         return barberos.publicos();
     }
 
+    /** Ficha completa del equipo (email, comisión…): solo el dueño. */
     @GetMapping("/equipo")
+    @PreAuthorize("hasRole('DUENO')")
     public List<Detalle> equipo() {
         return barberos.equipo();
     }

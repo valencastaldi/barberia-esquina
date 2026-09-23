@@ -76,5 +76,15 @@ public final class TurnoDtos {
                     pago == null ? null : new PagoRef(pago.getMedio(), pago.getMonto(), pago.getFecha()),
                     encuesta == null ? null : encuesta.getCalificacion());
         }
+
+        /**
+         * Lo que ve un barbero de un turno de otro peluquero: quién, qué y cuándo,
+         * sin el contacto del cliente, el cobro ni la calificación.
+         */
+        public Detalle sinDatosPrivados() {
+            return new Detalle(id, fecha, horaInicio, horaFin, estado, precio,
+                    new ClienteRef(cliente.id(), cliente.nombre(), cliente.apellido(), null, null),
+                    servicio, barbero, null, null);
+        }
     }
 }

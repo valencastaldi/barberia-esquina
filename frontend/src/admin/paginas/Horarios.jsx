@@ -10,7 +10,7 @@ const SLOTS = [15, 30, 45, 60].map((m) => ({ valor: m, texto: `${m} min` }));
 /** RF-24, RF-25, RF-26: horario semanal de cada peluquero y slot base. */
 export default function Horarios() {
   const { pedir, usuario, esDueno } = useSesion();
-  const equipo = usePedidoAdmin("/barberos/equipo");
+  const equipo = usePedidoAdmin("/barberos");   // lista pública: nombres de los activos
   const [idBarbero, setIdBarbero] = useState(usuario.id);
   const guardado = usePedidoAdmin("/horarios", { barbero: idBarbero });
   const [semana, setSemana] = useState(null);
@@ -41,12 +41,12 @@ export default function Horarios() {
     }
   }
 
-  const activos = (equipo.datos ?? []).filter((b) => b.activo);
+  const activos = equipo.datos ?? [];
   const elegible = esDueno ? activos : activos.filter((b) => b.id === usuario.id);
 
   return (
     <>
-      <Cabecera titulo="Horarios de atención" bajada="De acá sale la disponibilidad que ve el cliente al reservar.">
+      <Cabecera titulo={esDueno ? "Horarios de atención" : "Mis horarios"} bajada="De acá sale la disponibilidad que ve el cliente al reservar.">
         {puedeEditar && (
           <>
             <button type="button" className="btn btn-secundario" disabled={!cambios} onClick={() => setSemana(guardado.datos)}>Deshacer</button>

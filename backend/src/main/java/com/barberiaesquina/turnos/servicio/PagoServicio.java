@@ -4,6 +4,8 @@ import com.barberiaesquina.turnos.modelo.*;
 import com.barberiaesquina.turnos.repositorio.BarberoRepositorio;
 import com.barberiaesquina.turnos.repositorio.PagoRepositorio;
 import com.barberiaesquina.turnos.repositorio.TurnoRepositorio;
+import com.barberiaesquina.turnos.seguridad.SesionActual;
+import org.springframework.security.access.AccessDeniedException;
 import com.barberiaesquina.turnos.servicio.excepcion.ConflictoException;
 import com.barberiaesquina.turnos.servicio.excepcion.NoEncontradoException;
 import com.barberiaesquina.turnos.servicio.excepcion.ReglaNegocioException;
@@ -31,19 +33,24 @@ public class PagoServicio {
     private final BarberoRepositorio barberos;
     private final TurnoServicio turnoServicio;
     private final Calendario calendario;
+    private final SesionActual sesion;
 
     public PagoServicio(PagoRepositorio pagos, TurnoRepositorio turnos, BarberoRepositorio barberos,
-                        TurnoServicio turnoServicio, Calendario calendario) {
+                        TurnoServicio turnoServicio, Calendario calendario, SesionActual sesion) {
         this.pagos = pagos;
         this.turnos = turnos;
         this.barberos = barberos;
         this.turnoServicio = turnoServicio;
         this.calendario = calendario;
+        this.sesion = sesion;
     }
 
     public Respuesta registrar(Pedido pedido) {
         Turno turno = turnos.findById(pedido.idTurno())
                 .orElseThrow(() -> NoEncontradoException.de("Turno", pedido.idTurno()));
+        if (!sesion.esDueno() && !turno.getBarbero().getId().equals(sesion.idBarbero())) {
+            throw new AccessDeniedException("Solo el dueño puede cobrar turnos de otro peluquero");
+        }
         if (turno.getEstado() != EstadoTurno.COMPLETADO) {
             throw new ReglaNegocioException("Solo se cobran turnos completados");
         }

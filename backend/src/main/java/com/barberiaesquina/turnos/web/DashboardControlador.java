@@ -6,6 +6,7 @@ import com.barberiaesquina.turnos.web.dto.DashboardDtos.PuntoEvolucion;
 import com.barberiaesquina.turnos.web.dto.DashboardDtos.RendimientoBarbero;
 import com.barberiaesquina.turnos.web.dto.DashboardDtos.Resumen;
 import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -14,8 +15,9 @@ import org.springframework.web.bind.annotation.RestController;
 import java.time.LocalDate;
 import java.util.List;
 
-/** M7 — Dashboard. Sin fechas, toma los últimos 30 días. */
+/** M7 — Dashboard. Sin fechas, toma los últimos 30 días. Solo el dueño. */
 @RestController
+@PreAuthorize("hasRole('DUENO')")
 @RequestMapping("/api/v1/dashboard")
 public class DashboardControlador {
 

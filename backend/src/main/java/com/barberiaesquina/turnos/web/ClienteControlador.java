@@ -4,10 +4,12 @@ import com.barberiaesquina.turnos.servicio.ClienteServicio;
 import com.barberiaesquina.turnos.servicio.ClienteServicio.Filtro;
 import com.barberiaesquina.turnos.web.dto.ClienteDtos.Ficha;
 import com.barberiaesquina.turnos.web.dto.ClienteDtos.Pagina;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-/** [Extensión] Clientes. */
+/** [Extensión] Clientes. Datos del negocio: solo el dueño. */
 @RestController
+@PreAuthorize("hasRole('DUENO')")
 @RequestMapping("/api/v1/clientes")
 public class ClienteControlador {
 

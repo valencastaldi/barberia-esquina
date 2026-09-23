@@ -52,8 +52,8 @@ ejemplo (3 peluqueros, 150 clientes, ~550 turnos de las últimas 6 semanas y la 
 ./mvnw test
 ```
 
-29 tests de integración sobre H2 con un reloj fijo (martes 22/09/2026 11:00):
-disponibilidad, reserva, conflictos, cancelación, encuesta, pagos, permisos y rate limiting.
+34 tests de integración sobre H2 con un reloj fijo (martes 22/09/2026 11:00):
+disponibilidad, reserva, reservas simultáneas, cancelación, encuesta, pagos, permisos por rol y rate limiting.
 
 ## Arquitectura en capas
 
@@ -90,13 +90,13 @@ Todo bajo `/api/v1`. 🔓 = público (lo usa el cliente sin cuenta) · 🔑 = co
 | | `PUT /horarios` | 🔑 | Semana propia; el dueño puede `?barbero=ID` |
 | M4 Disponibilidad | `GET /disponibilidad?servicio=&fecha=[&barbero=]` | 🔓 | Horarios del día, libres y ocupados |
 | M5 Turnos | `POST /turnos` | 🔓 | Reserva (máx. 10 por IP por hora) |
-| | `GET /turnos?desde=&hasta=&barbero=&estado=` | 🔑 | Agenda (por defecto, hoy) |
+| | `GET /turnos?desde=&hasta=&barbero=&estado=` | 🔑 | Agenda (por defecto, hoy). Un barbero no recibe contacto, cobro ni calificación de turnos ajenos |
 | | `PATCH /turnos/{id}/estado` | 🔑 | completado / ausente / cancelado |
 | | `PATCH /turnos/cancelar/{token}` | 🔓 | Cancelación desde el email |
 | M6 Encuestas | `GET /encuestas/{idTurno}?token=` | 🔓 | Datos para la pantalla de encuesta |
 | | `POST /encuestas/{idTurno}?token=` | 🔓 | `{"calificacion": 1-5, "comentario": "..."}` |
-| M7 Dashboard | `GET /dashboard/resumen?desde=&hasta=&barbero=` | 🔑 | KPIs, estrellas, comentarios (por defecto, 30 días) |
-| | `GET /dashboard/evolucion?desde=&hasta=&barbero=` | 🔑 | Turnos por día para el gráfico |
+| M7 Dashboard | `GET /dashboard/resumen?desde=&hasta=&barbero=` | 👑 | KPIs, estrellas, comentarios (por defecto, 30 días) |
+| | `GET /dashboard/evolucion?desde=&hasta=&barbero=` | 👑 | Turnos por día para el gráfico |
 
 ### Agregados
 
@@ -107,11 +107,11 @@ Todo bajo `/api/v1`. 🔓 = público (lo usa el cliente sin cuenta) · 🔑 = co
 | `GET /turnos/cancelar/{token}` | 🔓 | La pantalla de cancelación necesita mostrar el turno antes de cancelar |
 | `GET /bloqueos` · `POST /bloqueos` · `DELETE /bloqueos/{id}` | 🔑 | RF-12 (bloquear franjas) no tenía endpoint |
 | `GET /barberos` | 🔓 | *Extensión:* el cliente elige con quién atenderse |
-| `GET /barberos/equipo` · `POST` · `PUT /{id}` · `PATCH /{id}/estado` | 🔑/👑 | *Extensión:* equipo de peluqueros |
-| `GET /clientes?q=&filtro=&pagina=&tamano=` · `GET /clientes/{id}` | 🔑 | *Extensión:* listado con filtros y ficha con historial |
+| `GET /barberos/equipo` · `POST` · `PUT /{id}` · `PATCH /{id}/estado` | 👑 | *Extensión:* equipo de peluqueros |
+| `GET /clientes?q=&filtro=&pagina=&tamano=` · `GET /clientes/{id}` | 👑 | *Extensión:* listado con filtros y ficha con historial |
 | `GET /pagos?desde=&hasta=` | 👑 | *Extensión:* cobrado, por medio de pago, liquidación |
-| `POST /pagos` | 🔑 | *Extensión:* registrar el cobro de un turno completado |
-| `GET /dashboard/barberos` | 🔑 | *Extensión:* rendimiento por peluquero |
+| `POST /pagos` | 🔑 | *Extensión:* registrar el cobro de un turno completado (el barbero, solo de los suyos) |
+| `GET /dashboard/barberos` | 👑 | *Extensión:* rendimiento por peluquero |
 
 Errores: siempre `{"title", "status", "detail"}`; los de validación suman `"errores": {campo: mensaje}`.
 Códigos: 400 datos inválidos · 401 sin login · 403 sin permiso · 404 · 409 conflicto

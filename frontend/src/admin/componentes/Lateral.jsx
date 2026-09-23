@@ -25,13 +25,13 @@ const GRUPOS = [
   { titulo: "Operación", secciones: [
     { id: "agenda", txt: "Agenda" },
     { id: "pagos", txt: "Pagos", soloDueno: true },
-    { id: "clientes", txt: "Clientes" },
+    { id: "clientes", txt: "Clientes", soloDueno: true },
   ] },
   { titulo: "Negocio", secciones: [
-    { id: "dashboard", txt: "Dashboard" },
-    { id: "peluqueros", txt: "Peluqueros" },
-    { id: "servicios", txt: "Servicios" },
-    { id: "horarios", txt: "Horarios" },
+    { id: "dashboard", txt: "Dashboard", soloDueno: true },
+    { id: "peluqueros", txt: "Peluqueros", soloDueno: true },
+    { id: "servicios", txt: "Servicios", soloDueno: true },
+    { id: "horarios", txt: "Horarios", txtBarbero: "Mis horarios" },
   ] },
 ];
 
@@ -52,12 +52,15 @@ export function Lateral() {
         <span><b>Barbería Esquina</b><small>Panel de gestión</small></span>
       </Link>
       <nav className="nav">
-        {GRUPOS.map((g) => (
+        {GRUPOS.map((g) => ({ ...g, secciones: g.secciones.filter((s) => !s.soloDueno || esDueno) }))
+          .filter((g) => g.secciones.length)
+          .map((g, i) => (
           <div key={g.titulo} style={{ display: "contents" }}>
-            <span className="nav-grupo">{g.titulo}</span>
-            {g.secciones.filter((s) => !s.soloDueno || esDueno).map((s) => (
+            {/* El barbero tiene dos secciones: van bajo un solo título */}
+            {(esDueno || i === 0) && <span className="nav-grupo">{esDueno ? g.titulo : "Mi trabajo"}</span>}
+            {g.secciones.map((s) => (
               <NavLink key={s.id} to={`/admin/${s.id}`} className={({ isActive }) => (isActive ? "activo" : undefined)}>
-                <Icono nombre={s.id} />{s.txt}
+                <Icono nombre={s.id} />{!esDueno && s.txtBarbero ? s.txtBarbero : s.txt}
               </NavLink>
             ))}
           </div>

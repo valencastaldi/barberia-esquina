@@ -25,7 +25,7 @@ export default function Agenda() {
   const filtros = { desde, hasta, barbero: idBarbero };
   const turnos = usePedidoAdmin("/turnos", filtros);
   const bloqueos = usePedidoAdmin("/bloqueos", filtros);
-  const equipo = usePedidoAdmin("/barberos/equipo");
+  const equipo = usePedidoAdmin("/barberos");   // lista pública: nombres de los activos
 
   const recargar = () => { turnos.recargar(); bloqueos.recargar(); };
 
@@ -45,20 +45,22 @@ export default function Agenda() {
     pedir(`/turnos/${t.id}/estado`, { metodo: "PATCH", cuerpo: { estado } });
 
   const lista = turnos.datos ?? [];
+  // El barbero ve la agenda de todos, pero los números son solo de sus turnos.
   const kpis = useMemo(() => {
-    const cuenta = (e) => lista.filter((t) => t.estado === e).length;
+    const suyos = esDueno ? lista : lista.filter((t) => t.barbero.id === usuario.id);
+    const cuenta = (e) => suyos.filter((t) => t.estado === e).length;
     const atendibles = cuenta("completado") + cuenta("ausente");
     return {
-      total: lista.filter((t) => t.estado !== "cancelado").length,
+      total: suyos.filter((t) => t.estado !== "cancelado").length,
       pendientes: cuenta("pendiente"),
       completados: cuenta("completado"),
       ausentes: cuenta("ausente"),
       ausentismo: atendibles ? cuenta("ausente") / atendibles : 0,
-      cobrado: lista.reduce((a, t) => a + (t.pago ? Number(t.pago.monto) : 0), 0),
-      estimado: lista.filter((t) => t.estado === "pendiente" || t.estado === "completado")
+      cobrado: suyos.reduce((a, t) => a + (t.pago ? Number(t.pago.monto) : 0), 0),
+      estimado: suyos.filter((t) => t.estado === "pendiente" || t.estado === "completado")
                      .reduce((a, t) => a + Number(t.precio), 0),
     };
-  }, [lista]);
+  }, [lista, esDueno, usuario.id]);
 
   // Turnos y bloqueos juntos, agrupados por día y en orden de hora.
   const porDia = useMemo(() => {
@@ -71,7 +73,7 @@ export default function Agenda() {
     return [...grupos.entries()];
   }, [lista, bloqueos.datos]);
 
-  const activos = (equipo.datos ?? []).filter((b) => b.activo);
+  const activos = equipo.datos ?? [];
   const esHoy = fecha === hoyIso() && periodo === "dia";
 
   return (
@@ -96,11 +98,11 @@ export default function Agenda() {
       <AvisoError mensaje={aviso} alCerrar={() => setAviso(null)} />
 
       <section className="kpis">
-        <Kpi destacado etiqueta={periodo === "dia" ? "Turnos del día" : "Turnos del período"} valor={kpis.total}
+        <Kpi destacado etiqueta={`${esDueno ? "Turnos" : "Tus turnos"} ${periodo === "dia" ? "del día" : "del período"}`} valor={kpis.total}
              delta={`${kpis.pendientes} por atender`} />
         <Kpi etiqueta="Completados" valor={kpis.completados} delta="Encuesta enviada a cada uno" tono="sube" />
         <Kpi etiqueta="Ausentes" valor={kpis.ausentes} delta={`${porcentaje(kpis.ausentismo)} de los atendibles`} tono="baja" />
-        <Kpi etiqueta="Cobrado" valor={pesos(kpis.cobrado)} delta={`De ${pesos(kpis.estimado)} estimados`} />
+        <Kpi etiqueta={esDueno ? "Cobrado" : "Cobraste"} valor={pesos(kpis.cobrado)} delta={`De ${pesos(kpis.estimado)} estimados`} />
       </section>
 
       <section className="bloque">
@@ -178,7 +180,7 @@ function FilaTurno({ t, puedeTocar, alCompletar, alCobrar, alAusente, alCancelar
         <button type="button" className="mini no" onClick={alCancelar}>Cancelar</button>
       </div>
     );
-  } else if (t.estado === "completado") {
+  } else if (t.estado === "completado" && puedeTocar) {
     acciones = (
       <>
         {t.pago ? <ChipMedio medio={t.pago.medio} />
@@ -197,12 +199,12 @@ function FilaTurno({ t, puedeTocar, alCompletar, alCobrar, alAusente, alCancelar
       <div className="quien">
         <b>{t.cliente.nombre} {t.cliente.apellido}</b>
         <p>
-          {t.servicio.nombre} · con {t.barbero.nombre} · {t.cliente.telefono}
+          {t.servicio.nombre} · con {t.barbero.nombre}{t.cliente.telefono ? ` · ${t.cliente.telefono}` : ""}
           {t.calificacion && <span className="calif"> · {"★".repeat(t.calificacion)}</span>}
         </p>
       </div>
       <div className="derecha">
-        <span className="monto">{pesos(t.precio)}</span>
+        {puedeTocar && <span className="monto">{pesos(t.precio)}</span>}
         {acciones}
       </div>
     </article>

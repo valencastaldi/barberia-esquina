@@ -26,10 +26,10 @@ export default function AdminApp() {
           <Route index element={<Navigate to="agenda" replace />} />
           <Route path="agenda" element={<Agenda />} />
           <Route path="pagos" element={<SoloDueno><Pagos /></SoloDueno>} />
-          <Route path="clientes" element={<Clientes />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="peluqueros" element={<Peluqueros />} />
-          <Route path="servicios" element={<Servicios />} />
+          <Route path="clientes" element={<SoloDueno><Clientes /></SoloDueno>} />
+          <Route path="dashboard" element={<SoloDueno><Dashboard /></SoloDueno>} />
+          <Route path="peluqueros" element={<SoloDueno><Peluqueros /></SoloDueno>} />
+          <Route path="servicios" element={<SoloDueno><Servicios /></SoloDueno>} />
           <Route path="horarios" element={<Horarios />} />
           <Route path="*" element={<Navigate to="agenda" replace />} />
         </Route>

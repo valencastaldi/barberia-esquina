@@ -70,6 +70,53 @@ class SeguridadTest extends PruebaDeIntegracion {
     }
 
     @Test
+    void unBarberoNoVeLaInformacionDelNegocio() throws Exception {
+        String barbero = login("santiago@test.com");
+        mvc.perform(conToken(get("/api/v1/clientes"), barbero)).andExpect(status().isForbidden());
+        mvc.perform(conToken(get("/api/v1/dashboard/resumen"), barbero)).andExpect(status().isForbidden());
+        mvc.perform(conToken(get("/api/v1/dashboard/barberos"), barbero)).andExpect(status().isForbidden());
+        mvc.perform(conToken(get("/api/v1/barberos/equipo"), barbero)).andExpect(status().isForbidden());
+        mvc.perform(conToken(get("/api/v1/pagos"), barbero)).andExpect(status().isForbidden());
+
+        String dueno = login("agustin@test.com");
+        mvc.perform(conToken(get("/api/v1/clientes"), dueno)).andExpect(status().isOk());
+        mvc.perform(conToken(get("/api/v1/dashboard/resumen"), dueno)).andExpect(status().isOk());
+    }
+
+    @Test
+    void enLaAgendaUnBarberoNoVeContactoNiCobrosDeTurnosAjenos() throws Exception {
+        turnoGuardado(agustin, corte, HOY, "10:00", EstadoTurno.PENDIENTE);
+        turnoGuardado(santiago, corte, HOY, "12:00", EstadoTurno.PENDIENTE);
+
+        mvc.perform(conToken(get("/api/v1/turnos"), login("santiago@test.com")))
+                .andExpect(status().isOk())
+                // El de Agustín: se ve quién y qué, pero no el teléfono
+                .andExpect(jsonPath("$[0].barbero.nombre").value("Agustín"))
+                .andExpect(jsonPath("$[0].cliente.nombre").value("Mateo"))
+                .andExpect(jsonPath("$[0].cliente.telefono").doesNotExist())
+                .andExpect(jsonPath("$[0].cliente.email").doesNotExist())
+                // El propio: completo
+                .andExpect(jsonPath("$[1].cliente.telefono").value("351 415-2233"));
+
+        mvc.perform(conToken(get("/api/v1/turnos"), login("agustin@test.com")))
+                .andExpect(jsonPath("$[0].cliente.telefono").value("351 415-2233"));
+    }
+
+    @Test
+    void unBarberoSoloCobraSusTurnos() throws Exception {
+        Turno deAgustin = turnoGuardado(agustin, corte, HOY, "10:00", EstadoTurno.COMPLETADO);
+        Turno deSantiago = turnoGuardado(santiago, corte, HOY, "10:30", EstadoTurno.COMPLETADO);
+        String barbero = login("santiago@test.com");
+
+        mvc.perform(json(conToken(post("/api/v1/pagos"), barbero), """
+                        {"idTurno": %d, "monto": 9000, "medio": "efectivo"}""".formatted(deAgustin.getId())))
+                .andExpect(status().isForbidden());
+        mvc.perform(json(conToken(post("/api/v1/pagos"), barbero), """
+                        {"idTurno": %d, "monto": 9000, "medio": "efectivo"}""".formatted(deSantiago.getId())))
+                .andExpect(status().isCreated());
+    }
+
+    @Test
     void unPeluqueroSoloManejaSusPropiosTurnos() throws Exception {
         Turno deAgustin = turnoGuardado(agustin, corte, HOY, "10:00", EstadoTurno.PENDIENTE);
         Turno deSantiago = turnoGuardado(santiago, corte, HOY, "10:00", EstadoTurno.PENDIENTE);
