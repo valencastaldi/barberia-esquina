@@ -39,8 +39,10 @@ Requisitos: Java 21, Node 18+, MySQL 8.
 La primera vez se cargan datos de ejemplo (3 peluqueros, 150 clientes, ~550 turnos).
 Usuario del panel: `agustin@barberiaesquina.com` / `esquina1290`, **solo para desarrollo**.
 
-Más detalle en el [README del backend](backend/README.md) (endpoints, seguridad, diferencias con la documentación)
-y en el [del front](frontend/README.md).
+## Documentación
+
+Todo el detalle está en **[docs/](docs/README.md)**: instalación, arquitectura, modelo de datos, API, frontend, roles y
+permisos, reglas de negocio, trazabilidad con los requerimientos de la tesis, pruebas, guía de desarrollo y pendientes.
 
 ## Estado
 

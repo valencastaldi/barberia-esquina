@@ -22,3 +22,7 @@ backend/data/
 # --- Secretos ---
 .env
 .env.*
+
+# --- Backups de la base (se comparten por privado, no en el repo) ---
+backup/
+*.sql.gz
