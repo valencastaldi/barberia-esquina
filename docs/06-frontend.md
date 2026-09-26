@@ -1,6 +1,6 @@
 # 6. Frontend
 
-React 18 + Vite 5 + React Router 6, en JavaScript. Se eligió Vite 5 porque funciona con Node 18.
+React 18 + Vite 6 + React Router 7, en JavaScript. Vite 6 es la última versión que funciona con Node 18 (la 7 pide Node 20).
 
 ## Estructura
 
@@ -77,6 +77,11 @@ Escritorio, desde 1024 px (RNF-10). Detalle de qué ve cada rol en [7. Roles y p
 `admin/sesion.jsx` guarda `{ token, vence, usuario }` en `localStorage` hasta que vence (8 h) o se cierra sesión. Todo
 pedido del panel pasa por `pedir()`, que agrega el token; si la API responde 401, se borra la sesión y se vuelve al login
 recordando a qué pantalla se quería ir.
+
+Guardar el token en `localStorage` es cómodo, pero lo expondría si alguna vez se colara un XSS. Por eso el build
+agrega una Content-Security-Policy (`vite.config.js`): solo se ejecutan scripts propios y el navegador no puede mandar
+datos a otro dominio que no sea la API. React además escapa todo lo que muestra y no se usa `dangerouslySetInnerHTML`.
+La política no se aplica en `npm run dev` porque Vite necesita scripts inline para la recarga en caliente.
 
 ## Estilos
 

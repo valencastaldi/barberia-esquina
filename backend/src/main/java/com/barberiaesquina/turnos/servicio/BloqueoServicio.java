@@ -40,6 +40,7 @@ public class BloqueoServicio {
 
     @Transactional(readOnly = true)
     public List<Respuesta> listar(LocalDate desde, LocalDate hasta, Long idBarbero) {
+        Calendario.validarRango(desde, hasta);
         return bloqueos.entre(desde, hasta, idBarbero).stream().map(Respuesta::de).toList();
     }
 

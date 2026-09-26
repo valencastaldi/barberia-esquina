@@ -1,6 +1,7 @@
 package com.barberiaesquina.turnos.servicio;
 
 import com.barberiaesquina.turnos.config.AppProperties;
+import com.barberiaesquina.turnos.servicio.excepcion.ReglaNegocioException;
 import org.springframework.stereotype.Component;
 
 import java.time.Clock;
@@ -30,6 +31,12 @@ public class Calendario {
     /** Último día en que se puede reservar. */
     public LocalDate ultimoDiaReservable() {
         return hoy().plusDays(props.turnos().diasAnticipacion());
+    }
+
+    /** Los listados y reportes del panel aceptan como mucho un año por pedido. */
+    public static void validarRango(LocalDate desde, LocalDate hasta) {
+        if (hasta.isBefore(desde)) throw new ReglaNegocioException("'hasta' no puede ser anterior a 'desde'");
+        if (desde.plusDays(366).isBefore(hasta)) throw new ReglaNegocioException("El rango máximo es de un año");
     }
 
     /** Día de la semana con la convención del documento: 0 = domingo ... 6 = sábado. */

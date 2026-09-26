@@ -51,6 +51,12 @@ flowchart LR
 | Datos | `TurnoServicio.listar()` → `Detalle.sinDatosPrivados()` | Quita contacto, cobro y calificación de turnos ajenos |
 | Panel | `SoloDueno` en las rutas y `esDueno` en el menú y los botones | Qué se muestra |
 
-El rol viaja en el JWT (`"roles": ["DUENO"]`) y Spring lo convierte en `ROLE_DUENO`.
+El JWT identifica al peluquero, pero el rol **no se toma del token**: en cada pedido `ConversorDeSesion` busca al
+peluquero en la base y usa el rol que tiene ahí (`ROLE_DUENO` o `ROLE_BARBERO`). Así un cambio de rol se aplica al
+instante, un peluquero dado de baja deja de entrar aunque su token no haya vencido, cambiar la contraseña cierra las
+sesiones anteriores (el token lleva una huella de la contraseña, el claim `cred`) y "Cerrar sesión" anula ese token
+(su `jti` queda en la tabla `token_revocado` hasta que vence).
+
+El login admite 10 intentos fallidos por IP cada 15 minutos (`LimiteDeLoginFiltro`); después responde 429.
 
 Cada una de estas reglas tiene su test en `SeguridadTest` (ver [10. Pruebas](10-pruebas.md)).

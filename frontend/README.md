@@ -1,6 +1,6 @@
 # Front — Barbería Esquina
 
-SPA en React 18 + Vite 5 + React Router 6 (JavaScript). Diseño portado de `../maqueta`
+SPA en React 18 + Vite 6 + React Router 7 (JavaScript). Diseño portado de `../maqueta`
 (mismo `base.css` y `cliente.css`).
 
 ## Cómo correrlo

@@ -72,6 +72,7 @@ public class PagoServicio {
      */
     @Transactional(readOnly = true)
     public Reporte reporte(LocalDate desde, LocalDate hasta) {
+        Calendario.validarRango(desde, hasta);
         List<Turno> completados = turnos.entre(desde, hasta, null).stream()
                 .filter(t -> t.getEstado() == EstadoTurno.COMPLETADO)
                 .toList();

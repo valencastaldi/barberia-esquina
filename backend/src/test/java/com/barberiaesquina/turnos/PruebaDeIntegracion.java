@@ -2,6 +2,7 @@ package com.barberiaesquina.turnos;
 
 import com.barberiaesquina.turnos.modelo.*;
 import com.barberiaesquina.turnos.repositorio.*;
+import com.barberiaesquina.turnos.seguridad.LimiteDeLoginFiltro;
 import com.barberiaesquina.turnos.seguridad.LimiteDeReservasFiltro;
 import com.barberiaesquina.turnos.servicio.Tokens;
 import com.jayway.jsonpath.JsonPath;
@@ -59,6 +60,7 @@ public abstract class PruebaDeIntegracion {
     @Autowired protected JdbcTemplate jdbc;
     @Autowired protected PasswordEncoder passwordEncoder;
     @Autowired protected LimiteDeReservasFiltro limiteDeReservas;
+    @Autowired protected LimiteDeLoginFiltro limiteDeLogin;
     @Autowired protected BarberoRepositorio barberos;
     @Autowired protected ServicioRepositorio servicios;
     @Autowired protected HorarioRepositorio horarios;
@@ -72,11 +74,12 @@ public abstract class PruebaDeIntegracion {
 
     @BeforeEach
     void baseLimpia() {
-        for (String tabla : new String[]{"pago", "encuesta", "bloqueo", "turno", "cliente", "horario_atencion",
+        for (String tabla : new String[]{"token_revocado", "pago", "encuesta", "bloqueo", "turno", "cliente", "horario_atencion",
                 "barbero_servicio", "servicio", "barbero"}) {
             jdbc.update("delete from " + tabla);
         }
         limiteDeReservas.reiniciar();
+        limiteDeLogin.reiniciar();
 
         corte = servicio("Corte", 30, 9000);
         corteYBarba = servicio("Corte + Barba", 60, 15000);

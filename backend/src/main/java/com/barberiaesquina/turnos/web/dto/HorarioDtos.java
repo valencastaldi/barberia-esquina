@@ -23,5 +23,5 @@ public final class HorarioDtos {
             boolean activo
     ) {}
 
-    public record Pedido(@NotEmpty @Valid List<Dia> dias) {}
+    public record Pedido(@NotEmpty List<@Valid Dia> dias) {}
 }

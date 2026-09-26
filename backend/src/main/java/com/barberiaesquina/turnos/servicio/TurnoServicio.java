@@ -113,18 +113,21 @@ public class TurnoServicio {
                 (Barbero b) -> turnos.delDia(b.getId(), fecha, EstadoTurno.CANCELADO).size()));
     }
 
-    /** El cliente no tiene cuenta: se lo reconoce por el email y se actualizan sus datos. */
+    /**
+     * El cliente no tiene cuenta: se lo reconoce por el email. Si ya existe, sus
+     * datos no se tocan: la reserva es pública y cualquiera que conozca un email
+     * podría cambiarle el nombre o el teléfono que ve la barbería.
+     */
     private Cliente registrarCliente(ClientePedido datos) {
-        Cliente cliente = clientes.findByEmailIgnoreCase(datos.email().trim()).orElseGet(() -> {
+        return clientes.findByEmailIgnoreCase(datos.email().trim()).orElseGet(() -> {
             Cliente nuevo = new Cliente();
             nuevo.setEmail(datos.email().trim().toLowerCase());
             nuevo.setFechaAlta(calendario.ahora());
-            return nuevo;
+            nuevo.setNombre(datos.nombre().trim());
+            nuevo.setApellido(datos.apellido().trim());
+            nuevo.setTelefono(datos.telefono().trim());
+            return clientes.save(nuevo);
         });
-        cliente.setNombre(datos.nombre().trim());
-        cliente.setApellido(datos.apellido().trim());
-        cliente.setTelefono(datos.telefono().trim());
-        return clientes.save(cliente);
     }
 
     // ------------------------------------------------------------------
@@ -175,8 +178,7 @@ public class TurnoServicio {
 
     @Transactional(readOnly = true)
     public List<Detalle> listar(LocalDate desde, LocalDate hasta, Long idBarbero, EstadoTurno estado) {
-        if (hasta.isBefore(desde)) throw new ReglaNegocioException("'hasta' no puede ser anterior a 'desde'");
-        if (desde.plusDays(366).isBefore(hasta)) throw new ReglaNegocioException("El rango máximo es de un año");
+        Calendario.validarRango(desde, hasta);
         List<Turno> lista = turnos.entre(desde, hasta, idBarbero).stream()
                 .filter(t -> estado == null || t.getEstado() == estado)
                 .toList();

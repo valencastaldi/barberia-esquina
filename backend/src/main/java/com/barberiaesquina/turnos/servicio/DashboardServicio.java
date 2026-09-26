@@ -7,7 +7,6 @@ import com.barberiaesquina.turnos.modelo.Turno;
 import com.barberiaesquina.turnos.repositorio.BarberoRepositorio;
 import com.barberiaesquina.turnos.repositorio.EncuestaRepositorio;
 import com.barberiaesquina.turnos.repositorio.TurnoRepositorio;
-import com.barberiaesquina.turnos.servicio.excepcion.ReglaNegocioException;
 import com.barberiaesquina.turnos.web.dto.DashboardDtos.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -108,8 +107,7 @@ public class DashboardServicio {
     // ------------------------------------------------------------------
 
     private List<Turno> delPeriodo(LocalDate desde, LocalDate hasta, Long idBarbero) {
-        if (hasta.isBefore(desde)) throw new ReglaNegocioException("'hasta' no puede ser anterior a 'desde'");
-        if (desde.plusDays(366).isBefore(hasta)) throw new ReglaNegocioException("El rango máximo es de un año");
+        Calendario.validarRango(desde, hasta);
         return turnos.entre(desde, hasta, idBarbero);
     }
 

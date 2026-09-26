@@ -84,7 +84,8 @@ Incorrecto → 401 `"Email o contraseña incorrectos"` (el mismo mensaje si el e
 
 ### `POST /auth/logout` 🔑 → 204
 
-El token no se guarda en el servidor: cerrar sesión es descartarlo en el front.
+Revoca el token con el que se hace el pedido: se guarda su `jti` en `token_revocado` y, aunque alguien tenga una copia,
+deja de servir (401). Las sesiones del mismo usuario en otros dispositivos siguen abiertas.
 
 ### `GET /auth/me` 🔑 → el `usuario` del login.
 

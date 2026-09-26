@@ -18,8 +18,6 @@ import org.springframework.security.oauth2.jwt.JwtIssuerValidator;
 import org.springframework.security.oauth2.jwt.JwtTimestampValidator;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
-import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
@@ -43,8 +41,11 @@ public class SeguridadConfig {
 
     public static final String CLAIM_ROLES = "roles";
 
+    /** El valor por defecto de application.yml. */
+    private static final String SECRETO_DE_DESARROLLO = "solo-para-desarrollo-cambiar-en-produccion-1290";
+
     @Bean
-    SecurityFilterChain cadenaDeSeguridad(HttpSecurity http) throws Exception {
+    SecurityFilterChain cadenaDeSeguridad(HttpSecurity http, ConversorDeSesion conversor) throws Exception {
         http
             .csrf(c -> c.disable())
             .cors(withDefaults())
@@ -58,18 +59,8 @@ public class SeguridadConfig {
                 .requestMatchers("/api/v1/turnos/cancelar/**", "/api/v1/encuestas/**").permitAll()
                 .requestMatchers("/error").permitAll()
                 .anyRequest().authenticated())
-            .oauth2ResourceServer(o -> o.jwt(j -> j.jwtAuthenticationConverter(conversorDeRoles())));
+            .oauth2ResourceServer(o -> o.jwt(j -> j.jwtAuthenticationConverter(conversor)));
         return http.build();
-    }
-
-    /** El claim "roles" (["DUENO"]) se traduce a ROLE_DUENO para usar hasRole('DUENO'). */
-    private JwtAuthenticationConverter conversorDeRoles() {
-        var autoridades = new JwtGrantedAuthoritiesConverter();
-        autoridades.setAuthoritiesClaimName(CLAIM_ROLES);
-        autoridades.setAuthorityPrefix("ROLE_");
-        var conversor = new JwtAuthenticationConverter();
-        conversor.setJwtGrantedAuthoritiesConverter(autoridades);
-        return conversor;
     }
 
     /** RNF: contraseñas con bcrypt, costo mayor o igual a 10. */
@@ -83,6 +74,11 @@ public class SeguridadConfig {
         byte[] bytes = props.jwt().secreto().getBytes(StandardCharsets.UTF_8);
         if (bytes.length < 32) {
             throw new IllegalStateException("app.jwt.secreto tiene que tener al menos 32 caracteres");
+        }
+        // El secreto de desarrollo está publicado en el repo: con él cualquiera firma un token de dueño.
+        // Si la app corre sin datos de demo (o sea, con datos reales), exige uno propio.
+        if (!props.datosDemo() && SECRETO_DE_DESARROLLO.equals(props.jwt().secreto())) {
+            throw new IllegalStateException("Con datos reales hay que definir JWT_SECRET (el de desarrollo es público)");
         }
         return new SecretKeySpec(bytes, "HmacSHA256");
     }

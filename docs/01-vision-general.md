@@ -66,7 +66,7 @@ En las pantallas del panel, lo agregado lleva la etiqueta **"Extensión"**. En e
 | Parte | Estado |
 |---|---|
 | Maqueta | Completa (referencia de diseño) |
-| API | Completa: 19 endpoints de la Etapa 4 + extensión · 36 tests |
+| API | Completa: 19 endpoints de la Etapa 4 + extensión · 44 tests |
 | Sitio del cliente | Completo y probado en celular (375 y 320 px) |
 | Panel de gestión | Completo y probado en escritorio (1366 y 1024 px) |
 | Datos reales del local | **Pendiente**: precios, dirección, teléfono (hoy son de relleno) |

@@ -52,8 +52,8 @@ ejemplo (3 peluqueros, 150 clientes, ~550 turnos de las últimas 6 semanas y la 
 ./mvnw test
 ```
 
-36 tests de integración sobre H2 con un reloj fijo (martes 22/09/2026 11:00):
-disponibilidad, reserva, reservas simultáneas, cancelación, encuesta, pagos, permisos por rol y rate limiting.
+44 tests de integración sobre H2 con un reloj fijo (martes 22/09/2026 11:00):
+disponibilidad, reserva, reservas simultáneas, cancelación, encuesta, pagos, permisos por rol, sesiones revocadas y rate limiting (reservas y login).
 
 ## Arquitectura en capas
 
@@ -62,12 +62,12 @@ web/          Controladores REST + DTOs (records) + manejo de errores (RFC 9457)
 servicio/     Lógica de negocio y transacciones
 repositorio/  Spring Data JPA
 modelo/       Entidades JPA y enums
-seguridad/    JWT, roles, límite de reservas por IP
+seguridad/    JWT, rol leído de la base, límites por IP (reservas y login)
 config/       Propiedades (app.*) y reloj con zona horaria de Córdoba
 demo/         Carga del dueño y de los datos de ejemplo
 ```
 
-El esquema lo maneja Flyway: `src/main/resources/db/migration/V1__esquema.sql`.
+El esquema lo maneja Flyway: `src/main/resources/db/migration/` (`V1__esquema.sql`, `V2__token_revocado.sql`).
 Hibernate no crea ni modifica tablas (`ddl-auto: none`).
 
 ## Endpoints
@@ -134,6 +134,9 @@ Códigos: 400 datos inválidos · 401 sin login · 403 sin permiso · 404 · 409
 
 - **bcrypt costo 10** para contraseñas; login con el mismo mensaje y tiempo si el email no existe.
 - **JWT con vencimiento** (8 h), firmado HS256; secreto por variable de entorno en producción.
+  El rol se lee de la base en cada pedido: bajas, cambios de rol y de contraseña valen al instante.
+  "Cerrar sesión" revoca el token (tabla `token_revocado`).
+- **Login**: 10 intentos fallidos por IP cada 15 minutos (429).
 - **Token de cancelación** aleatorio de 256 bits, de un solo uso y con vencimiento de 48 h.
 - **Rate limiting**: 10 reservas por IP por hora (429).
 - **Validación en tiempo real**: antes de guardar, la reserva bloquea la fila del peluquero
@@ -156,5 +159,4 @@ Códigos: 400 datos inválidos · 401 sin login · 403 sin permiso · 404 · 409
 ## Pendiente
 
 - Backups diarios con retención de 7 días: se configuran en el servidor de MySQL, no en la API.
-- El límite de reservas por IP vive en memoria: con más de una instancia de la API habría que moverlo a Redis.
-- Revocar tokens al cerrar sesión (hoy el JWT sigue valiendo hasta que vence).
+- Los límites por IP (reservas y login) viven en memoria: con más de una instancia de la API habría que moverlos a Redis.

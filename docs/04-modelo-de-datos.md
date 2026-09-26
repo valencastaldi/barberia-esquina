@@ -1,8 +1,8 @@
 # 4. Modelo de datos
 
-Base MySQL `esquina_turnos`. El esquema completo está en
-[`backend/src/main/resources/db/migration/V1__esquema.sql`](../backend/src/main/resources/db/migration/V1__esquema.sql)
-y lo aplica Flyway al arrancar la API.
+Base MySQL `esquina_turnos`. El esquema está en las migraciones de
+[`backend/src/main/resources/db/migration/`](../backend/src/main/resources/db/migration/) (`V1__esquema.sql` con el
+modelo de negocio y `V2__token_revocado.sql`) y lo aplica Flyway al arrancar la API.
 
 ## Diagrama entidad-relación
 
@@ -108,6 +108,7 @@ erDiagram
 | `encuesta` | Respuesta de satisfacción | Una por turno (`UNIQUE id_turno`). |
 | `pago` | Cobro de un turno completado | Uno por turno (`UNIQUE id_turno`). |
 | `bloqueo` | Franjas en que un peluquero no atiende | RF-12. No se superpone con turnos pendientes. |
+| `token_revocado` | Sesiones cerradas antes de vencer | Técnica, no es del negocio: el `jti` del JWT hasta que vence. Se limpia sola cada hora. |
 
 Restricciones (`CHECK`) que protegen los datos aunque alguien escriba directo en la base: calificación entre 1 y 5, comisión
 entre 0 y 100, precio y monto no negativos, duración mayor a 0, día de la semana entre 0 y 6, y hora de inicio anterior a la

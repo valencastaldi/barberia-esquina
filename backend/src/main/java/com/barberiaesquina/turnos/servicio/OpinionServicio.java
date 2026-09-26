@@ -5,7 +5,6 @@ import com.barberiaesquina.turnos.modelo.Encuesta;
 import com.barberiaesquina.turnos.modelo.Turno;
 import com.barberiaesquina.turnos.repositorio.BarberoRepositorio;
 import com.barberiaesquina.turnos.repositorio.EncuestaRepositorio;
-import com.barberiaesquina.turnos.servicio.excepcion.ReglaNegocioException;
 import com.barberiaesquina.turnos.web.dto.OpinionDtos.Opinion;
 import com.barberiaesquina.turnos.web.dto.OpinionDtos.PorBarbero;
 import com.barberiaesquina.turnos.web.dto.OpinionDtos.Reporte;
@@ -33,7 +32,7 @@ public class OpinionServicio {
     }
 
     public Reporte reporte(LocalDate desde, LocalDate hasta, Long idBarbero) {
-        if (hasta.isBefore(desde)) throw new ReglaNegocioException("'hasta' no puede ser anterior a 'desde'");
+        Calendario.validarRango(desde, hasta);
         List<Encuesta> todas = encuestas.delPeriodo(desde, hasta);
 
         // Resumen de cada peluquero, siempre con todo el equipo (para compararse).

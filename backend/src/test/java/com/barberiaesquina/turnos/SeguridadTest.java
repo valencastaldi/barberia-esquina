@@ -1,14 +1,22 @@
 package com.barberiaesquina.turnos;
 
+import com.barberiaesquina.turnos.modelo.Barbero;
+import com.barberiaesquina.turnos.modelo.Cliente;
 import com.barberiaesquina.turnos.modelo.EstadoTurno;
+import com.barberiaesquina.turnos.modelo.Rol;
 import com.barberiaesquina.turnos.modelo.Turno;
+import com.barberiaesquina.turnos.seguridad.LimpiezaDeTokens;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 class SeguridadTest extends PruebaDeIntegracion {
+
+    @Autowired LimpiezaDeTokens limpiezaDeTokens;
 
     @Test
     void elPanelPideLogin() throws Exception {
@@ -182,5 +190,94 @@ class SeguridadTest extends PruebaDeIntegracion {
         mvc.perform(json(post("/api/v1/turnos"),
                         reserva(corte.getId(), santiago.getId(), HOY.plusDays(7), "10:00", "otro@test.com")))
                 .andExpect(status().isTooManyRequests());
+    }
+
+    // ---------- La sesión se controla contra la base, no solo contra el token ----------
+
+    @Test
+    void unDuenoPasadoABarberoPierdeLosPermisosAlInstante() throws Exception {
+        Barbero otroDueno = barbero("Nicolás", "nicolas@test.com", Rol.DUENO, 0);
+        String token = login("nicolas@test.com");
+        mvc.perform(conToken(get("/api/v1/clientes"), token)).andExpect(status().isOk());
+
+        otroDueno.setRol(Rol.BARBERO);
+        barberos.save(otroDueno);
+
+        mvc.perform(conToken(get("/api/v1/clientes"), token)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void elTokenDeUnPeluqueroDadoDeBajaDejaDeServir() throws Exception {
+        String token = login("santiago@test.com");
+        santiago.setActivo(false);
+        barberos.save(santiago);
+
+        mvc.perform(conToken(get("/api/v1/turnos"), token)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void cambiarLaContrasenaCierraLasSesionesAnteriores() throws Exception {
+        String token = login("santiago@test.com");
+        santiago.setPasswordHash(passwordEncoder.encode("otra-clave-nueva"));
+        barberos.save(santiago);
+
+        mvc.perform(conToken(get("/api/v1/auth/me"), token)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void cerrarSesionAnulaEseTokenPeroNoLasOtrasSesiones() throws Exception {
+        String compu = login("santiago@test.com");
+        String celular = login("santiago@test.com");
+
+        mvc.perform(conToken(post("/api/v1/auth/logout"), compu)).andExpect(status().isNoContent());
+
+        mvc.perform(conToken(get("/api/v1/auth/me"), compu)).andExpect(status().isUnauthorized());
+        mvc.perform(conToken(get("/api/v1/auth/me"), celular)).andExpect(status().isOk());
+    }
+
+    @Test
+    void laLimpiezaBorraSoloLosTokensRevocadosQueYaVencieron() {
+        jdbc.update("insert into token_revocado (jti, vence) values ('viejo', ?), ('vigente', ?)",
+                AHORA.minusHours(1), AHORA.plusHours(1));
+
+        limpiezaDeTokens.borrarVencidos();
+
+        assertThat(jdbc.queryForList("select jti from token_revocado", String.class)).containsExactly("vigente");
+    }
+
+    @Test
+    void despuesDeDiezLoginsFallidosLaIpEspera() throws Exception {
+        String mal = """
+                {"email": "agustin@test.com", "password": "mal"}""";
+        for (int i = 0; i < 10; i++) {
+            mvc.perform(json(post("/api/v1/auth/login"), mal)).andExpect(status().isUnauthorized());
+        }
+        mvc.perform(json(post("/api/v1/auth/login"), mal)).andExpect(status().isTooManyRequests());
+        // Ni siquiera con la contraseña correcta: si no, el límite no frena nada.
+        mvc.perform(json(post("/api/v1/auth/login"), """
+                        {"email": "agustin@test.com", "password": "%s"}""".formatted(PASSWORD)))
+                .andExpect(status().isTooManyRequests());
+    }
+
+    @Test
+    void unaReservaNoCambiaLosDatosDeUnClienteQueYaExiste() throws Exception {
+        turnoGuardado(agustin, corte, HOY.minusDays(3), "10:00", EstadoTurno.COMPLETADO);   // cliente@test.com
+
+        mvc.perform(json(post("/api/v1/turnos"), reserva(corte.getId(), agustin.getId(), HOY.plusDays(7), "10:00",
+                        "cliente@test.com")))
+                .andExpect(status().isCreated());
+
+        Cliente c = clientes.findByEmailIgnoreCase("cliente@test.com").orElseThrow();
+        assertThat(c.getNombre()).isEqualTo("Mateo");
+        assertThat(c.getTelefono()).isEqualTo("351 415-2233");
+    }
+
+    @Test
+    void losReportesDelPanelNoAceptanRangosDeMasDeUnAno() throws Exception {
+        String dueno = login("agustin@test.com");
+        mvc.perform(conToken(get("/api/v1/pagos"), dueno).param("desde", "2020-01-01").param("hasta", "2026-01-01"))
+                .andExpect(status().isUnprocessableContent());
+        mvc.perform(conToken(get("/api/v1/bloqueos"), dueno).param("desde", "2020-01-01").param("hasta", "2026-01-01"))
+                .andExpect(status().isUnprocessableContent());
     }
 }

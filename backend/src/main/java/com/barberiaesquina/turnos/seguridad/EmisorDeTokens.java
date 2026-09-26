@@ -13,6 +13,7 @@ import java.time.Clock;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
+import java.util.UUID;
 
 /** RNF: JWT con expiración. */
 @Component
@@ -35,12 +36,14 @@ public class EmisorDeTokens {
         Instant vence = ahora.plus(props.jwt().expiracionMinutos(), ChronoUnit.MINUTES);
         var claims = JwtClaimsSet.builder()
                 .issuer(EMISOR)
+                .id(UUID.randomUUID().toString())   // jti: permite revocar este token al cerrar sesión
                 .subject(String.valueOf(barbero.getId()))
                 .issuedAt(ahora)
                 .expiresAt(vence)
                 .claim("email", barbero.getEmail())
                 .claim("nombre", barbero.nombreCompleto())
                 .claim(SeguridadConfig.CLAIM_ROLES, List.of(barbero.getRol().name()))
+                .claim(ConversorDeSesion.CLAIM_CREDENCIAL, ConversorDeSesion.huella(barbero))
                 .build();
         var header = JwsHeader.with(MacAlgorithm.HS256).build();
         String token = encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();

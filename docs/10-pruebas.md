@@ -7,7 +7,7 @@ cd backend
 ./mvnw test
 ```
 
-**36 tests de integración.** Levantan la API completa (Spring, seguridad, JPA, Flyway) sobre **H2 en memoria en modo MySQL**,
+**44 tests de integración.** Levantan la API completa (Spring, seguridad, JPA, Flyway) sobre **H2 en memoria en modo MySQL**,
 con las mismas migraciones que la base real, y le hacen pedidos HTTP con MockMvc.
 
 Usan un **reloj fijo**: martes 22/09/2026 a las 11:00 (Córdoba). Así "hoy" y "ya pasó" dan siempre lo mismo, se corran el
@@ -46,7 +46,7 @@ La base común está en `PruebaDeIntegracion.java`.
 - cobrar un turno y verlo en el reporte (liquidación incluida)
 - la agenda lista los turnos del día con su cobro
 
-**`SeguridadTest`** (14) — login y permisos
+**`SeguridadTest`** (22) — login y permisos
 - el panel pide login; lo que usa el cliente es público
 - login con credenciales incorrectas; un peluquero dado de baja no entra
 - el token identifica al usuario
@@ -58,6 +58,13 @@ La base común está en `PruebaDeIntegracion.java`.
 - un barbero solo cobra y maneja sus propios turnos
 - siempre queda un dueño activo
 - más de diez reservas por hora desde la misma IP se cortan
+- después de diez logins fallidos la IP tiene que esperar
+- un dueño pasado a barbero pierde los permisos al instante, sin esperar a que venza el token
+- el token de un peluquero dado de baja deja de servir; cambiar la contraseña cierra las sesiones anteriores
+- cerrar sesión anula ese token pero no las otras sesiones del mismo usuario
+- la limpieza borra solo los tokens revocados que ya vencieron
+- una reserva pública no cambia los datos de un cliente que ya existe
+- los reportes del panel no aceptan rangos de más de un año
 
 ### H2 no es MySQL
 

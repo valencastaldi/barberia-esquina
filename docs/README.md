@@ -36,7 +36,7 @@ peluquerias/
 
 | | |
 |---|---|
-| Backend | 76 clases Java · 30 endpoints · 36 tests de integración |
+| Backend | 82 clases Java · 30 endpoints · 44 tests de integración |
 | Base de datos | MySQL 8 · 9 tablas · esquema versionado con Flyway |
-| Frontend | React 18 + Vite 5 · 5 pantallas del cliente · 9 del panel |
+| Frontend | React 18 + Vite 6 · 5 pantallas del cliente · 9 del panel |
 | Repo | <https://github.com/valencastaldi/barberia-esquina> |

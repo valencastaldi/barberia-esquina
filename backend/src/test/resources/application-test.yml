@@ -8,3 +8,5 @@ app:
   mail:
     habilitado: false
   datos-demo: false
+  jwt:
+    secreto: secreto-solo-para-los-tests-automaticos-0001

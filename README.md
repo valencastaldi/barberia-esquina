@@ -15,7 +15,7 @@ Hoy los turnos se coordinan por WhatsApp y llamadas. Con este sistema:
 | Carpeta | Qué es | Stack |
 |---|---|---|
 | [`backend/`](backend/) | API REST `/api/v1` | Java 21 · Spring Boot 4 · Spring Security (JWT) · JPA · Flyway · MySQL 8 |
-| [`frontend/`](frontend/) | SPA: sitio del cliente y panel de gestión | React 18 · Vite 5 · React Router |
+| [`frontend/`](frontend/) | SPA: sitio del cliente y panel de gestión | React 18 · Vite 6 · React Router 7 |
 | [`maqueta/`](maqueta/) | Prototipo navegable de todas las pantallas | HTML · CSS · JS |
 
 ## Cómo correrlo
@@ -47,7 +47,7 @@ permisos, reglas de negocio, trazabilidad con los requerimientos de la tesis, pr
 ## Estado
 
 - [x] Maqueta de todas las pantallas
-- [x] API completa: 19 endpoints de la documentación + extensión (peluqueros, clientes, pagos, bloqueos) · 36 tests
+- [x] API completa: 19 endpoints de la documentación + extensión (peluqueros, clientes, pagos, bloqueos) · 44 tests
 - [x] Sitio del cliente: inicio, reserva en 3 pasos, confirmación, cancelación, encuesta
 - [x] Panel de gestión: agenda, pagos, clientes, dashboard, peluqueros, servicios, horarios
 - [ ] Datos reales de la barbería (precios, dirección, teléfono)

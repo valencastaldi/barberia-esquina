@@ -25,13 +25,13 @@ public class AuthControlador {
     }
 
     /**
-     * El JWT no se guarda en el servidor: cerrar sesión es borrarlo en el front.
-     * El endpoint existe porque figura en la Etapa 4 y deja lugar para una lista
-     * de tokens revocados si hiciera falta.
+     * Revoca el token con el que se hizo el pedido: aunque alguien se hubiera
+     * guardado una copia, deja de servir. Las sesiones en otros dispositivos siguen.
      */
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout() {
+        auth.cerrarSesion();
     }
 
     @GetMapping("/me")
