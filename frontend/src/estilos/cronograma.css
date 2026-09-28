@@ -39,7 +39,8 @@ body.admin {
   transform: translateY(-50%);
   font-size: 12px;
   color: var(--texto-3);
-  font-variant-numeric: tabular-nums;
+  font-family: var(--numeros);
+  font-variant-numeric: lining-nums tabular-nums;
 }
 .crono-eje span:first-child { transform: none; }
 
@@ -75,7 +76,7 @@ body.admin {
 .crono-turno:hover { filter: brightness(1.15); z-index: 2; box-shadow: var(--sombra-elev); }
 .crono-turno:focus-visible { outline: 2px solid var(--azul-claro); outline-offset: 1px; z-index: 2; }
 .crono-turno b { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.crono-turno .crono-hora { font-size: 11.5px; color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.crono-turno .crono-hora { font-family: var(--numeros); font-size: 12.5px; color: var(--texto-2); font-variant-numeric: lining-nums tabular-nums; }
 .crono-turno .crono-servicio { color: var(--texto-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .crono-turno .crono-marca {
   position: absolute;
@@ -203,7 +204,7 @@ body.admin {
   .dia-tira:hover { border-color: var(--borde-fuerte); }
   .dia-tira:focus-visible { outline: 2px solid var(--azul-claro); outline-offset: 2px; }
   .dia-tira small { display: block; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--texto-3); }
-  .dia-tira b { display: block; margin-top: 2px; font-family: var(--display); font-size: 19px; }
+  .dia-tira b { display: block; margin-top: 2px; font-family: var(--numeros); font-size: 20px; font-weight: 500; font-variant-numeric: lining-nums tabular-nums; }
   .dia-tira i { display: block; margin-top: 2px; font-style: normal; font-size: 11.5px; color: var(--azul-claro); }
   .dia-tira i.vacio-dia { color: var(--texto-3); }
   .dia-tira[aria-pressed="true"] { background: var(--azul); border-color: var(--azul-claro); }

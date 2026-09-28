@@ -144,10 +144,11 @@ body.admin {
   margin-bottom: 10px;
 }
 .kpi .valor {
-  font-family: var(--display);
+  font-family: var(--numeros);
   font-size: 34px;
   line-height: 1;
-  font-weight: 700;
+  font-weight: 500;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 .kpi .valor small { font-size: 16px; color: var(--texto-3); font-family: var(--sans); font-weight: 500; }
 .kpi .delta { margin-top: 9px; font-size: 12.5px; color: var(--texto-3); }
@@ -194,10 +195,10 @@ body.admin {
 .turno:hover { background: rgba(255,255,255,.022); }
 
 .turno .hora {
-  font-family: var(--display);
-  font-size: 19px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
+  font-family: var(--numeros);
+  font-size: 20px;
+  font-weight: 500;
+  font-variant-numeric: lining-nums tabular-nums;
 }
 .turno .hora small { display: block; font-family: var(--sans); font-size: 12.5px; font-weight: 400; color: var(--texto-3); }
 
@@ -205,7 +206,7 @@ body.admin {
 .turno .quien p { margin-top: 3px; font-size: 13px; color: var(--texto-2); }
 
 .turno .derecha { display: flex; align-items: center; gap: 14px; justify-self: end; }
-.turno .monto { font-size: 14.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.turno .monto { font-family: var(--numeros); font-size: 16px; font-weight: 500; font-variant-numeric: lining-nums tabular-nums; }
 
 .acciones-turno { display: flex; gap: 7px; }
 .mini {
@@ -481,7 +482,7 @@ dialog.modal.lado .modal-cuerpo { min-height: 100%; }
 
 .reparto { display: grid; gap: 16px; }
 .reparto .linea { display: grid; grid-template-columns: 1fr auto; gap: 7px 12px; font-size: 14px; }
-.reparto .linea b { font-variant-numeric: tabular-nums; }
+.reparto .linea b { font-family: var(--numeros); font-weight: 500; font-variant-numeric: lining-nums tabular-nums; }
 .reparto .linea small { color: var(--texto-3); font-size: 12.5px; margin-left: 6px; font-weight: 400; }
 .reparto .pista-barra { grid-column: 1 / -1; height: 8px; border-radius: 4px; background: rgba(255,255,255,.08); overflow: hidden; }
 .reparto .pista-barra i { display: block; height: 100%; border-radius: 4px; }
@@ -528,7 +529,7 @@ dialog.modal.lado .modal-cuerpo { min-height: 100%; }
   border-bottom: 1px solid var(--borde);
 }
 .numeros div { font-size: 12px; color: var(--texto-3); }
-.numeros b { display: block; margin-bottom: 2px; font-family: var(--display); font-size: 18px; white-space: nowrap; color: var(--texto); font-variant-numeric: tabular-nums; }
+.numeros b { display: block; margin-bottom: 2px; font-family: var(--numeros); font-size: 18px; font-weight: 500; white-space: nowrap; color: var(--texto); font-variant-numeric: lining-nums tabular-nums; }
 .numeros b.estrella { color: var(--ambar); }
 
 .tarjeta-pelu .pie { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: auto; }
@@ -566,7 +567,7 @@ table.datos td .quien-celda { display: flex; align-items: center; gap: 12px; }
 
 .ficha-datos { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
 .ficha-datos div { padding: 13px 14px; border-radius: var(--r-sm); background: var(--superficie-2); font-size: 12.5px; color: var(--texto-3); }
-.ficha-datos b { display: block; margin-top: 3px; font-size: 17px; color: var(--texto); font-variant-numeric: tabular-nums; }
+.ficha-datos b { display: block; margin-top: 3px; font-family: var(--numeros); font-size: 18px; font-weight: 500; color: var(--texto); font-variant-numeric: lining-nums tabular-nums; }
 
 .ficha-datos b.alerta { color: #FF8983; }
 

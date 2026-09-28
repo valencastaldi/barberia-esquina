@@ -143,9 +143,10 @@ body.cliente {
 .servicio:active { transform: scale(.99); }
 .servicio h3 { font-size: 15.5px; }
 .servicio .precio {
-  font-family: var(--display);
+  font-family: var(--numeros);
   font-size: 18px;
-  font-weight: 700;
+  font-weight: 500;
+  font-variant-numeric: lining-nums tabular-nums;
   white-space: nowrap;
 }
 .servicio .detalle { grid-column: 1; font-size: 13px; color: var(--texto-2); }
@@ -231,7 +232,7 @@ body.cliente {
   text-transform: uppercase;
   color: var(--texto-3);
 }
-.dia b { display: block; font-family: var(--display); font-size: 21px; margin-top: 3px; }
+.dia b { display: block; font-family: var(--numeros); font-size: 21px; font-weight: 500; margin-top: 3px; font-variant-numeric: lining-nums tabular-nums; }
 .dia i { display: block; font-style: normal; font-size: 11px; color: var(--texto-3); margin-top: 3px; }
 .dia[aria-pressed="true"] {
   background: var(--azul);
@@ -260,8 +261,9 @@ body.cliente {
   background: var(--superficie);
   border: 1px solid var(--borde);
   border-radius: var(--r-sm);
-  font-size: 15px;
-  font-variant-numeric: tabular-nums;
+  font-family: var(--numeros);
+  font-size: 16px;
+  font-variant-numeric: lining-nums tabular-nums;
   transition: border-color .15s ease, background .15s ease;
 }
 .hora:hover:not([disabled]) { border-color: var(--borde-fuerte); }
@@ -305,8 +307,10 @@ body.cliente {
 .resumen .fila span { color: var(--texto-2); }
 .resumen .fila strong { font-weight: 600; text-align: right; }
 .resumen .fila.total strong {
-  font-family: var(--display);
-  font-size: 19px;
+  font-family: var(--numeros);
+  font-size: 20px;
+  font-weight: 500;
+  font-variant-numeric: lining-nums tabular-nums;
   color: var(--azul-claro);
 }
 

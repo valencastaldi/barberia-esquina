@@ -35,6 +35,7 @@
 
   /* --- Tipografía --- */
   --display: "Playfair Display", "Georgia", "Times New Roman", serif;
+  --numeros: "Oswald", "Arial Narrow", sans-serif;   /* precios, horarios, días, KPIs */
   --sans: "Inter", -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
 
   /* --- Medidas --- */
