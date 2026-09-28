@@ -84,6 +84,26 @@ cd frontend && npm run dev
 
 MySQL corre como servicio de Windows (`MySQL80`), así que normalmente ya está prendido.
 
+## Probar desde el celular
+
+El celular tiene que estar en **el mismo WiFi** que la PC (mismo router). En lugar de `npm run dev`:
+
+```bash
+cd frontend
+npm run dev:red
+```
+
+Vite muestra una línea `Network: http://192.168.x.x:5173/`: esa dirección se abre en el navegador del celular
+(y `/admin` para el panel). Solo hace falta el front visible en la red: la API la alcanza a través de él.
+
+Si no abre:
+- **La PC y el celular están en redes distintas** (datos móviles, WiFi de invitados): conectá el celular al mismo WiFi.
+- **El firewall de Windows lo bloquea:** la primera vez Windows pregunta si permitir Node.js; hay que aceptar.
+- **La IP cambió** (el router la reasigna): mirala de nuevo en la salida de `npm run dev:red`.
+
+> Los links de los emails (cancelar, encuesta) apuntan a `FRONTEND_URL`, que en desarrollo es `localhost`: desde el
+> celular no abren. Para probarlos, copiá el link y cambiá `localhost` por la IP de la PC.
+
 ## Compartir una base con datos
 
 No hace falta para trabajar: cada uno tiene su base con los mismos datos de ejemplo. Pero si se quiere pasar **la base
