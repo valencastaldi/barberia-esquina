@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import "../estilos/admin.css";
 import "../estilos/panel.css";
+import "../estilos/cronograma.css";
 import { RequiereSesion, SesionProvider, SoloDueno } from "./sesion.jsx";
 import { Lateral } from "./componentes/Lateral.jsx";
 import Login from "./paginas/Login.jsx";

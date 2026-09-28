@@ -1,8 +1,24 @@
 import { useMemo, useState } from "react";
-import { fechaLarga, pesos } from "../../lib/formato.js";
+import { aFecha, fechaLarga, pesos } from "../../lib/formato.js";
 import { useSesion, usePedidoAdmin } from "../sesion.jsx";
 import { hoyIso, moverPeriodo, porcentaje, rango, tituloPeriodo } from "../fechas.js";
 import { AvisoError, Cabecera, ChipEstado, ChipMedio, EstadoCarga, Kpi, Modal, NOMBRE_MEDIO, Segmentos } from "../componentes/ui.jsx";
+import { Cronograma } from "../componentes/Cronograma.jsx";
+
+const VISTAS = [
+  { valor: "lista", texto: "Lista" },
+  { valor: "cronograma", texto: "Cronograma" },
+];
+
+/** La vista elegida se recuerda en este navegador (si se puede). */
+const CLAVE_VISTA = "esquina.agenda.vista";
+function vistaGuardada() {
+  try {
+    return localStorage.getItem(CLAVE_VISTA) === "cronograma" ? "cronograma" : "lista";
+  } catch {
+    return "lista";
+  }
+}
 
 const PERIODOS = [
   { valor: "dia", texto: "Día" },
@@ -14,18 +30,28 @@ const PERIODOS = [
 export default function Agenda() {
   const { pedir, usuario, esDueno } = useSesion();
   const [fecha, setFecha] = useState(hoyIso);
-  const [periodo, setPeriodo] = useState("dia");
   const [idBarbero, setIdBarbero] = useState(null);
   const [aviso, setAviso] = useState(null);
   const [cobrando, setCobrando] = useState(null);     // turno a completar/cobrar
   const [cancelando, setCancelando] = useState(null);  // turno a cancelar
   const [bloqueando, setBloqueando] = useState(false);
+  const [detalle, setDetalle] = useState(null);        // turno abierto desde el cronograma
+  const [vista, setVista] = useState(vistaGuardada);
+  // El cronograma es de un día: con esa vista el período siempre es "dia".
+  const [periodoLista, setPeriodo] = useState("dia");
+  const periodo = vista === "cronograma" ? "dia" : periodoLista;
+
+  function cambiarVista(v) {
+    setVista(v);
+    try { localStorage.setItem(CLAVE_VISTA, v); } catch { /* sin almacenamiento: no se recuerda */ }
+  }
 
   const [desde, hasta] = rango(fecha, periodo);
   const filtros = { desde, hasta, barbero: idBarbero };
   const turnos = usePedidoAdmin("/turnos", filtros);
   const bloqueos = usePedidoAdmin("/bloqueos", filtros);
   const equipo = usePedidoAdmin("/barberos");   // lista pública: nombres de los activos
+  const horarios = usePedidoAdmin("/horarios"); // horario de la barbería: rango de horas del cronograma
 
   const recargar = () => { turnos.recargar(); bloqueos.recargar(); };
 
@@ -75,6 +101,8 @@ export default function Agenda() {
 
   const activos = equipo.datos ?? [];
   const esHoy = fecha === hoyIso() && periodo === "dia";
+  const puedeTocar = (t) => esDueno || t.barbero.id === usuario.id;
+  const horarioDelDia = horarios.datos?.find((d) => d.diaSemana === aFecha(fecha).getDay());
 
   return (
     <>
@@ -84,7 +112,8 @@ export default function Agenda() {
           <button type="button" className="mini" onClick={() => setFecha(hoyIso())} disabled={esHoy}>Hoy</button>
           <button type="button" className="mini" onClick={() => setFecha(moverPeriodo(fecha, periodo, 1))} aria-label="Siguiente">›</button>
         </div>
-        <Segmentos opciones={PERIODOS} valor={periodo} alCambiar={setPeriodo} etiqueta="Período" />
+        {vista === "lista" && <Segmentos opciones={PERIODOS} valor={periodo} alCambiar={setPeriodo} etiqueta="Período" />}
+        <Segmentos opciones={VISTAS} valor={vista} alCambiar={cambiarVista} etiqueta="Vista" />
         {esDueno && <button type="button" className="btn btn-secundario" onClick={() => setBloqueando(true)}>Bloquear franja</button>}
       </Cabecera>
 
@@ -105,6 +134,26 @@ export default function Agenda() {
         <Kpi etiqueta={esDueno ? "Cobrado" : "Cobraste"} valor={pesos(kpis.cobrado)} delta={`De ${pesos(kpis.estimado)} estimados`} />
       </section>
 
+      {vista === "cronograma" && (
+        <section className="bloque">
+          <header>
+            <div>
+              <h2>Cronograma del día</h2>
+              <p>Tocá un turno para marcarlo, cobrarlo o cancelarlo.</p>
+            </div>
+            <Leyenda />
+          </header>
+          <EstadoCarga pedido={turnos} texto="Cargando la agenda…" />
+          {turnos.datos && (
+            <Cronograma turnos={lista} bloqueos={bloqueos.datos ?? []} horarioDelDia={horarioDelDia} esHoy={esHoy}
+                        barberos={idBarbero ? activos.filter((b) => b.id === idBarbero) : activos}
+                        puedeTocar={puedeTocar} esDueno={esDueno} alElegirTurno={setDetalle}
+                        alQuitarBloqueo={(b) => accion(() => pedir(`/bloqueos/${b.id}`, { metodo: "DELETE" }))} />
+          )}
+        </section>
+      )}
+
+      {vista === "lista" && (
       <section className="bloque">
         <header>
           <div>
@@ -129,6 +178,13 @@ export default function Agenda() {
           </div>
         ))}
       </section>
+      )}
+
+      <ModalDetalle turno={detalle} puedeTocar={detalle ? puedeTocar(detalle) : false} alCerrar={() => setDetalle(null)}
+                    alCompletar={(t) => { setDetalle(null); setCobrando({ turno: t, completar: true }); }}
+                    alCobrar={(t) => { setDetalle(null); setCobrando({ turno: t, completar: false }); }}
+                    alAusente={(t) => { setDetalle(null); accion(() => cambiarEstado(t, "ausente")); }}
+                    alCancelar={(t) => { setDetalle(null); setCancelando(t); }} />
 
       <ModalCobro datos={cobrando} alCerrar={() => setCobrando(null)}
                   alConfirmar={(medio) => accion(async () => {
@@ -208,6 +264,67 @@ function FilaTurno({ t, puedeTocar, alCompletar, alCobrar, alAusente, alCancelar
         {acciones}
       </div>
     </article>
+  );
+}
+
+/** Qué significa cada color del cronograma. */
+function Leyenda() {
+  return (
+    <ul className="crono-leyenda" aria-label="Referencias">
+      <li><i className="estado-pendiente" />Pendiente</li>
+      <li><i className="estado-completado" />Completado</li>
+      <li><i className="sin-cobrar" />Sin cobrar</li>
+      <li><i className="estado-ausente" />Ausente</li>
+      <li><i className="bloqueado" />Bloqueado</li>
+    </ul>
+  );
+}
+
+/** Detalle de un turno tocado en el cronograma, con las mismas acciones que la lista. */
+function ModalDetalle({ turno: t, puedeTocar, alCerrar, alCompletar, alCobrar, alAusente, alCancelar }) {
+  const pendiente = t?.estado === "pendiente";
+  const faltaCobrar = t?.estado === "completado" && !t?.pago;
+  return (
+    <Modal abierto={!!t} alCerrar={alCerrar} titulo={t ? `${t.cliente.nombre} ${t.cliente.apellido}` : ""}
+           bajada={t ? `${fechaLarga(t.fecha)} · ${t.horaInicio} a ${t.horaFin}` : ""}>
+      {t && (
+        <>
+          <div className="detalle-turno">
+            <div><span>Servicio</span><b>{t.servicio.nombre}</b></div>
+            <div><span>Peluquero</span><b>{t.barbero.nombre}</b></div>
+            {puedeTocar && <div><span>Precio</span><b>{pesos(t.precio)}</b></div>}
+            <div><span>Estado</span><ChipEstado estado={t.estado} /></div>
+            {t.estado === "completado" && puedeTocar && (
+              <div>
+                <span>Cobro</span>
+                {t.pago ? <b>{pesos(t.pago.monto)} · {NOMBRE_MEDIO[t.pago.medio]}</b> : <ChipMedio medio={null} />}
+              </div>
+            )}
+            {t.cliente.telefono && (
+              <div><span>Contacto</span><b>{t.cliente.telefono}{t.cliente.email ? ` · ${t.cliente.email}` : ""}</b></div>
+            )}
+            {t.calificacion && <div><span>Encuesta</span><b className="texto-ambar">{"★".repeat(t.calificacion)}</b></div>}
+          </div>
+
+          <div className="modal-pie">
+            {!puedeTocar && <p className="texto-ayuda detalle-ajeno">Es un turno de otro peluquero.</p>}
+            {puedeTocar && pendiente && (
+              <>
+                <button type="button" className="btn btn-peligro" onClick={() => alCancelar(t)}>Cancelar turno</button>
+                <button type="button" className="btn btn-secundario" onClick={() => alAusente(t)}>Ausente</button>
+                <button type="button" className="btn btn-primario" onClick={() => alCompletar(t)}>Completado</button>
+              </>
+            )}
+            {puedeTocar && faltaCobrar && (
+              <button type="button" className="btn btn-primario" onClick={() => alCobrar(t)}>Registrar cobro</button>
+            )}
+            {!(puedeTocar && (pendiente || faltaCobrar)) && (
+              <button type="button" className="btn btn-secundario" onClick={alCerrar}>Cerrar</button>
+            )}
+          </div>
+        </>
+      )}
+    </Modal>
   );
 }
 

@@ -1,0 +1,171 @@
+/* Vista "Cronograma" de la agenda: una columna por peluquero, turnos como bloques. */
+
+body.admin {
+
+.cronograma-envoltorio {
+  overflow-x: auto;            /* con muchos peluqueros, se desliza de costado */
+}
+
+.cronograma {
+  display: grid;
+  min-width: 100%;
+}
+
+/* ---------- Cabecera de columnas ---------- */
+.crono-esquina,
+.crono-cabecera {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--superficie);
+  border-bottom: 1px solid var(--borde);
+}
+.crono-cabecera {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-left: 1px solid var(--borde);
+}
+.crono-cabecera b { display: block; font-size: 14px; }
+.crono-cabecera small { display: block; font-size: 12px; color: var(--texto-3); }
+
+/* ---------- Eje de horas ---------- */
+.crono-eje { position: relative; }
+.crono-eje span {
+  position: absolute;
+  right: 10px;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--texto-3);
+  font-variant-numeric: tabular-nums;
+}
+.crono-eje span:first-child { transform: none; }
+
+/* ---------- Columna de un peluquero ---------- */
+.crono-columna {
+  position: relative;
+  border-left: 1px solid var(--borde);
+  /* Líneas cada media hora; la de la hora en punto, un poco más marcada. */
+  background-image:
+    repeating-linear-gradient(to bottom, rgba(255,255,255,.07) 0 1px, transparent 1px calc(var(--media-hora) * 2)),
+    repeating-linear-gradient(to bottom, rgba(255,255,255,.035) 0 1px, transparent 1px var(--media-hora));
+}
+
+/* ---------- Turno ---------- */
+.crono-turno {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 6px 9px;
+  overflow: hidden;
+  text-align: left;
+  border: 1px solid;
+  border-left-width: 3px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  line-height: 1.3;
+  color: var(--texto);
+  cursor: pointer;
+  transition: filter .12s ease, box-shadow .12s ease;
+}
+.crono-turno:hover { filter: brightness(1.15); z-index: 2; box-shadow: var(--sombra-elev); }
+.crono-turno:focus-visible { outline: 2px solid var(--azul-claro); outline-offset: 1px; z-index: 2; }
+.crono-turno b { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.crono-turno .crono-hora { font-size: 11.5px; color: var(--texto-2); font-variant-numeric: tabular-nums; }
+.crono-turno .crono-servicio { color: var(--texto-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.crono-turno .crono-marca {
+  position: absolute;
+  top: 6px;
+  right: 8px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Turnos de 30 min: todo en una línea para que entre */
+.crono-turno.corto { flex-direction: row; align-items: center; gap: 6px; padding-top: 3px; padding-bottom: 3px; }
+.crono-turno.corto .crono-servicio { display: none; }
+.crono-turno.corto .crono-marca { position: static; margin-left: auto; }
+
+/* Colores por estado (mismos tonos que los chips de la lista) */
+.crono-turno.estado-pendiente  { background: rgba(30,70,210,.18); border-color: rgba(75,120,255,.45); border-left-color: var(--azul-claro); }
+.crono-turno.estado-completado { background: rgba(47,191,113,.12); border-color: rgba(47,191,113,.35); border-left-color: var(--verde); }
+.crono-turno.estado-completado .crono-marca { color: #6FE0A6; }
+.crono-turno.sin-cobrar        { border-left-color: var(--ambar); }
+.crono-turno.sin-cobrar .crono-marca { color: var(--ambar); }
+.crono-turno.estado-ausente    { background: rgba(228,50,43,.10); border-color: rgba(228,50,43,.3); border-left-color: var(--rojo); opacity: .8; }
+.crono-turno.estado-ausente .crono-marca { color: #FF8983; }
+
+/* ---------- Bloqueo ---------- */
+.crono-bloqueo {
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 6px 9px;
+  border: 1px dashed var(--borde-fuerte);
+  border-radius: 8px;
+  background: repeating-linear-gradient(135deg, rgba(255,255,255,.05) 0 8px, transparent 8px 16px);
+  font-size: 12px;
+  color: var(--texto-2);
+  overflow: hidden;
+}
+.crono-quitar {
+  flex: none;
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,.08);
+  color: var(--texto-2);
+  font-size: 15px;
+  line-height: 1;
+}
+.crono-quitar:hover { background: rgba(255,255,255,.16); color: var(--texto); }
+
+/* ---------- Línea de "ahora" ---------- */
+.crono-ahora {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 1;
+  height: 2px;
+  background: var(--rojo);
+  pointer-events: none;
+}
+.crono-ahora::before {
+  content: "";
+  position: absolute;
+  left: -5px;
+  top: -4px;
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--rojo);
+}
+
+.crono-nota { padding: 12px 20px; border-top: 1px solid var(--borde); }
+
+/* ---------- Referencias de colores ---------- */
+.crono-leyenda { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; color: var(--texto-2); }
+.crono-leyenda li { display: flex; align-items: center; gap: 6px; }
+.crono-leyenda i { width: 10px; height: 10px; border-radius: 3px; }
+.crono-leyenda .estado-pendiente  { background: var(--azul-claro); }
+.crono-leyenda .estado-completado { background: var(--verde); }
+.crono-leyenda .sin-cobrar        { background: var(--ambar); }
+.crono-leyenda .estado-ausente    { background: var(--rojo); }
+.crono-leyenda .bloqueado { border: 1px dashed var(--borde-fuerte); background: repeating-linear-gradient(135deg, rgba(255,255,255,.2) 0 2px, transparent 2px 4px); }
+
+/* ---------- Detalle del turno (modal) ---------- */
+.detalle-turno { display: grid; gap: 1px; background: var(--borde); border: 1px solid var(--borde); border-radius: var(--r-sm); overflow: hidden; }
+.detalle-turno > div { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 11px 14px; background: var(--superficie-2); font-size: 14px; }
+.detalle-turno span:first-child { color: var(--texto-2); }
+.detalle-turno b { font-weight: 600; text-align: right; }
+.detalle-ajeno { margin: 0 auto 0 0; }
+
+}
