@@ -73,6 +73,7 @@ public class EmailServicio {
     }
 
     private void enviar(DatosEmail datos, String asunto, String cuerpo) {
+        if (datos.email() == null) return;   // cliente cargado desde el panel sin email
         JavaMailSender sender = mailSender.getIfAvailable();
         if (!props.mail().habilitado() || sender == null) {
             log.info("[email deshabilitado] Para {} — {}", datos.email(), asunto);

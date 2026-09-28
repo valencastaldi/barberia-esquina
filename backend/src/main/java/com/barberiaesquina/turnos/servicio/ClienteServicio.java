@@ -108,7 +108,7 @@ public class ClienteServicio {
         String q = busqueda.trim().toLowerCase(Locale.ROOT);
         String digitos = q.replaceAll("\\D", "");
         return r -> (r.nombre() + " " + r.apellido()).toLowerCase(Locale.ROOT).contains(q)
-                || r.email().toLowerCase(Locale.ROOT).contains(q)
+                || (r.email() != null && r.email().toLowerCase(Locale.ROOT).contains(q))
                 || (!digitos.isEmpty() && r.telefono().replaceAll("\\D", "").contains(digitos));
     }
 

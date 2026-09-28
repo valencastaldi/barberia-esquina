@@ -34,6 +34,7 @@ Con login, cada pedido lleva el header `Authorization: Bearer <token>`.
 | `GET /dashboard/barberos` | 👑 | *Extensión:* rendimiento por peluquero |
 | `GET /barberos/{id}/foto` · `POST /barberos/{id}/foto` · `DELETE /barberos/{id}/foto` | 🔓 · 👑 · 👑 | *Extensión:* foto de perfil del peluquero |
 | `GET /opiniones` | 🔑 | Encuestas con promedio por peluquero, para todo el equipo |
+| `POST /turnos/panel` | 🔑 | *Extensión:* cargar un turno desde el panel (por teléfono o sin reserva) |
 
 ## Errores
 
@@ -183,6 +184,18 @@ Días pasados, a más de 30 días o sin atención → `slots: []`. Si el peluque
 
 409 si el horario se ocupó · 422 si la fecha está fuera de rango · 429 si se pasó el límite por IP.
 Después del commit se envía el email de confirmación con el link `/cancelar/{token}`.
+
+### `POST /turnos/panel` 🔑 — cargar un turno desde el panel
+
+*Extensión.* Mismo cuerpo que `POST /turnos`, pero `cliente.email` es **opcional** (puede ser `null` o `""`).
+Mismas reglas de disponibilidad (409 si el horario está ocupado, 422 fuera de rango); no tiene límite por IP.
+
+- **Dueño:** a cualquier peluquero; con `idBarbero: null` se asigna el libre con menos turnos.
+- **Barbero:** solo a sí mismo; `idBarbero: null` queda para él y otro id → 403.
+- **Cliente:** con email se lo reconoce por el email; sin email, por el teléfono entre los que tampoco tienen email.
+  Si no existe, se crea. Sin email no se mandan emails (confirmación, cancelación ni encuesta).
+
+Respuesta 201: el turno con la misma forma que un elemento de `GET /turnos`.
 
 ### `GET /turnos?desde=&hasta=&barbero=&estado=` 🔑 — agenda
 

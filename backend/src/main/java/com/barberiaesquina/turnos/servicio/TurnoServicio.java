@@ -65,24 +65,53 @@ public class TurnoServicio {
     @Transactional(isolation = Isolation.READ_COMMITTED)
     public ReservaRespuesta reservar(ReservaPedido pedido) {
         Servicio servicio = disponibilidad.servicioReservable(pedido.idServicio());
-        if (disponibilidad.fueraDeRango(pedido.fecha())) {
+        Barbero barbero = barberoLibre(servicio, pedido.idBarbero(), pedido.fecha(), pedido.hora());
+        Turno turno = guardarTurno(servicio, barbero, pedido.fecha(), pedido.hora(), registrarCliente(pedido.cliente()));
+
+        return new ReservaRespuesta(turno.getId(), turno.getFecha(), turno.getHoraInicio(), turno.getHoraFin(),
+                servicio.getNombre(), barbero.nombreCompleto(), turno.getPrecio(),
+                turno.getTokenCancelacion(), cancelableHasta(turno));
+    }
+
+    /**
+     * [Extensión] Turno cargado desde el panel: por teléfono o de alguien que vino sin reservar.
+     * Mismas reglas de disponibilidad que la reserva pública. El dueño se lo puede cargar a
+     * cualquiera; un barbero solo a sí mismo. Si hay email, el cliente recibe la confirmación.
+     */
+    @Transactional(isolation = Isolation.READ_COMMITTED)
+    public Detalle reservarDesdePanel(TurnoPanelPedido pedido) {
+        Long idBarbero = pedido.idBarbero();
+        if (!sesion.esDueno()) {
+            if (idBarbero != null && !idBarbero.equals(sesion.idBarbero())) {
+                throw new AccessDeniedException("Solo el dueño puede cargar turnos a otro peluquero");
+            }
+            idBarbero = sesion.idBarbero();
+        }
+        Servicio servicio = disponibilidad.servicioReservable(pedido.idServicio());
+        Barbero barbero = barberoLibre(servicio, idBarbero, pedido.fecha(), pedido.hora());
+        Turno turno = guardarTurno(servicio, barbero, pedido.fecha(), pedido.hora(),
+                registrarClienteDelPanel(pedido.cliente()));
+        return detalles(List.of(turno)).getFirst();
+    }
+
+    private Barbero barberoLibre(Servicio servicio, Long idBarbero, LocalDate fecha, LocalTime hora) {
+        if (disponibilidad.fueraDeRango(fecha)) {
             throw new ReglaNegocioException("Solo se puede reservar desde hoy hasta dentro de "
                     + props.turnos().diasAnticipacion() + " días");
         }
-
-        Barbero barbero = elegirBarberoLibre(servicio, pedido.idBarbero(), pedido.fecha(), pedido.hora())
+        return elegirBarberoLibre(servicio, idBarbero, fecha, hora)
                 .orElseThrow(() -> new ConflictoException("Ese horario se acaba de ocupar. Elegí otro."));
+    }
 
-        Cliente cliente = registrarCliente(pedido.cliente());
+    private Turno guardarTurno(Servicio servicio, Barbero barbero, LocalDate fecha, LocalTime hora, Cliente cliente) {
         LocalDateTime ahora = calendario.ahora();
-
         Turno turno = new Turno();
         turno.setCliente(cliente);
         turno.setServicio(servicio);
         turno.setBarbero(barbero);
-        turno.setFecha(pedido.fecha());
-        turno.setHoraInicio(pedido.hora());
-        turno.setHoraFin(pedido.hora().plusMinutes(servicio.getDuracionMinutos()));
+        turno.setFecha(fecha);
+        turno.setHoraInicio(hora);
+        turno.setHoraFin(hora.plusMinutes(servicio.getDuracionMinutos()));
         turno.setPrecio(servicio.getPrecio());
         turno.setEstado(EstadoTurno.PENDIENTE);
         turno.setTokenCancelacion(Tokens.nuevo());
@@ -91,10 +120,7 @@ public class TurnoServicio {
         turnos.save(turno);
 
         eventos.publishEvent(new EventosTurno.TurnoReservado(datosEmail(turno), turno.getTokenCancelacion()));
-
-        return new ReservaRespuesta(turno.getId(), turno.getFecha(), turno.getHoraInicio(), turno.getHoraFin(),
-                servicio.getNombre(), barbero.nombreCompleto(), turno.getPrecio(),
-                turno.getTokenCancelacion(), cancelableHasta(turno));
+        return turno;
     }
 
     /**
@@ -126,6 +152,27 @@ public class TurnoServicio {
             nuevo.setNombre(datos.nombre().trim());
             nuevo.setApellido(datos.apellido().trim());
             nuevo.setTelefono(datos.telefono().trim());
+            return clientes.save(nuevo);
+        });
+    }
+
+    /**
+     * Desde el panel el email es opcional. Con email se lo reconoce igual que en la reserva
+     * pública; sin email, por el teléfono entre los clientes que tampoco tienen email.
+     */
+    private Cliente registrarClienteDelPanel(ClientePanelPedido datos) {
+        String email = datos.email() == null || datos.email().isBlank() ? null : datos.email().trim().toLowerCase();
+        String telefono = datos.telefono().trim();
+        Optional<Cliente> existente = email != null
+                ? clientes.findByEmailIgnoreCase(email)
+                : clientes.findFirstByTelefonoAndEmailIsNullOrderByIdAsc(telefono);
+        return existente.orElseGet(() -> {
+            Cliente nuevo = new Cliente();
+            nuevo.setEmail(email);
+            nuevo.setFechaAlta(calendario.ahora());
+            nuevo.setNombre(datos.nombre().trim());
+            nuevo.setApellido(datos.apellido().trim());
+            nuevo.setTelefono(telefono);
             return clientes.save(nuevo);
         });
     }
