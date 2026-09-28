@@ -8,6 +8,10 @@ spring:
     url: ${DB_URL:jdbc:mysql://localhost:3306/esquina_turnos?serverTimezone=America/Argentina/Cordoba}
     username: ${DB_USER:esquina}
     password: ${DB_PASSWORD:esquina}
+  servlet:
+    multipart:
+      max-file-size: 2MB      # fotos de perfil (el front ya las achica a 400x400)
+      max-request-size: 3MB
   jpa:
     open-in-view: false
     hibernate:

@@ -32,6 +32,7 @@ Con login, cada pedido lleva el header `Authorization: Bearer <token>`.
 | `GET /clientes` · `GET /clientes/{id}` | 👑 | *Extensión:* clientes |
 | `GET /pagos` · `POST /pagos` | 👑 · 🔑 | *Extensión:* cobros y liquidación |
 | `GET /dashboard/barberos` | 👑 | *Extensión:* rendimiento por peluquero |
+| `GET /barberos/{id}/foto` · `POST /barberos/{id}/foto` · `DELETE /barberos/{id}/foto` | 🔓 · 👑 · 👑 | *Extensión:* foto de perfil del peluquero |
 | `GET /opiniones` | 🔑 | Encuestas con promedio por peluquero, para todo el equipo |
 
 ## Errores
@@ -263,6 +264,16 @@ Sin fechas: los últimos 30 días.
 ## Extensión
 
 ### `GET /barberos` 🔓 — `[{ "id": 1, "nombre": "Agustín", "apellido": "Rosas", "servicios": [1, 2, 3, 4, 5] }]`
+
+### Foto de perfil
+
+- `GET /barberos/{id}/foto` 🔓 — la imagen (`image/jpeg`, `image/png` o `image/webp`). 404 si no tiene. Se puede guardar en
+  caché un año: la URL que devuelve la API lleva `?v=…` con la fecha de la foto, y cambia cuando se cambia la foto.
+- `POST /barberos/{id}/foto` 👑 — multipart con el campo `archivo`. Responde `{ "foto": "/api/v1/barberos/2/foto?v=…" }`.
+  El tipo se decide por los primeros bytes del archivo (no por el nombre): cualquier otra cosa → 422. Más de 2 MB → 413.
+- `DELETE /barberos/{id}/foto` 👑 → 204.
+
+`GET /barberos` y `GET /barberos/equipo` traen el campo `foto` (esa URL, o `null` si no tiene).
 
 ### `GET /barberos/equipo` 👑 — ficha completa: email, teléfono, rol, comisión, activo, servicios y `diasAtencion`.
 

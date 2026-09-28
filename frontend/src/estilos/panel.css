@@ -124,3 +124,26 @@ body.admin {
   .comentario .puntaje .apagadas { color: rgba(255,255,255,.15); }
   .comentario .sin-comentario { font-style: italic; color: var(--texto-3); }
 }
+
+/* ---------- Foto de perfil ---------- */
+body.admin {
+  .avatar.con-foto { overflow: hidden; background: var(--superficie-2); }
+  .avatar.con-foto img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .avatar.grande { width: 76px; height: 76px; font-size: 24px; }
+
+  .foto-perfil {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+    border-bottom: 1px solid var(--borde);
+  }
+  .foto-perfil .etiqueta-foto { font-size: 12.5px; font-weight: 500; color: var(--texto-2); }
+  .foto-perfil .texto-ayuda { margin: 3px 0 10px; }
+
+  /* El input de archivo queda escondido; se ve el botón y se puede usar con teclado. */
+  .boton-archivo { position: relative; display: inline-flex; align-items: center; cursor: pointer; }
+  .boton-archivo input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .boton-archivo:focus-within { outline: 2px solid var(--azul-claro); outline-offset: 2px; }
+}

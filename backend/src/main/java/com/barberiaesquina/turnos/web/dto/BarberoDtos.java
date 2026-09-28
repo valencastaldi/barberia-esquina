@@ -13,22 +13,32 @@ public final class BarberoDtos {
 
     private BarberoDtos() {}
 
-    /** Lo que ve el cliente al elegir con quién atenderse. */
-    public record Publico(Long id, String nombre, String apellido, List<Long> servicios) {
+    /** Lo que ve el cliente al elegir con quién atenderse. foto = URL de la imagen o null. */
+    public record Publico(Long id, String nombre, String apellido, List<Long> servicios, String foto) {
         public static Publico de(Barbero b) {
-            return new Publico(b.getId(), b.getNombre(), b.getApellido(), idsServicios(b));
+            return new Publico(b.getId(), b.getNombre(), b.getApellido(), idsServicios(b), urlFoto(b));
         }
     }
 
     /** Ficha completa para el panel. */
     public record Detalle(Long id, String nombre, String apellido, String dni, LocalDate fechaNacimiento,
                           String email, String telefono, Rol rol, Integer comisionPct, boolean activo,
-                          LocalDateTime fechaAlta, List<Long> servicios, List<Integer> diasAtencion) {
+                          LocalDateTime fechaAlta, List<Long> servicios, List<Integer> diasAtencion, String foto) {
         public static Detalle de(Barbero b, List<Integer> diasAtencion) {
             return new Detalle(b.getId(), b.getNombre(), b.getApellido(), b.getDni(), b.getFechaNacimiento(),
                     b.getEmail(), b.getTelefono(), b.getRol(), b.getComisionPct(), b.isActivo(),
-                    b.getFechaAlta(), idsServicios(b), diasAtencion);
+                    b.getFechaAlta(), idsServicios(b), diasAtencion, urlFoto(b));
         }
+    }
+
+    /**
+     * La URL lleva la fecha de la última carga (?v=…): si cambia la foto, cambia la URL
+     * y el navegador no muestra la vieja guardada en caché.
+     */
+    public static String urlFoto(Barbero b) {
+        if (b.getFotoActualizada() == null) return null;
+        long version = b.getFotoActualizada().toEpochSecond(java.time.ZoneOffset.UTC);
+        return "/api/v1/barberos/" + b.getId() + "/foto?v=" + version;
     }
 
     /** Alta y edición. La contraseña es obligatoria solo al dar de alta. */

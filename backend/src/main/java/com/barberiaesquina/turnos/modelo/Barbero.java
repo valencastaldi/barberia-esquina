@@ -37,6 +37,9 @@ public class Barbero {
     private Integer comisionPct = 0;
     private boolean activo = true;
 
+    /** [Extensión] Cuándo se subió la foto de perfil; null = sin foto. */
+    private LocalDateTime fotoActualizada;
+
     @ManyToMany
     @JoinTable(name = "barbero_servicio",
             joinColumns = @JoinColumn(name = "id_barbero"),

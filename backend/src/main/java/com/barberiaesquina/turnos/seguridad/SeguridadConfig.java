@@ -54,7 +54,7 @@ public class SeguridadConfig {
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                 .requestMatchers(HttpMethod.GET,
                         "/api/v1/servicios", "/api/v1/barberos", "/api/v1/horarios", "/api/v1/resenas",
-                        "/api/v1/disponibilidad/**").permitAll()
+                        "/api/v1/disponibilidad/**", "/api/v1/barberos/*/foto").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/turnos").permitAll()
                 .requestMatchers("/api/v1/turnos/cancelar/**", "/api/v1/encuestas/**").permitAll()
                 .requestMatchers("/error").permitAll()

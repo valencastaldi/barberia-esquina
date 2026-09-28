@@ -18,6 +18,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
 import java.util.LinkedHashMap;
@@ -76,6 +77,14 @@ public class ManejadorDeErrores extends ResponseEntityExceptionHandler {
         ProblemDetail p = problema(HttpStatus.BAD_REQUEST, "Datos inválidos", "Revisá los datos marcados");
         p.setProperty("errores", errores);
         return ResponseEntity.badRequest().body(p);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex,
+                                                                          HttpHeaders headers, HttpStatusCode status,
+                                                                          WebRequest request) {
+        return ResponseEntity.status(HttpStatus.PAYLOAD_TOO_LARGE)
+                .body(problema(HttpStatus.PAYLOAD_TOO_LARGE, "Archivo muy grande", "La foto no puede pesar más de 2 MB"));
     }
 
     private static ProblemDetail problema(HttpStatus status, String titulo, String detalle) {

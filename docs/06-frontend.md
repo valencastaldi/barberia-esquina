@@ -68,7 +68,7 @@ Escritorio, desde 1024 px (RNF-10). Detalle de qué ve cada rol en [7. Roles y p
 | `/admin/clientes` | Buscador, filtros, paginado de 25, ficha lateral con historial |
 | `/admin/dashboard` | 7 / 30 / 90 días: KPIs, gráfico diario (SVG propio), estrellas, comentarios, rendimiento por peluquero |
 | `/admin/opiniones` | Promedio por peluquero (tocar una tarjeta filtra), lista con filtros "con comentario" y "3 estrellas o menos" |
-| `/admin/peluqueros` | Tarjetas del equipo con números de 30 días; alta y edición |
+| `/admin/peluqueros` | Tarjetas del equipo con números de 30 días; alta y edición, con foto de perfil |
 | `/admin/servicios` | Tabla del catálogo; alta, edición, ocultar, borrar |
 | `/admin/horarios` | Semana de cada peluquero y slot base ("Mis horarios", sin editar, para el barbero) |
 

@@ -17,7 +17,7 @@ function politicaDeSeguridad(apiUrl) {
     "script-src 'self'",
     "style-src 'self' https://fonts.googleapis.com",
     "font-src https://fonts.gstatic.com",
-    "img-src 'self' data:",
+    `img-src 'self' data:${api}`,   // las fotos de los peluqueros las sirve la API
     `connect-src 'self'${api}`,
     "object-src 'none'",
     "base-uri 'self'",

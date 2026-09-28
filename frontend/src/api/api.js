@@ -22,14 +22,24 @@ const MENSAJE_POR_STATUS = {
   429: "Hiciste demasiados pedidos seguidos. Probá de nuevo en un rato.",
 };
 
+/**
+ * Las rutas que devuelve la API (por ejemplo la foto: "/api/v1/barberos/2/foto?v=…")
+ * pasan a apuntar a donde está la API, aunque esté en otro dominio (VITE_API_URL).
+ */
+export function urlDeApi(ruta) {
+  return ruta ? ruta.replace(/^\/api\/v1/, BASE) : null;
+}
+
 export async function api(ruta, { metodo = "GET", cuerpo, params, token } = {}) {
   const url = new URL(BASE + ruta, window.location.origin);
   Object.entries(params ?? {}).forEach(([k, v]) => {
     if (v !== undefined && v !== null && v !== "") url.searchParams.set(k, v);
   });
 
+  // Un FormData (subir una foto) va tal cual: el navegador arma el multipart y su Content-Type.
+  const esArchivo = cuerpo instanceof FormData;
   const headers = { Accept: "application/json" };
-  if (cuerpo !== undefined) headers["Content-Type"] = "application/json";
+  if (cuerpo !== undefined && !esArchivo) headers["Content-Type"] = "application/json";
   if (token) headers.Authorization = `Bearer ${token}`;
 
   let respuesta;
@@ -37,7 +47,7 @@ export async function api(ruta, { metodo = "GET", cuerpo, params, token } = {}) 
     respuesta = await fetch(url, {
       method: metodo,
       headers,
-      body: cuerpo === undefined ? undefined : JSON.stringify(cuerpo),
+      body: cuerpo === undefined ? undefined : esArchivo ? cuerpo : JSON.stringify(cuerpo),
     });
   } catch {
     throw new ErrorApi("No pudimos conectarnos. Revisá tu conexión e intentá de nuevo.", 0);

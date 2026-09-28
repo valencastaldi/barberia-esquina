@@ -4,6 +4,8 @@ import { decimal, pesos } from "../../lib/formato.js";
 import { useSesion, usePedidoAdmin } from "../sesion.jsx";
 import { hoyIso, sumarDias } from "../fechas.js";
 import { AvisoError, Cabecera, EstadoCarga, Interruptor, Modal } from "../componentes/ui.jsx";
+import { Avatar } from "../../componentes/Avatar.jsx";
+import { prepararFoto } from "../../lib/imagen.js";
 
 const LETRAS = ["D", "L", "M", "M", "J", "V", "S"];
 const NOMBRES_DIA = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
@@ -48,7 +50,7 @@ export default function Peluqueros() {
           return (
             <article key={b.id} className={`tarjeta-pelu${b.activo ? "" : " inactivo"}`}>
               <div className="persona">
-                <span className="avatar">{b.nombre[0]}{b.apellido[0]}</span>
+                <Avatar persona={b} />
                 <span>
                   <b>{b.nombre} {b.apellido}</b>
                   <small>{b.rol === "dueno" ? "Dueño" : `Barbero · comisión ${b.comisionPct}%`}</small>
@@ -81,10 +83,18 @@ export default function Peluqueros() {
       </p>
 
       <ModalPeluquero peluquero={editando} servicios={servicios.datos ?? []} alCerrar={() => setEditando(null)}
-                      alGuardar={async (cuerpo) => {
-                        await (editando.id
+                      alGuardar={async (cuerpo, foto) => {
+                        const guardado = await (editando.id
                           ? pedir(`/barberos/${editando.id}`, { metodo: "PUT", cuerpo })
                           : pedir("/barberos", { metodo: "POST", cuerpo }));
+                        // La foto va aparte (multipart) y recién ahora hay id si el peluquero es nuevo.
+                        if (foto.nueva) {
+                          const datos = new FormData();
+                          datos.append("archivo", foto.nueva, "foto.jpg");
+                          await pedir(`/barberos/${guardado.id}/foto`, { metodo: "POST", cuerpo: datos });
+                        } else if (foto.quitar) {
+                          await pedir(`/barberos/${guardado.id}/foto`, { metodo: "DELETE" });
+                        }
                         setEditando(null);
                         equipo.recargar();
                       }} />
@@ -95,9 +105,12 @@ export default function Peluqueros() {
 function ModalPeluquero({ peluquero, servicios, alCerrar, alGuardar }) {
   const [form, setForm] = useState(null);
   const [error, setError] = useState(null);
+  const [foto, setFoto] = useState({ nueva: null, vistaPrevia: null, quitar: false });
+  const [guardando, setGuardando] = useState(false);
   const nuevo = !peluquero?.id;
 
   if (peluquero && !form) {
+    setFoto({ nueva: null, vistaPrevia: null, quitar: false });
     setForm({
       nombre: peluquero.nombre ?? "", apellido: peluquero.apellido ?? "", email: peluquero.email ?? "",
       telefono: peluquero.telefono ?? "", dni: peluquero.dni ?? "", rol: peluquero.rol ?? "barbero",
@@ -114,25 +127,65 @@ function ModalPeluquero({ peluquero, servicios, alCerrar, alGuardar }) {
     ...f, servicios: f.servicios.includes(id) ? f.servicios.filter((x) => x !== id) : [...f.servicios, id],
   }));
 
+  async function elegirFoto(e) {
+    const archivo = e.target.files?.[0];
+    e.target.value = "";                      // permite volver a elegir el mismo archivo
+    if (!archivo) return;
+    setError(null);
+    try {
+      const { blob, vistaPrevia } = await prepararFoto(archivo);
+      setFoto({ nueva: blob, vistaPrevia, quitar: false });
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
   async function guardar(e) {
     e.preventDefault();
+    setGuardando(true);
     try {
       await alGuardar({
         nombre: form.nombre.trim(), apellido: form.apellido.trim(), email: form.email.trim(),
         telefono: form.telefono.trim() || null, dni: form.dni.trim() || null, rol: form.rol,
         comisionPct: form.rol === "dueno" ? 0 : Number(form.comisionPct), servicios: form.servicios,
         password: form.password || null,
-      });
+      }, foto);
     } catch (err) {
       setError(Object.values(err.errores ?? {})[0] ? `${err.message}: ${Object.entries(err.errores).map(([k, v]) => `${k} ${v}`).join(", ")}` : err.message);
+    } finally {
+      setGuardando(false);
     }
   }
+
+  // Qué foto mostrar: la recién elegida, ninguna si se pidió quitar, o la que ya tenía.
+  const tieneFoto = foto.vistaPrevia || (!foto.quitar && peluquero?.foto);
 
   return (
     <Modal abierto={!!peluquero} alCerrar={alCerrar} titulo={nuevo ? "Sumar peluquero" : `Editar a ${peluquero?.nombre}`}
            bajada="Con estos datos entra al panel y aparece como opción al reservar.">
-      {form && (
+      {/* Al cerrar, `form` todavía tiene datos en ese último dibujo: se exige también el peluquero. */}
+      {form && peluquero && (
         <form onSubmit={guardar}>
+          <div className="foto-perfil">
+            <Avatar className="avatar grande" src={foto.vistaPrevia ?? undefined}
+                    persona={{ nombre: form.nombre, apellido: form.apellido, foto: foto.quitar ? null : peluquero.foto }} />
+            <div>
+              <span className="etiqueta-foto">Foto de perfil</span>
+              <p className="texto-ayuda">La ven los clientes al elegir con quién atenderse. Se recorta cuadrada.</p>
+              <div className="acciones-turno">
+                <label className="mini boton-archivo">
+                  {tieneFoto ? "Cambiar foto" : "Subir foto"}
+                  <input type="file" accept="image/jpeg,image/png,image/webp" onChange={elegirFoto} />
+                </label>
+                {tieneFoto && (
+                  <button type="button" className="mini no"
+                          onClick={() => setFoto({ nueva: null, vistaPrevia: null, quitar: !!peluquero.foto })}>
+                    Quitar foto
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
           <div className="fila-campos">
             <label className="campo"><span>Nombre</span><input value={form.nombre} onChange={cambiar("nombre")} required /></label>
             <label className="campo"><span>Apellido</span><input value={form.apellido} onChange={cambiar("apellido")} required /></label>
@@ -172,7 +225,7 @@ function ModalPeluquero({ peluquero, servicios, alCerrar, alGuardar }) {
           <AvisoError mensaje={error} />
           <div className="modal-pie">
             <button type="button" className="btn btn-secundario" onClick={alCerrar}>Cancelar</button>
-            <button type="submit" className="btn btn-primario">Guardar</button>
+            <button type="submit" className="btn btn-primario" disabled={guardando}>{guardando ? "Guardando…" : "Guardar"}</button>
           </div>
         </form>
       )}

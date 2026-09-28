@@ -6,6 +6,7 @@ import { DIAS_CORTOS, aFecha, fechaLarga, pesos, sumarMinutos } from "../../lib/
 import { recordarCliente, recordarReserva, clienteRecordado } from "../../lib/memoria.js";
 import { BarraCta, EstadoPedido, LayoutCliente, Resumen, Topbar } from "../../componentes/cliente/LayoutCliente.jsx";
 import { TarjetaServicio } from "../../componentes/cliente/TarjetaServicio.jsx";
+import { Avatar } from "../../componentes/Avatar.jsx";
 
 const NOMBRES_PASO = { 1: "Servicio", 2: "Día y horario", 3: "Tus datos" };
 const FRANJAS = [
@@ -200,8 +201,9 @@ function PasoHorario({ servicio, barberos, barbero, setBarbero, asignado, setAsi
               Cualquiera
             </button>
             {queLoHacen.map((b) => (
-              <button type="button" key={b.id} className="chip" aria-pressed={barbero?.id === b.id}
+              <button type="button" key={b.id} className="chip con-avatar" aria-pressed={barbero?.id === b.id}
                       onClick={() => { setBarbero(b); limpiarHora(); }}>
+                <Avatar persona={b} className="avatar-chip" />
                 {b.nombre}
               </button>
             ))}
@@ -263,15 +265,21 @@ function QuienAtiende({ slot, barberos, asignado, setAsignado }) {
   const libres = (slot?.barberos ?? []).map((id) => barberos.find((b) => b.id === id)).filter(Boolean);
   if (!asignado || !libres.length) return null;
   if (libres.length === 1) {
-    return <p className="te-atiende">Te atiende <strong>{asignado.nombre}</strong></p>;
+    return (
+      <p className="te-atiende te-atiende-uno">
+        <Avatar persona={asignado} className="avatar-chip" />
+        <span>Te atiende <strong>{asignado.nombre}</strong></span>
+      </p>
+    );
   }
   return (
     <div className="te-atiende">
       <p>A las {slot.hora} te atiende</p>
       <div className="chips" role="group" aria-label={`Peluqueros libres a las ${slot.hora}`}>
         {libres.map((b) => (
-          <button type="button" key={b.id} className="chip" aria-pressed={asignado.id === b.id}
+          <button type="button" key={b.id} className="chip con-avatar" aria-pressed={asignado.id === b.id}
                   onClick={() => setAsignado(b)}>
+            <Avatar persona={b} className="avatar-chip" />
             {b.nombre}
           </button>
         ))}

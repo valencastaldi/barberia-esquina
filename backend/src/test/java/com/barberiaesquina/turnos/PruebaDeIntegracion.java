@@ -75,7 +75,7 @@ public abstract class PruebaDeIntegracion {
     @BeforeEach
     void baseLimpia() {
         for (String tabla : new String[]{"token_revocado", "pago", "encuesta", "bloqueo", "turno", "cliente", "horario_atencion",
-                "barbero_servicio", "servicio", "barbero"}) {
+                "barbero_servicio", "servicio", "barbero_foto", "barbero"}) {
             jdbc.update("delete from " + tabla);
         }
         limiteDeReservas.reiniciar();

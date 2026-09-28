@@ -107,6 +107,7 @@ erDiagram
 | `turno` | Cada reserva | Guarda el `precio` del momento, así los cambios de precio no alteran el historial. |
 | `encuesta` | Respuesta de satisfacción | Una por turno (`UNIQUE id_turno`). |
 | `pago` | Cobro de un turno completado | Uno por turno (`UNIQUE id_turno`). |
+| `barbero_foto` | Foto de perfil de cada peluquero | Tabla aparte para que listar el equipo no traiga los bytes. En la base (no en una carpeta) para que viaje con los backups. `barbero.foto_actualizada` se usa para la URL. |
 | `bloqueo` | Franjas en que un peluquero no atiende | RF-12. No se superpone con turnos pendientes. |
 | `token_revocado` | Sesiones cerradas antes de vencer | Técnica, no es del negocio: el `jti` del JWT hasta que vence. Se limpia sola cada hora. |
 
