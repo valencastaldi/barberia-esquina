@@ -85,10 +85,18 @@ body.admin {
   font-weight: 600;
 }
 
-/* Turnos de 30 min: todo en una línea para que entre */
-.crono-turno.corto { flex-direction: row; align-items: center; gap: 6px; padding-top: 3px; padding-bottom: 3px; }
-.crono-turno.corto .crono-servicio { display: none; }
-.crono-turno.corto .crono-marca { position: static; margin-left: auto; }
+.crono-linea { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+
+/* Turnos de 30 min: dos renglones → la hora arriba y "Cliente · Servicio" abajo */
+.crono-turno.corto { gap: 2px; padding-top: 5px; padding-bottom: 5px; }
+.crono-turno.corto .crono-linea { flex-direction: row; align-items: baseline; gap: 0; }
+.crono-turno.corto .crono-linea b { flex: none; max-width: 70%; }
+.crono-turno.corto .crono-servicio::before { content: " · "; }
+
+/* Más cortos todavía: un solo renglón */
+.crono-turno.mini { flex-direction: row; align-items: center; gap: 6px; padding-top: 2px; padding-bottom: 2px; }
+.crono-turno.mini .crono-servicio { display: none; }
+.crono-turno.mini .crono-marca { position: static; margin-left: auto; }
 
 /* Colores por estado (mismos tonos que los chips de la lista) */
 .crono-turno.estado-pendiente  { background: rgba(30,70,210,.18); border-color: rgba(75,120,255,.45); }

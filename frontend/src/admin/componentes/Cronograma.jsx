@@ -88,15 +88,20 @@ export function Cronograma({ turnos, bloqueos, barberos, horarioDelDia, esHoy, p
             {visibles.filter((t) => t.barbero.id === b.id).map((t) => {
               const h = y(t.horaFin) - y(t.horaInicio) - 3;
               const sinCobrar = t.estado === "completado" && !t.pago && puedeTocar(t);
+              // Según el alto: 3 renglones (45 min o más), 2 (30 min) o 1 (menos).
+              const tamano = h >= 70 ? "" : h >= 40 ? " corto" : " mini";
               return (
                 <button type="button" key={t.id}
-                        className={`crono-turno estado-${t.estado}${sinCobrar ? " sin-cobrar" : ""}${h < 40 ? " corto" : ""}`}
+                        className={`crono-turno estado-${t.estado}${sinCobrar ? " sin-cobrar" : ""}${tamano}`}
                         style={{ top: y(t.horaInicio), height: h }}
                         onClick={() => alElegirTurno(t)}
+                        title={`${t.horaInicio}–${t.horaFin} · ${t.cliente.nombre} ${t.cliente.apellido} · ${t.servicio.nombre}`}
                         aria-label={`${t.horaInicio} a ${t.horaFin}, ${t.cliente.nombre} ${t.cliente.apellido}, ${t.servicio.nombre}, ${t.estado}${sinCobrar ? ", sin cobrar" : ""}`}>
                   <span className="crono-hora">{t.horaInicio}–{t.horaFin}</span>
-                  <b>{t.cliente.nombre} {t.cliente.apellido}</b>
-                  <span className="crono-servicio">{t.servicio.nombre}</span>
+                  <span className="crono-linea">
+                    <b>{t.cliente.nombre} {t.cliente.apellido}</b>
+                    <span className="crono-servicio">{t.servicio.nombre}</span>
+                  </span>
                   <span className="crono-marca">{marca(t, sinCobrar)}</span>
                 </button>
               );
