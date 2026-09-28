@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { aFecha, fechaLarga, pesos } from "../../lib/formato.js";
+import { DIAS_CORTOS, aFecha, fechaLarga, pesos } from "../../lib/formato.js";
 import { useSesion, usePedidoAdmin } from "../sesion.jsx";
-import { hoyIso, moverPeriodo, porcentaje, rango, tituloPeriodo } from "../fechas.js";
+import { hoyIso, moverPeriodo, porcentaje, rango, sumarDias, tituloPeriodo } from "../fechas.js";
 import { AvisoError, Cabecera, ChipEstado, ChipMedio, EstadoCarga, Kpi, Modal, NOMBRE_MEDIO, Segmentos } from "../componentes/ui.jsx";
 import { Cronograma } from "../componentes/Cronograma.jsx";
 
@@ -24,6 +24,7 @@ const PERIODOS = [
   { valor: "dia", texto: "Día" },
   { valor: "semana", texto: "Semana" },
   { valor: "mes", texto: "Mes" },
+  { valor: "proximos", texto: "Próximos" },
 ];
 
 /** RF-09, RF-10, RF-11, RF-12, RF-14: agenda, cambio de estado, cobro y bloqueos. */
@@ -46,14 +47,19 @@ export default function Agenda() {
     try { localStorage.setItem(CLAVE_VISTA, v); } catch { /* sin almacenamiento: no se recuerda */ }
   }
 
+  const proximos = periodo === "proximos";
   const [desde, hasta] = rango(fecha, periodo);
   const filtros = { desde, hasta, barbero: idBarbero };
-  const turnos = usePedidoAdmin("/turnos", filtros);
+  // "Próximos": solo lo que falta atender (los reservados de hoy en adelante).
+  const turnos = usePedidoAdmin("/turnos", { ...filtros, estado: proximos ? "pendiente" : undefined });
   const bloqueos = usePedidoAdmin("/bloqueos", filtros);
+  // Tira de días del cronograma: cuántos turnos hay en cada uno de los próximos 14 días.
+  const tira = usePedidoAdmin(vista === "cronograma" ? "/turnos" : null,
+                              { desde: hoyIso(), hasta: sumarDias(hoyIso(), 13), barbero: idBarbero });
   const equipo = usePedidoAdmin("/barberos");   // lista pública: nombres de los activos
   const horarios = usePedidoAdmin("/horarios"); // horario de la barbería: rango de horas del cronograma
 
-  const recargar = () => { turnos.recargar(); bloqueos.recargar(); };
+  const recargar = () => { turnos.recargar(); bloqueos.recargar(); tira.recargar(); };
 
   /** Ejecuta una acción; si falla, muestra el motivo que da la API. */
   async function accion(fn) {
@@ -85,6 +91,9 @@ export default function Agenda() {
       cobrado: suyos.reduce((a, t) => a + (t.pago ? Number(t.pago.monto) : 0), 0),
       estimado: suyos.filter((t) => t.estado === "pendiente" || t.estado === "completado")
                      .reduce((a, t) => a + Number(t.precio), 0),
+      // Para "Próximos"
+      hoy: suyos.filter((t) => t.fecha === hoyIso()).length,
+      semana: suyos.filter((t) => t.fecha <= sumarDias(hoyIso(), 6)).length,
     };
   }, [lista, esDueno, usuario.id]);
 
@@ -107,11 +116,13 @@ export default function Agenda() {
   return (
     <>
       <Cabecera titulo="Agenda" bajada={tituloPeriodo(fecha, periodo)}>
-        <div className="navegador" role="group" aria-label="Cambiar fecha">
-          <button type="button" className="mini" onClick={() => setFecha(moverPeriodo(fecha, periodo, -1))} aria-label="Anterior">‹</button>
-          <button type="button" className="mini" onClick={() => setFecha(hoyIso())} disabled={esHoy}>Hoy</button>
-          <button type="button" className="mini" onClick={() => setFecha(moverPeriodo(fecha, periodo, 1))} aria-label="Siguiente">›</button>
-        </div>
+        {!proximos && (
+          <div className="navegador" role="group" aria-label="Cambiar fecha">
+            <button type="button" className="mini" onClick={() => setFecha(moverPeriodo(fecha, periodo, -1))} aria-label="Anterior">‹</button>
+            <button type="button" className="mini" onClick={() => setFecha(hoyIso())} disabled={esHoy}>Hoy</button>
+            <button type="button" className="mini" onClick={() => setFecha(moverPeriodo(fecha, periodo, 1))} aria-label="Siguiente">›</button>
+          </div>
+        )}
         {vista === "lista" && <Segmentos opciones={PERIODOS} valor={periodo} alCambiar={setPeriodo} etiqueta="Período" />}
         <Segmentos opciones={VISTAS} valor={vista} alCambiar={cambiarVista} etiqueta="Vista" />
         {esDueno && <button type="button" className="btn btn-secundario" onClick={() => setBloqueando(true)}>Bloquear franja</button>}
@@ -126,6 +137,15 @@ export default function Agenda() {
 
       <AvisoError mensaje={aviso} alCerrar={() => setAviso(null)} />
 
+      {proximos ? (
+        <section className="kpis">
+          <Kpi destacado etiqueta={esDueno ? "Turnos reservados" : "Tus turnos reservados"} valor={kpis.total}
+               delta={`Hasta el ${fechaLarga(hasta)}`} />
+          <Kpi etiqueta="Hoy" valor={kpis.hoy} delta="Pendientes de hoy" />
+          <Kpi etiqueta="Próximos 7 días" valor={kpis.semana} delta="Incluye hoy" />
+          <Kpi etiqueta="Facturación estimada" valor={pesos(kpis.estimado)} delta="Si vienen todos" />
+        </section>
+      ) : (
       <section className="kpis">
         <Kpi destacado etiqueta={`${esDueno ? "Turnos" : "Tus turnos"} ${periodo === "dia" ? "del día" : "del período"}`} valor={kpis.total}
              delta={`${kpis.pendientes} por atender`} />
@@ -133,6 +153,7 @@ export default function Agenda() {
         <Kpi etiqueta="Ausentes" valor={kpis.ausentes} delta={`${porcentaje(kpis.ausentismo)} de los atendibles`} tono="baja" />
         <Kpi etiqueta={esDueno ? "Cobrado" : "Cobraste"} valor={pesos(kpis.cobrado)} delta={`De ${pesos(kpis.estimado)} estimados`} />
       </section>
+      )}
 
       {vista === "cronograma" && (
         <section className="bloque">
@@ -143,6 +164,7 @@ export default function Agenda() {
             </div>
             <Leyenda />
           </header>
+          <TiraDias turnos={tira.datos} fecha={fecha} alElegir={setFecha} />
           <EstadoCarga pedido={turnos} texto="Cargando la agenda…" />
           {turnos.datos && (
             <Cronograma turnos={lista} bloqueos={bloqueos.datos ?? []} horarioDelDia={horarioDelDia} esHoy={esHoy}
@@ -157,8 +179,10 @@ export default function Agenda() {
       <section className="bloque">
         <header>
           <div>
-            <h2>{periodo === "dia" ? "Turnos del día" : "Turnos"}</h2>
-            <p>Marcar un turno como completado le envía al cliente el email con la encuesta.</p>
+            <h2>{periodo === "dia" ? "Turnos del día" : proximos ? "Próximos turnos" : "Turnos"}</h2>
+            <p>{proximos
+              ? "Todo lo que falta atender, de hoy en adelante, agrupado por día."
+              : "Marcar un turno como completado le envía al cliente el email con la encuesta."}</p>
           </div>
           <span className="eyebrow">{lista.length} turnos</span>
         </header>
@@ -166,7 +190,12 @@ export default function Agenda() {
         {turnos.datos && !porDia.length && <div className="vacio">No hay turnos en este período.</div>}
         {porDia.map(([dia, filas]) => (
           <div key={dia}>
-            {periodo !== "dia" && <h3 className="separador-dia">{fechaLarga(dia)}</h3>}
+            {periodo !== "dia" && (
+              <h3 className="separador-dia">
+                {dia === hoyIso() ? "Hoy · " : dia === sumarDias(hoyIso(), 1) ? "Mañana · " : ""}{fechaLarga(dia)}
+                <span>{filas.filter((f) => f.tipo === "turno").length} turnos</span>
+              </h3>
+            )}
             {filas.map((f) => f.tipo === "bloqueo"
               ? <FilaBloqueo key={`b${f.b.id}`} b={f.b} puedeQuitar={esDueno}
                              alQuitar={() => accion(() => pedir(`/bloqueos/${f.b.id}`, { metodo: "DELETE" }))} />
@@ -264,6 +293,31 @@ function FilaTurno({ t, puedeTocar, alCompletar, alCobrar, alAusente, alCancelar
         {acciones}
       </div>
     </article>
+  );
+}
+
+/**
+ * Los próximos 14 días con cuántos turnos tiene cada uno: para ver de un vistazo
+ * lo que viene y saltar a ese día en el cronograma.
+ */
+function TiraDias({ turnos, fecha, alElegir }) {
+  const dias = Array.from({ length: 14 }, (_, i) => sumarDias(hoyIso(), i));
+  const cuenta = (d) => (turnos ?? []).filter((t) => t.fecha === d && t.estado !== "cancelado").length;
+  return (
+    <div className="tira-dias" role="group" aria-label="Próximos días">
+      {dias.map((d, i) => {
+        const f = aFecha(d);
+        const n = cuenta(d);
+        return (
+          <button type="button" key={d} className="dia-tira" aria-pressed={d === fecha} onClick={() => alElegir(d)}
+                  aria-label={`${fechaLarga(d)}: ${n} ${n === 1 ? "turno" : "turnos"}`}>
+            <small>{i === 0 ? "Hoy" : DIAS_CORTOS[f.getDay()]}</small>
+            <b>{f.getDate()}</b>
+            <i className={n ? "" : "vacio-dia"}>{turnos ? `${n} ${n === 1 ? "turno" : "turnos"}` : "…"}</i>
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

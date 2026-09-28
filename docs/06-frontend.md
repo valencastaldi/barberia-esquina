@@ -63,7 +63,7 @@ Escritorio, desde 1024 px (RNF-10). Detalle de qué ve cada rol en [7. Roles y p
 | Ruta | Pantalla |
 |---|---|
 | `/admin/login` | Ingreso |
-| `/admin/agenda` | Dos vistas: **Lista** (día / semana / mes) y **Cronograma** (el día en una grilla con una columna por peluquero, cada turno como un bloque del largo de su duración, colores por estado, franjas bloqueadas y línea de "ahora"; tocando un bloque se abre el detalle con las mismas acciones). En ambas: navegación ‹ Hoy ›, filtro por peluquero, completar (pregunta cómo pagó), ausente, cancelar, registrar cobro, bloquear franja. La vista elegida se recuerda en el navegador |
+| `/admin/agenda` | Dos vistas: **Lista** (día / semana / mes / **próximos**: todo lo pendiente de hoy a 30 días, agrupado por día) y **Cronograma** (con una tira de los próximos 14 días y cuántos turnos tiene cada uno para saltar a ese día; el día en una grilla con una columna por peluquero, cada turno como un bloque del largo de su duración, colores por estado, franjas bloqueadas y línea de "ahora"; tocando un bloque se abre el detalle con las mismas acciones). En ambas: navegación ‹ Hoy ›, filtro por peluquero, completar (pregunta cómo pagó), ausente, cancelar, registrar cobro, bloquear franja. La vista elegida se recuerda en el navegador |
 | `/admin/pagos` | Hoy / 7 / 30 días: cobrado, ticket promedio, para la casa, sin cobrar, por medio de pago, liquidación, movimientos |
 | `/admin/clientes` | Buscador, filtros, paginado de 25, ficha lateral con historial |
 | `/admin/dashboard` | 7 / 30 / 90 días: KPIs, gráfico diario (SVG propio), estrellas, comentarios, rendimiento por peluquero |

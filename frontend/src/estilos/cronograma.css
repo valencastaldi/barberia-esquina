@@ -4,6 +4,7 @@ body.admin {
 
 .cronograma-envoltorio {
   overflow-x: auto;            /* con muchos peluqueros, se desliza de costado */
+  scrollbar-color: var(--borde-fuerte) transparent;
 }
 
 .cronograma {
@@ -167,4 +168,41 @@ body.admin {
 .detalle-turno b { font-weight: 600; text-align: right; }
 .detalle-ajeno { margin: 0 auto 0 0; }
 
+}
+
+/* ---------- Tira de próximos días (arriba del cronograma) ---------- */
+body.admin {
+  .tira-dias {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 14px 20px;
+    border-bottom: 1px solid var(--borde);
+    scrollbar-width: thin;
+    scrollbar-color: var(--borde-fuerte) transparent;
+  }
+  .dia-tira {
+    flex: none;
+    width: 76px;
+    padding: 8px 0 9px;
+    border: 1px solid var(--borde);
+    border-radius: var(--r-sm);
+    background: var(--superficie-2);
+    text-align: center;
+    color: var(--texto);
+    transition: border-color .14s ease, background .14s ease;
+  }
+  .dia-tira:hover { border-color: var(--borde-fuerte); }
+  .dia-tira:focus-visible { outline: 2px solid var(--azul-claro); outline-offset: 2px; }
+  .dia-tira small { display: block; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--texto-3); }
+  .dia-tira b { display: block; margin-top: 2px; font-family: var(--display); font-size: 19px; }
+  .dia-tira i { display: block; margin-top: 2px; font-style: normal; font-size: 11.5px; color: var(--azul-claro); }
+  .dia-tira i.vacio-dia { color: var(--texto-3); }
+  .dia-tira[aria-pressed="true"] { background: var(--azul); border-color: var(--azul-claro); }
+  .dia-tira[aria-pressed="true"] small,
+  .dia-tira[aria-pressed="true"] i { color: rgba(255,255,255,.85); }
+
+  /* Cantidad de turnos al lado del día en la lista agrupada */
+  .separador-dia { display: flex; justify-content: space-between; }
+  .separador-dia span { font-weight: 500; letter-spacing: .06em; }
 }

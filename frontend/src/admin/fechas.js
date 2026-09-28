@@ -8,8 +8,15 @@ export function sumarDias(iso, n) {
   return aIso(f);
 }
 
-/** Rango [desde, hasta] del período que contiene a la fecha. La semana va de lunes a domingo. */
+/** Hasta cuántos días adelante se puede reservar (app.turnos.dias-anticipacion en la API). */
+export const DIAS_RESERVABLES = 30;
+
+/**
+ * Rango [desde, hasta] del período que contiene a la fecha. La semana va de lunes a domingo.
+ * "proximos" no depende de la fecha: siempre es de hoy a lo más lejos que se puede reservar.
+ */
 export function rango(iso, periodo) {
+  if (periodo === "proximos") return [hoyIso(), sumarDias(hoyIso(), DIAS_RESERVABLES)];
   const f = aFecha(iso);
   if (periodo === "semana") {
     const desdeLunes = (f.getDay() + 6) % 7;
@@ -33,6 +40,7 @@ export function moverPeriodo(iso, periodo, sentido) {
 
 /** "Mar 23 de septiembre", "22 al 28 de septiembre", "Septiembre 2026" */
 export function tituloPeriodo(iso, periodo) {
+  if (periodo === "proximos") return `Turnos reservados de hoy a ${DIAS_RESERVABLES} días`;
   const [desde, hasta] = rango(iso, periodo);
   const d = aFecha(desde), h = aFecha(hasta);
   if (periodo === "mes") return `${MESES[d.getMonth()][0].toUpperCase()}${MESES[d.getMonth()].slice(1)} ${d.getFullYear()}`;
