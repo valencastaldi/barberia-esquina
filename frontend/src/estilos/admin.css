@@ -42,7 +42,8 @@ body.admin {
 .lateral .marca b {
   display: block;
   font-family: var(--display);
-  font-size: 15px;
+  font-size: 16px;
+  font-weight: 500;
   letter-spacing: .03em;
 }
 .lateral .marca small { display: block; font-size: 12px; color: var(--texto-3); }
@@ -95,7 +96,7 @@ body.admin {
   margin-bottom: 26px;
   border-bottom: 1px solid var(--borde);
 }
-.cabecera h1 { font-family: var(--display); font-size: 27px; }
+.cabecera h1 { font-family: var(--display); font-size: 28px; font-weight: 500; }
 .cabecera p { margin-top: 5px; color: var(--texto-2); font-size: 14px; }
 .cabecera .acciones { display: flex; gap: 10px; flex: none; }
 .cabecera .btn { height: 42px; font-size: 14px; }
@@ -349,7 +350,7 @@ table.datos td.fin { text-align: right; }
   border-radius: 50%;
   border: 1px solid var(--borde-fuerte);
 }
-.caja-login h1 { font-family: var(--display); font-size: 23px; text-align: center; }
+.caja-login h1 { font-family: var(--display); font-size: 24px; font-weight: 500; text-align: center; }
 .caja-login > p { margin: 8px 0 26px; text-align: center; color: var(--texto-2); font-size: 14px; }
 .caja-login .pie-login { margin-top: 20px; text-align: center; font-size: 13px; color: var(--texto-3); }
 .caja-login .pie-login a { color: var(--azul-claro); }
@@ -406,7 +407,7 @@ dialog.modal {
 }
 dialog.modal::backdrop { background: rgba(4, 5, 7, .72); }
 .modal-cuerpo { padding: 26px 28px 24px; }
-.modal-cuerpo > h2 { font-family: var(--display); font-size: 22px; }
+.modal-cuerpo > h2 { font-family: var(--display); font-size: 24px; font-weight: 500; }
 .modal-cuerpo > p.bajada { margin: 5px 0 20px; font-size: 14px; color: var(--texto-2); }
 .modal-pie { display: flex; justify-content: flex-end; gap: 10px; margin-top: 22px; }
 .modal-pie .btn { height: 44px; font-size: 14px; }

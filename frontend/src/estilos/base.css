@@ -34,8 +34,8 @@
   --texto-3:      #8A909C;
 
   /* --- Tipografía --- */
-  --display: "Playfair Display", "Georgia", "Times New Roman", serif;
-  --numeros: "Oswald", "Arial Narrow", sans-serif;   /* precios, horarios, días, KPIs */
+  --display: "Oswald", "Arial Narrow", sans-serif;   /* títulos, nombres y marca */
+  --numeros: var(--display);                          /* precios, horarios, días, KPIs */
   --sans: "Inter", -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
 
   /* --- Medidas --- */
@@ -81,7 +81,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 /* --- Tipos de display --- */
 .display {
   font-family: var(--display);
-  font-weight: 700;
+  font-weight: 500;
   letter-spacing: 0.01em;
 }
 

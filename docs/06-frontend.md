@@ -85,7 +85,7 @@ La política no se aplica en `npm run dev` porque Vite necesita scripts inline p
 
 ## Estilos
 
-- **Identidad:** negro + azul del logo (no el dorado del documento). Playfair Display para títulos y precios, Inter para
+- **Identidad:** negro + azul del logo (no el dorado del documento). Oswald para títulos, nombres y números (precios, horarios, días; token `--display`), Inter para
   la interfaz. Contraste AA, texto mínimo 12 px.
 - **Tokens** en `base.css`: `--negro`, `--superficie`, `--azul`, `--azul-claro`, `--rojo` (solo destructivo), `--verde`
   (completado), `--ambar` (estrellas), `--celeste` (Mercado Pago)…
