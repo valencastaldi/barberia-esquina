@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
-import { DIAS_CORTOS, aFecha, fechaLarga, pesos } from "../../lib/formato.js";
+import { useEffect, useMemo, useState } from "react";
+import { ErrorApi } from "../../api/api.js";
+import { DIAS_CORTOS, aFecha, fechaLarga, pesos, sumarMinutos } from "../../lib/formato.js";
 import { useSesion, usePedidoAdmin } from "../sesion.jsx";
 import { hoyIso, moverPeriodo, porcentaje, rango, sumarDias, tituloPeriodo } from "../fechas.js";
 import { AvisoError, Cabecera, ChipEstado, ChipMedio, EstadoCarga, Kpi, Modal, NOMBRE_MEDIO, Segmentos } from "../componentes/ui.jsx";
@@ -36,6 +37,7 @@ export default function Agenda() {
   const [cobrando, setCobrando] = useState(null);     // turno a completar/cobrar
   const [cancelando, setCancelando] = useState(null);  // turno a cancelar
   const [bloqueando, setBloqueando] = useState(false);
+  const [cargandoTurno, setCargandoTurno] = useState(false);
   const [detalle, setDetalle] = useState(null);        // turno abierto desde el cronograma
   const [vista, setVista] = useState(vistaGuardada);
   // El cronograma es de un día: con esa vista el período siempre es "dia".
@@ -126,6 +128,7 @@ export default function Agenda() {
         {vista === "lista" && <Segmentos opciones={PERIODOS} valor={periodo} alCambiar={setPeriodo} etiqueta="Período" />}
         <Segmentos opciones={VISTAS} valor={vista} alCambiar={cambiarVista} etiqueta="Vista" />
         {esDueno && <button type="button" className="btn btn-secundario" onClick={() => setBloqueando(true)}>Bloquear franja</button>}
+        <button type="button" className="btn btn-primario" onClick={() => setCargandoTurno(true)}>Nuevo turno</button>
       </Cabecera>
 
       {activos.length > 1 && (
@@ -250,6 +253,13 @@ export default function Agenda() {
                       setBloqueando(false);
                       recargar();
                     }} />
+
+      <ModalTurno abierto={cargandoTurno} alCerrar={() => setCargandoTurno(false)} fechaInicial={fecha}
+                  equipo={activos} esDueno={esDueno} idPropio={usuario.id} alGuardar={async (cuerpo) => {
+                    await pedir("/turnos/panel", { metodo: "POST", cuerpo });
+                    setCargandoTurno(false);
+                    recargar();
+                  }} />
     </>
   );
 }
@@ -487,6 +497,208 @@ function ModalBloqueo({ abierto, alCerrar, fechaInicial, equipo, idPropio, alGua
           <div className="modal-pie">
             <button type="button" className="btn btn-secundario" onClick={alCerrar}>Cancelar</button>
             <button type="submit" className="btn btn-primario" disabled={guardando}>{guardando ? "Guardando…" : "Bloquear"}</button>
+          </div>
+        </form>
+      )}
+    </Modal>
+  );
+}
+
+const CLIENTE_VACIO = { nombre: "", apellido: "", email: "", telefono: "" };
+
+/** Como en la reserva del cliente, pero el email es opcional. */
+function validarCliente(c) {
+  const errores = {};
+  if (!c.nombre.trim()) errores.nombre = "Falta el nombre";
+  if (!c.apellido.trim()) errores.apellido = "Falta el apellido";
+  if (c.email.trim() && !/^\S+@\S+\.\S+$/.test(c.email.trim())) errores.email = "Revisá el email o dejalo vacío";
+  if (!/^[0-9 +()-]{8,30}$/.test(c.telefono.trim())) errores.telefono = "Con característica, ej. 351 555-1234";
+  return errores;
+}
+
+/**
+ * Extensión: cargar un turno desde el panel (cliente que llama por teléfono o viene sin reservar).
+ * El dueño elige cualquier peluquero; el barbero se carga solo a sí mismo.
+ */
+function ModalTurno({ abierto, alCerrar, fechaInicial, equipo, esDueno, idPropio, alGuardar }) {
+  const [form, setForm] = useState(null);
+  const [errores, setErrores] = useState({});
+  const [error, setError] = useState(null);
+  const [guardando, setGuardando] = useState(false);
+
+  // Cada vez que se abre, arranca con la fecha que se está mirando.
+  if (abierto && !form) {
+    setForm({ idServicio: "", idBarbero: "", fecha: fechaInicial, hora: "", ...CLIENTE_VACIO });
+    setErrores({});
+    setError(null);
+  }
+  if (!abierto && form) setForm(null);
+
+  const servicios = usePedidoAdmin(abierto ? "/servicios" : null);
+  const propio = equipo.find((b) => b.id === idPropio);
+  // El barbero solo ve los servicios que hace; el dueño, todos.
+  const opcionesServicio = (servicios.datos ?? []).filter((s) => esDueno || !propio || propio.servicios?.includes(s.id));
+  const servicio = opcionesServicio.find((s) => s.id === Number(form?.idServicio));
+  const queLoHacen = servicio ? equipo.filter((b) => b.servicios?.includes(servicio.id)) : equipo;
+
+  const barbero = esDueno ? (form?.idBarbero ? Number(form.idBarbero) : undefined) : idPropio;
+  const dias = usePedidoAdmin(servicio ? "/disponibilidad/dias" : null,
+                              { servicio: servicio?.id, barbero, cantidad: 14 });
+  const slots = usePedidoAdmin(servicio && form?.fecha ? "/disponibilidad" : null,
+                               { servicio: servicio?.id, fecha: form?.fecha, barbero });
+  const libres = (slots.datos?.slots ?? []).filter((s) => s.libre);
+
+  // Si el día elegido no tiene lugar (o quedó fuera de las dos semanas), pasa al primero que tenga.
+  useEffect(() => {
+    if (!dias.datos) return;
+    setForm((f) => f && !dias.datos.some((d) => d.fecha === f.fecha && d.libres > 0)
+      ? { ...f, fecha: dias.datos.find((d) => d.libres > 0)?.fecha ?? "", hora: "" }
+      : f);
+  }, [dias.datos]);
+
+  // Si el horario elegido dejó de estar libre, se deselecciona.
+  useEffect(() => {
+    if (!slots.datos) return;
+    setForm((f) => f && f.hora && !slots.datos.slots.some((s) => s.hora === f.hora && s.libre) ? { ...f, hora: "" } : f);
+  }, [slots.datos]);
+
+  const cambiar = (campo) => (e) => {
+    const valor = e.target.value;
+    setForm((f) => {
+      const nuevo = { ...f, [campo]: valor };
+      if (campo === "idServicio" || campo === "idBarbero" || campo === "fecha") nuevo.hora = "";
+      // Si el peluquero elegido no hace el servicio nuevo, vuelve a "Cualquiera".
+      if (campo === "idServicio" && f.idBarbero &&
+          !equipo.find((b) => b.id === Number(f.idBarbero))?.servicios?.includes(Number(valor))) nuevo.idBarbero = "";
+      return nuevo;
+    });
+    if (errores[campo]) setErrores((er) => ({ ...er, [campo]: undefined }));
+  };
+
+  async function guardar(e) {
+    e.preventDefault();
+    const encontrados = validarCliente(form);
+    setErrores(encontrados);
+    if (Object.keys(encontrados).length) return;
+
+    setGuardando(true);
+    setError(null);
+    try {
+      await alGuardar({
+        idServicio: servicio.id,
+        idBarbero: barbero ?? null,
+        fecha: form.fecha,
+        hora: form.hora,
+        cliente: {
+          nombre: form.nombre.trim(),
+          apellido: form.apellido.trim(),
+          email: form.email.trim() || null,
+          telefono: form.telefono.trim(),
+        },
+      });
+    } catch (err) {
+      setError(err.message);
+      if (err instanceof ErrorApi && err.status === 400) {
+        // "cliente.email" → "email"
+        setErrores(Object.fromEntries(Object.entries(err.errores).map(([k, v]) => [k.replace("cliente.", ""), v])));
+      } else if (err instanceof ErrorApi && err.status === 409) {
+        // Se ocupó mientras se cargaba: se vuelven a pedir los horarios.
+        slots.recargar();
+        dias.recargar();
+      }
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  const campoCliente = (campo, etiqueta, props) => (
+    <label className="campo"><span>{etiqueta}</span>
+      <input value={form[campo]} onChange={cambiar(campo)} aria-invalid={!!errores[campo]}
+             aria-describedby={errores[campo] ? `error-turno-${campo}` : undefined} {...props} />
+      {errores[campo] && <small className="error-campo" id={`error-turno-${campo}`}>{errores[campo]}</small>}
+    </label>
+  );
+
+  const selectorServicio = (
+    <label className="campo"><span>Servicio</span>
+      <select value={form?.idServicio ?? ""} onChange={cambiar("idServicio")} required>
+        <option value="" disabled>{servicios.cargando ? "Cargando…" : "Elegí un servicio"}</option>
+        {opcionesServicio.map((s) => <option key={s.id} value={s.id}>{s.nombre} · {s.duracionMinutos} min</option>)}
+      </select>
+    </label>
+  );
+
+  return (
+    <Modal abierto={abierto} alCerrar={alCerrar} titulo="Nuevo turno"
+           bajada="Para clientes que llaman por teléfono o vienen sin reservar.">
+      {form && (
+        <form onSubmit={guardar} noValidate>
+          {esDueno ? (
+            <div className="fila-campos">
+              {selectorServicio}
+              <label className="campo"><span>Peluquero</span>
+                <select value={form.idBarbero} onChange={cambiar("idBarbero")}>
+                  <option value="">Cualquiera</option>
+                  {queLoHacen.map((b) => <option key={b.id} value={b.id}>{b.nombre} {b.apellido}</option>)}
+                </select>
+              </label>
+            </div>
+          ) : selectorServicio}
+
+          {servicio && (
+            <label className="campo"><span>Día</span>
+              <select value={form.fecha} onChange={cambiar("fecha")} disabled={!dias.datos}>
+                {!dias.datos && <option value={form.fecha}>Buscando días con lugar…</option>}
+                {dias.datos && !form.fecha && <option value="">Sin lugar en las próximas dos semanas</option>}
+                {dias.datos?.map((d) => (
+                  <option key={d.fecha} value={d.fecha} disabled={d.libres === 0}>
+                    {fechaLarga(d.fecha)} · {d.libres ? `${d.libres} libres` : d.atiende ? "completo" : "no se atiende"}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+
+          {servicio && form.fecha && (
+            <div className="campo">
+              <span>Horario{form.hora ? ` · ${form.hora} a ${sumarMinutos(form.hora, servicio.duracionMinutos)}` : ""}</span>
+              {slots.cargando && !slots.datos ? <p className="texto-ayuda">Buscando horarios…</p>
+                : slots.error ? <AvisoError mensaje={slots.error.message} />
+                : !libres.length ? <p className="texto-ayuda">No quedan horarios libres este día.</p>
+                : (
+                  <div className="pastillas horas-turno" role="radiogroup" aria-label="Horarios libres">
+                    {libres.map((s) => (
+                      <label className="pastilla" key={s.hora}>
+                        <input type="radio" name="hora-turno" value={s.hora} checked={form.hora === s.hora}
+                               onChange={cambiar("hora")} />
+                        <span>{s.hora}</span>
+                      </label>
+                    ))}
+                  </div>
+                )}
+              {esDueno && !form.idBarbero && form.hora && (
+                <p className="texto-ayuda nota-turno">Se asigna el peluquero libre con menos turnos ese día.</p>
+              )}
+            </div>
+          )}
+
+          <h3 className="titulo-seccion-modal">Cliente</h3>
+          <div className="fila-campos">
+            {campoCliente("nombre", "Nombre", { maxLength: 60, autoComplete: "off" })}
+            {campoCliente("apellido", "Apellido", { maxLength: 60, autoComplete: "off" })}
+          </div>
+          <div className="fila-campos">
+            {campoCliente("telefono", "Teléfono", { type: "tel", inputMode: "tel", maxLength: 30, placeholder: "351 555-1234", autoComplete: "off" })}
+            {campoCliente("email", "Email (opcional)", { type: "email", inputMode: "email", placeholder: "cliente@gmail.com", autoComplete: "off" })}
+          </div>
+          <p className="texto-ayuda">Sin email no le llega la confirmación, el aviso si se cancela ni la encuesta.</p>
+
+          <AvisoError mensaje={error} />
+          <div className="modal-pie">
+            <button type="button" className="btn btn-secundario" onClick={alCerrar}>Cancelar</button>
+            <button type="submit" className="btn btn-primario" disabled={guardando || !servicio || !form.fecha || !form.hora}>
+              {guardando ? "Guardando…" : "Cargar turno"}
+            </button>
           </div>
         </form>
       )}
