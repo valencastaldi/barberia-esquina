@@ -104,6 +104,26 @@ Si no abre:
 > Los links de los emails (cancelar, encuesta) apuntan a `FRONTEND_URL`, que en desarrollo es `localhost`: desde el
 > celular no abren. Para probarlos, copiá el link y cambiá `localhost` por la IP de la PC.
 
+## Probar el envío de emails
+
+En desarrollo los emails están apagados (se anotan en la consola). Para que salgan de verdad, con la cuenta de Gmail de la
+barbería:
+
+1. La cuenta necesita la verificación en 2 pasos activada. Después, en
+   <https://myaccount.google.com/apppasswords> se crea una **contraseña de aplicación** (16 letras). La contraseña
+   normal de la cuenta no sirve.
+2. En IntelliJ: **Run → Edit Configurations… → (configuración del backend) → Environment variables**:
+   ```
+   MAIL_HABILITADO=true;MAIL_HOST=smtp.gmail.com;MAIL_PORT=587;MAIL_USER=cuenta@gmail.com;MAIL_PASSWORD=clave-de-16-letras;MAIL_REMITENTE=Barbería Esquina <cuenta@gmail.com>
+   ```
+3. Reiniciar la API y reservar un turno con un email propio. En la consola: `Email '…' enviado a …`.
+
+> ⚠ La contraseña de aplicación **nunca** va en el repo (ni en `application.yml`): se pasa por privado. Mejor que cada
+> uno cree la suya en la misma cuenta, así se puede revocar una sin cortar las demás.
+
+`535 Username and Password not accepted` → la clave está mal o IntelliJ sigue con la configuración vieja
+(**File → Reload All from Disk** y volver a arrancar).
+
 ## Compartir una base con datos
 
 No hace falta para trabajar: cada uno tiene su base con los mismos datos de ejemplo. Pero si se quiere pasar **la base
@@ -154,6 +174,7 @@ alguna, la API no arranca.
 | `ORIGENES_PERMITIDOS` | `http://localhost:5173` | dominio del sitio (CORS) |
 | `MAIL_HABILITADO` | `false` | `true` |
 | `MAIL_HOST` / `MAIL_PORT` / `MAIL_USER` / `MAIL_PASSWORD` | `localhost` / `587` | SMTP real (por ejemplo Gmail con contraseña de aplicación) |
+| `MAIL_REMITENTE` | `Barbería Esquina <turnos@barberiaesquina.com>` | con Gmail, la misma cuenta de `MAIL_USER`: `Barbería Esquina <cuenta@gmail.com>` |
 | `DATOS_DEMO` | `true` | `false` (forzado por el perfil) |
 | `PORT` | `8080` | el del servidor |
 
