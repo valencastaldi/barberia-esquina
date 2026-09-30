@@ -413,6 +413,24 @@ dialog.modal::backdrop { background: rgba(4, 5, 7, .72); }
 .modal-pie .btn { height: 44px; font-size: 14px; }
 .modal .campo input, .modal .campo select { height: 46px; background: var(--superficie-2); }
 .fila-campos { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+@media (max-width: 560px) {
+  .modal .fila-campos { grid-template-columns: 1fr; }
+}
+
+/* Nuevo turno desde el panel */
+.horas-turno { max-height: 172px; overflow-y: auto; padding: 2px; }
+.horas-turno .pastilla span { font-family: var(--numeros); font-variant-numeric: lining-nums tabular-nums; }
+.nota-turno { margin: 10px 0 0; }
+.titulo-seccion-modal {
+  margin: 8px 0 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--borde);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--texto-2);
+}
 
 /* Ficha lateral (cliente) */
 dialog.modal.lado {

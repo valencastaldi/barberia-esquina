@@ -32,6 +32,13 @@ public class TurnoControlador {
         return turnos.reservar(pedido);
     }
 
+    /** [Extensión] Turno cargado desde el panel (requiere sesión; el email del cliente es opcional). */
+    @PostMapping("/panel")
+    @ResponseStatus(HttpStatus.CREATED)
+    public Detalle reservarDesdePanel(@Valid @RequestBody TurnoPanelPedido pedido) {
+        return turnos.reservarDesdePanel(pedido);
+    }
+
     /** Agenda del panel. Sin fechas devuelve la de hoy. */
     @GetMapping
     public List<Detalle> listar(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,

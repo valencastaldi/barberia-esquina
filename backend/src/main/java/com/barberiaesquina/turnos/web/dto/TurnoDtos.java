@@ -51,6 +51,23 @@ public final class TurnoDtos {
 
     // ---------- Panel ----------
 
+    /** [Extensión] Como ClientePedido, pero el email es opcional: el turno puede ser por teléfono o sin reserva. */
+    public record ClientePanelPedido(
+            @NotBlank @Size(max = 60) String nombre,
+            @NotBlank @Size(max = 60) String apellido,
+            @Email @Size(max = 120) String email,
+            @NotBlank @Pattern(regexp = "[0-9 +()-]{8,30}", message = "teléfono inválido") String telefono
+    ) {}
+
+    /** [Extensión] Turno cargado desde el panel. Un barbero solo puede cargarse turnos a sí mismo. */
+    public record TurnoPanelPedido(
+            @NotNull Long idServicio,
+            Long idBarbero,
+            @NotNull LocalDate fecha,
+            @NotNull @JsonFormat(pattern = "HH:mm") LocalTime hora,
+            @NotNull @Valid ClientePanelPedido cliente
+    ) {}
+
     public record CambioEstadoPedido(@NotNull EstadoTurno estado) {}
 
     public record Ref(Long id, String nombre) {}

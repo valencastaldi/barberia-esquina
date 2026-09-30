@@ -8,4 +8,7 @@ import java.util.Optional;
 public interface ClienteRepositorio extends JpaRepository<Cliente, Long> {
 
     Optional<Cliente> findByEmailIgnoreCase(String email);
+
+    /** Para reconocer a un cliente cargado desde el panel sin email. */
+    Optional<Cliente> findFirstByTelefonoAndEmailIsNullOrderByIdAsc(String telefono);
 }

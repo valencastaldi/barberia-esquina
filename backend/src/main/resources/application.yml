@@ -21,6 +21,10 @@ spring:
     port: ${MAIL_PORT:587}
     username: ${MAIL_USER:}
     password: ${MAIL_PASSWORD:}
+    properties:
+      mail.smtp.auth: true
+      mail.smtp.starttls.enable: true     # Gmail y la mayoría de los SMTP en el puerto 587 lo exigen
+      mail.smtp.starttls.required: true
 
 server:
   port: ${PORT:8080}
@@ -46,6 +50,7 @@ app:
     nombre: Agustín
     apellido: Rosas
   mail:
-    remitente: "Barbería Esquina <turnos@barberiaesquina.com>"
+    # Con Gmail tiene que ser la misma cuenta de MAIL_USER (si no, Gmail lo reemplaza o lo rechaza).
+    remitente: ${MAIL_REMITENTE:Barbería Esquina <turnos@barberiaesquina.com>}
     habilitado: ${MAIL_HABILITADO:false}   # sin SMTP en desarrollo: los emails se anotan en el log
   datos-demo: ${DATOS_DEMO:true}
