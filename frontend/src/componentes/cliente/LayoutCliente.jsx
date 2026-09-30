@@ -1,12 +1,15 @@
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { IconoVolver } from "../Iconos.jsx";
+import { Logo } from "../Logo.jsx";
 import { BARBERIA } from "../../config.js";
 
 /** Columna mobile-first del sitio del cliente (máx. 430px, centrada en escritorio). */
 export function LayoutCliente({ titulo, children }) {
-  useEffect(() => {
+  // Antes de pintar: todo el CSS del cliente cuelga de body.cliente, y con useEffect
+  // el primer cuadro podía salir sin estilos.
+  useLayoutEffect(() => {
     document.body.className = "cliente";
     document.title = titulo ? `${titulo} — ${BARBERIA.nombre}` : `${BARBERIA.nombre} — Reservá tu turno`;
   }, [titulo]);
@@ -29,7 +32,7 @@ export function Topbar({ titulo, alVolver }) {
   return (
     <header className="topbar">
       <Link className="marca" to="/">
-        <img src="/logo.jpg" alt="" />
+        <Logo tamano={32} />
         <strong>{BARBERIA.nombre}</strong>
       </Link>
     </header>

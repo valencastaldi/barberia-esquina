@@ -1,12 +1,15 @@
 package com.barberiaesquina.turnos;
 
+import com.barberiaesquina.turnos.modelo.Barbero;
 import com.barberiaesquina.turnos.modelo.Bloqueo;
 import com.barberiaesquina.turnos.modelo.EstadoTurno;
 import com.barberiaesquina.turnos.repositorio.BloqueoRepositorio;
+import com.jayway.jsonpath.JsonPath;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalTime;
+import java.util.List;
 
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -143,6 +146,35 @@ class DisponibilidadTest extends PruebaDeIntegracion {
                 .andExpect(jsonPath("$[0].atiende").value(true))
                 .andExpect(jsonPath("$[0].libres").value(17))    // 11:30 a 19:30
                 .andExpect(jsonPath("$[1].atiende").value(false)); // miércoles: no hay horario cargado
+    }
+
+    @Test
+    void elPrimerDiaConLugarTraeSusHorarios() throws Exception {
+        // Hoy los dos bloquean el día entero: el primer día con lugar es el martes que viene.
+        for (Barbero peluquero : List.of(agustin, santiago)) {
+            Bloqueo b = new Bloqueo();
+            b.setBarbero(peluquero);
+            b.setFecha(HOY);
+            b.setHoraInicio(LocalTime.of(10, 0));
+            b.setHoraFin(LocalTime.of(20, 0));
+            bloqueos.save(b);
+        }
+        String delDia = mvc.perform(get("/api/v1/disponibilidad")
+                        .param("servicio", corte.getId().toString())
+                        .param("fecha", HOY.plusDays(7).toString()))
+                .andReturn().getResponse().getContentAsString();
+
+        // Son los mismos horarios que da /disponibilidad para ese día; los demás días no los traen.
+        mvc.perform(get("/api/v1/disponibilidad/dias")
+                        .param("servicio", corte.getId().toString())
+                        .param("cantidad", "14"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[0].libres").value(0))
+                .andExpect(jsonPath("$[0].slots").doesNotExist())
+                .andExpect(jsonPath("$[7].fecha").value(HOY.plusDays(7).toString()))
+                .andExpect(jsonPath("$[7].slots").value(JsonPath.<Object>read(delDia, "$.slots")))
+                .andExpect(jsonPath("$[7].slots", hasSize(20)))
+                .andExpect(jsonPath("$[13].slots").doesNotExist());
     }
 
     @Test

@@ -15,8 +15,8 @@ function politicaDeSeguridad(apiUrl) {
   const csp = [
     "default-src 'self'",
     "script-src 'self'",
-    "style-src 'self' https://fonts.googleapis.com",
-    "font-src https://fonts.gstatic.com",
+    "style-src 'self'",
+    "font-src 'self'",
     `img-src 'self' data:${api}`,   // las fotos de los peluqueros las sirve la API
     `connect-src 'self'${api}`,
     "object-src 'none'",

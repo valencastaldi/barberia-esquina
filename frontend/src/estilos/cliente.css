@@ -8,11 +8,19 @@ body.cliente {
    ========================================================= */
 
 & {
-  background:
-    radial-gradient(120% 60% at 50% -10%, rgba(30,70,210,.20) 0%, transparent 62%),
-    var(--negro);
-  background-attachment: fixed;
+  background: var(--negro);
   min-height: 100vh;
+}
+
+/* El brillo azul de arriba queda fijo en la pantalla. Va en una capa aparte y no con
+   background-attachment: fixed, que obliga a repintar todo el fondo en cada cuadro del scroll. */
+&::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(120% 60% at 50% -10%, rgba(30,70,210,.20) 0%, transparent 62%);
 }
 
 .app {
@@ -105,12 +113,26 @@ body.cliente {
   background: var(--superficie);
   font-size: 13px;
   color: var(--texto-2);
+  transition: opacity .2s ease;
 }
+/* Mientras llega el horario el cartel ocupa su lugar sin verse: cuando aparece no empuja nada */
+.estado-local.esperando { opacity: 0; }
+
 .punto-vivo {
+  position: relative;
   width: 8px; height: 8px;
   border-radius: 50%;
   background: var(--verde);
-  box-shadow: 0 0 0 0 rgba(47,191,113,.6);
+}
+/* El latido es un aro que crece y se desvanece. Se anima con transform y opacity (no con
+   box-shadow), así lo mueve la placa de video sin repintar la página en cada cuadro. */
+.punto-vivo::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: var(--verde);
+  opacity: 0;
   animation: latido 2.2s infinite;
 }
 
@@ -243,6 +265,15 @@ body.cliente {
 .dia[aria-pressed="true"] small,
 .dia[aria-pressed="true"] i { color: rgba(255,255,255,.8); }
 .dia[disabled] { opacity: .3; }
+
+/* Días u horarios de antes, mientras llegan los nuevos: quedan a la vista, atenuados y sin
+   responder a toques. Si la respuesta tarda menos de 150 ms no llega a notarse. */
+.dias, .franjas { transition: opacity .15s ease; }
+.recargando {
+  opacity: .45;
+  pointer-events: none;
+  transition: opacity .2s ease .15s;
+}
 
 /* ---------- Horarios ---------- */
 .franja { margin-bottom: 18px; }
@@ -519,10 +550,11 @@ p.te-atiende { margin-bottom: 0; }
 
 }
 
+/* De 8 px a 24 px de diámetro (el aro de 8 px que tenía con box-shadow), de .55 a 0 */
 @keyframes latido {
-  0%   { box-shadow: 0 0 0 0 rgba(47,191,113,.55); }
-  70%  { box-shadow: 0 0 0 8px rgba(47,191,113,0); }
-  100% { box-shadow: 0 0 0 0 rgba(47,191,113,0); }
+  0%   { transform: scale(1); opacity: .55; }
+  70%  { transform: scale(3); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
 }
 
 @keyframes entra {

@@ -155,9 +155,13 @@ Días pasados, a más de 30 días o sin atención → `slots: []`. Si el peluque
 ### `GET /disponibilidad/dias?servicio=3[&barbero=2][&cantidad=14]` 🔓
 
 ```json
-[{ "fecha": "2026-09-24", "atiende": true, "libres": 15 },
+[{ "fecha": "2026-09-24", "atiende": true, "libres": 15,
+   "slots": [{ "hora": "10:00", "libre": true, "barberos": [2, 1] }, …] },
  { "fecha": "2026-09-27", "atiende": false, "libres": 0 }]
 ```
+
+El primer día con horarios libres trae también sus `slots` (los mismos que `GET /disponibilidad` para ese día): es el
+día que la pantalla muestra al entrar, y así no necesita un segundo pedido. Los demás días no traen `slots`.
 
 ## M5 · Turnos
 

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "../../api/api.js";
+import { olvidarDisponibilidad } from "../../api/disponibilidad.js";
 import { usePedido } from "../../api/usePedido.js";
 import { BARBERIA } from "../../config.js";
 import { fechaLarga, pesos } from "../../lib/formato.js";
@@ -20,6 +21,7 @@ export default function Cancelar() {
     setFalla(null);
     try {
       await api(`/turnos/cancelar/${encodeURIComponent(token)}`, { metodo: "PATCH" });
+      olvidarDisponibilidad();   // si reserva otro, que vea libre el horario que acaba de dejar
       setCancelado(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (error) {

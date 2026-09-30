@@ -5,4 +5,7 @@
 *.jpg binary
 *.jpeg binary
 *.png binary
+*.webp binary
+*.avif binary
+*.woff2 binary
 *.jar binary

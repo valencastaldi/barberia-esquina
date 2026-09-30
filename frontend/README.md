@@ -64,7 +64,7 @@ El panel se carga aparte (`React.lazy`): quien reserva desde el celular no desca
 
 ```
 src/
-├── api/          api.js (fetch + errores) · usePedido.js (hook de carga)
+├── api/          api.js (fetch + errores) · usePedido.js (hook de carga) · cache.js (respuestas en memoria) · disponibilidad.js (paso 2)
 ├── lib/          formato (fechas, precios) · horarios (abierto/cerrado) · memoria (localStorage)
 ├── componentes/  Iconos · cliente/ (layout, barra inferior, resumen, tarjeta de servicio)
 ├── paginas/      cliente/ (Inicio, Reservar, Confirmacion, Cancelar, Encuesta)

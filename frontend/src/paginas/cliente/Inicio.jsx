@@ -1,32 +1,50 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { api } from "../../api/api.js";
+import { pedirGuardado, VIGENCIA_CATALOGO } from "../../api/cache.js";
 import { usePedido } from "../../api/usePedido.js";
 import { BARBERIA } from "../../config.js";
 import { decimal } from "../../lib/formato.js";
 import { estadoDelLocal, semanaResumida } from "../../lib/horarios.js";
 import { BarraCta, EstadoPedido, LayoutCliente } from "../../componentes/cliente/LayoutCliente.jsx";
 import { TarjetaServicio } from "../../componentes/cliente/TarjetaServicio.jsx";
+import { Logo } from "../../componentes/Logo.jsx";
+
+/** Lo de la home se guarda un rato: "Reservar" usa los mismos servicios sin volver a pedirlos. */
+const catalogo = (ruta) => ({ clave: ruta, vigencia: VIGENCIA_CATALOGO });
 
 export default function Inicio() {
-  const servicios = usePedido(() => api("/servicios"), []);
-  const horarios = usePedido(() => api("/horarios"), []);
-  const resenas = usePedido(() => api("/resenas"), []);
+  const servicios = usePedido(() => api("/servicios"), [], catalogo("/servicios"));
+  const horarios = usePedido(() => api("/horarios"), [], catalogo("/horarios"));
+  const resenas = usePedido(() => api("/resenas"), [], catalogo("/resenas"));
+
+  // "Reservar" necesita también a los peluqueros: se piden ya, así el paso 2 aparece completo.
+  useEffect(() => {
+    pedirGuardado("/barberos", () => api("/barberos"), VIGENCIA_CATALOGO).catch(() => {});
+  }, []);
+
+  // Lo que va debajo de los servicios aparece recién cuando llegó todo (y ya no se va):
+  // si cada parte apareciera cuando llega su respuesta, empujaría lo que el cliente ya está mirando.
+  const todoListo = [servicios, horarios, resenas].every((p) => !p.cargando);
+  const [conResto, setConResto] = useState(todoListo);
+  if (todoListo && !conResto) setConResto(true);
 
   const local = horarios.datos ? estadoDelLocal(horarios.datos) : null;
 
   return (
     <LayoutCliente>
       <header className="hero">
-        <img className="sello" src="/logo.jpg" alt="Escudo de Barbería Esquina 1290" />
+        <Logo tamano={132} className="sello" alt="Escudo de Barbería Esquina 1290" />
         <h1>
           {BARBERIA.nombre}
           <em>{BARBERIA.rotulo}</em>
         </h1>
         <p>Reservá tu turno en 3 pasos. Sin llamadas, sin cuenta, sin esperar respuesta.</p>
-        {local && (
-          <div className="estado-local">
-            <span className={local.abierto ? "punto-vivo" : "punto-apagado"} aria-hidden="true" />
-            <span>{local.texto}</span>
+        {!horarios.error && (
+          // Mientras llega el horario, su lugar queda reservado (invisible) para que no salte nada.
+          <div className={`estado-local${local ? "" : " esperando"}`} aria-hidden={local ? undefined : true}>
+            <span className={local?.abierto ? "punto-vivo" : "punto-apagado"} aria-hidden="true" />
+            <span>{local?.texto ?? "Horario de hoy"}</span>
           </div>
         )}
       </header>
@@ -36,7 +54,8 @@ export default function Inicio() {
           <h2>Servicios</h2>
           <span className="eyebrow">Precios al día</span>
         </div>
-        <EstadoPedido {...servicios} alReintentar={servicios.recargar} />
+        <EstadoPedido cargando={servicios.cargando && !servicios.datos} error={servicios.error}
+                      alReintentar={servicios.recargar} />
         {servicios.datos && (
           <div className="servicios">
             {servicios.datos.map((s) => (
@@ -46,6 +65,19 @@ export default function Inicio() {
         )}
       </section>
 
+      {conResto && <Resto resenas={resenas} horarios={horarios} />}
+
+      <BarraCta>
+        <Link className="btn btn-primario btn-block" to="/reservar">Reservar turno</Link>
+      </BarraCta>
+    </LayoutCliente>
+  );
+}
+
+/** Reseñas, dónde estamos y el pie. */
+function Resto({ resenas, horarios }) {
+  return (
+    <>
       {resenas.datos?.encuestas > 0 && (
         <section className="seccion">
           <div className="seccion-cab">
@@ -96,10 +128,6 @@ export default function Inicio() {
         <p>{BARBERIA.nombre} · {BARBERIA.rotulo}</p>
         <p style={{ marginTop: 8 }}><Link to="/admin">Acceso del equipo →</Link></p>
       </footer>
-
-      <BarraCta>
-        <Link className="btn btn-primario btn-block" to="/reservar">Reservar turno</Link>
-      </BarraCta>
-    </LayoutCliente>
+    </>
   );
 }

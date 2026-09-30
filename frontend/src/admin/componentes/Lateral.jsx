@@ -1,5 +1,6 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useSesion } from "../sesion.jsx";
+import { Logo } from "../../componentes/Logo.jsx";
 
 const ICONOS = {
   agenda: "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z",
@@ -50,7 +51,7 @@ export function Lateral() {
   return (
     <aside className="lateral">
       <Link className="marca" to="/">
-        <img src="/logo.jpg" alt="" />
+        <Logo tamano={38} />
         <span><b>Barbería Esquina</b><small>Panel de gestión</small></span>
       </Link>
       <nav className="nav">

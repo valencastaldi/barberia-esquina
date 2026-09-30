@@ -52,16 +52,23 @@ public class DisponibilidadServicio {
         return new Dia(fecha, servicio.getId(), servicio.getDuracionMinutos(), slots);
     }
 
-    /** Para el selector de días del paso 2: cuántos horarios libres tiene cada día. */
+    /**
+     * Para el selector de días del paso 2: cuántos horarios libres tiene cada día. El primero
+     * con lugar trae también sus horarios, que ya están calculados: es el día que la pantalla
+     * muestra al entrar y así no necesita un segundo pedido.
+     */
     public List<ResumenDia> proximosDias(Long idServicio, Long idBarbero, int cantidad) {
         Servicio servicio = servicioReservable(idServicio);
         List<Barbero> candidatos = candidatos(servicio, idBarbero);
         List<ResumenDia> dias = new ArrayList<>();
+        boolean conHorarios = false;
         LocalDate fecha = calendario.hoy();
         for (int i = 0; i < cantidad && !fueraDeRango(fecha); i++, fecha = fecha.plusDays(1)) {
             List<Slot> slots = calcularSlots(fecha, servicio, candidatos);
             int libres = (int) slots.stream().filter(Slot::libre).count();
-            dias.add(new ResumenDia(fecha, !slots.isEmpty(), libres));
+            boolean primeroConLugar = libres > 0 && !conHorarios;
+            dias.add(new ResumenDia(fecha, !slots.isEmpty(), libres, primeroConLugar ? slots : null));
+            conHorarios |= primeroConLugar;
         }
         return dias;
     }

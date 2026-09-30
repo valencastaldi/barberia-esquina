@@ -1,6 +1,8 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api, ErrorApi } from "../../api/api.js";
+import { VIGENCIA_CATALOGO, VIGENCIA_DISPONIBILIDAD } from "../../api/cache.js";
+import { adelantarDias, claveDia, claveDias, olvidarDisponibilidad, pedirDia, pedirDias } from "../../api/disponibilidad.js";
 import { usePedido } from "../../api/usePedido.js";
 import { DIAS_CORTOS, aFecha, fechaLarga, pesos, sumarMinutos } from "../../lib/formato.js";
 import { recordarCliente, recordarReserva, clienteRecordado } from "../../lib/memoria.js";
@@ -19,8 +21,9 @@ const FRANJAS = [
 export default function Reservar() {
   const navegar = useNavigate();
   const [params] = useSearchParams();
+  const idDeLaUrl = Number(params.get("servicio")) || null;   // viene de la home con un servicio elegido
 
-  const [paso, setPaso] = useState(1);
+  const [paso, setPaso] = useState(idDeLaUrl ? 2 : 1);
   const [servicio, setServicio] = useState(null);
   const [barbero, setBarbero] = useState(null);   // el que eligió el cliente; null = cualquiera
   const [asignado, setAsignado] = useState(null); // con "cualquiera": quién lo atiende en el horario elegido
@@ -28,17 +31,21 @@ export default function Reservar() {
   const [hora, setHora] = useState(null);         // "15:00"
   const [aviso, setAviso] = useState(null);       // mensaje arriba del paso 2
 
-  const servicios = usePedido(() => api("/servicios"), []);
-  const barberos = usePedido(() => api("/barberos"), []);
+  // Los trae la home: si vienen de ahí, están desde el primer dibujo.
+  const servicios = usePedido(() => api("/servicios"), [], { clave: "/servicios", vigencia: VIGENCIA_CATALOGO });
+  const barberos = usePedido(() => api("/barberos"), [], { clave: "/barberos", vigencia: VIGENCIA_CATALOGO });
 
-  // Si viene de la home con un servicio elegido, se saltea el paso 1.
+  // Con el servicio en la URL, los días se piden ya, sin esperar la lista de servicios.
   useEffect(() => {
-    const id = Number(params.get("servicio"));
-    const elegido = servicios.datos?.find((s) => s.id === id);
-    if (elegido && !servicio) {
-      setServicio(elegido);
-      setPaso(2);
-    }
+    if (idDeLaUrl) adelantarDias(idDeLaUrl);
+  }, [idDeLaUrl]);
+
+  // ...y con la lista se completa el servicio. Antes de pintar, para no mostrar un paso intermedio.
+  useLayoutEffect(() => {
+    if (!idDeLaUrl || servicio || !servicios.datos) return;
+    const elegido = servicios.datos.find((s) => s.id === idDeLaUrl);
+    if (elegido) setServicio(elegido);
+    else setPaso(1);   // ya no se ofrece: que elija otro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [servicios.datos]);
 
@@ -53,6 +60,7 @@ export default function Reservar() {
     setAsignado(null);
     setFecha(null);
     setHora(null);
+    adelantarDias(s.id);   // mientras toca "Continuar", los días ya se están pidiendo
   }
 
   function volver() {
@@ -62,6 +70,7 @@ export default function Reservar() {
 
   /** El horario se ocupó mientras el cliente completaba sus datos: vuelve al paso 2. */
   function horarioOcupado(mensaje) {
+    olvidarDisponibilidad();
     setHora(null);
     setAsignado(null);
     setAviso(mensaje);
@@ -86,8 +95,15 @@ export default function Reservar() {
         <PasoServicio servicios={servicios} elegido={servicio} alElegir={elegirServicio}
                       alContinuar={() => irA(2)} />
       )}
+      {paso === 2 && !servicio && (
+        // Llegó con el servicio en la URL y la lista de servicios todavía no está.
+        <section className="vista activa">
+          <EstadoPedido cargando={servicios.cargando} error={servicios.error} alReintentar={servicios.recargar}
+                        texto="Buscando días con lugar…" />
+        </section>
+      )}
       {paso === 2 && servicio && (
-        <PasoHorario servicio={servicio} barberos={barberos.datos ?? []}
+        <PasoHorario servicio={servicio} barberos={barberos}
                      barbero={barbero} setBarbero={setBarbero} asignado={asignado} setAsignado={setAsignado}
                      fecha={fecha} setFecha={setFecha} hora={hora} setHora={setHora}
                      aviso={aviso} setAviso={setAviso}
@@ -97,6 +113,7 @@ export default function Reservar() {
         <PasoDatos servicio={servicio} barbero={barbero ?? asignado} fecha={fecha} hora={hora}
                    alHorarioOcupado={horarioOcupado}
                    alConfirmar={(reserva, cliente) => {
+                     olvidarDisponibilidad();   // ese horario ya no está libre
                      recordarCliente(cliente);
                      recordarReserva({ ...reserva, email: cliente.email, nombre: cliente.nombre });
                      navegar("/turno/confirmado", { replace: true });
@@ -143,7 +160,8 @@ function PasoServicio({ servicios, elegido, alElegir, alContinuar }) {
 
 function PasoHorario({ servicio, barberos, barbero, setBarbero, asignado, setAsignado, fecha, setFecha,
                        hora, setHora, aviso, setAviso, alCambiarServicio, alContinuar }) {
-  const queLoHacen = barberos.filter((b) => b.servicios.includes(servicio.id));
+  const equipo = barberos.datos ?? [];
+  const queLoHacen = equipo.filter((b) => b.servicios.includes(servicio.id));
   const quienAtiende = barbero ?? asignado;
   const listo = fecha && hora && quienAtiende;
 
@@ -157,15 +175,14 @@ function PasoHorario({ servicio, barberos, barbero, setBarbero, asignado, setAsi
   function elegirHora(slot) {
     setHora(slot.hora);
     setAviso(null);
-    if (!barbero) setAsignado(barberos.find((b) => b.id === slot.barberos[0]) ?? null);
+    if (!barbero) setAsignado(equipo.find((b) => b.id === slot.barberos[0]) ?? null);
   }
 
-  // Días con lugar (GET /disponibilidad/dias). Arranca en el primero que tenga horarios libres.
-  const dias = usePedido(
-    () => api("/disponibilidad/dias", { params: { servicio: servicio.id, barbero: barbero?.id, cantidad: 14 } }),
-    [servicio.id, barbero?.id]
-  );
-  useEffect(() => {
+  // Días con lugar. Arranca en el primero que tenga horarios libres, que ya viene con sus horarios.
+  const dias = usePedido(() => pedirDias(servicio.id, barbero?.id), [servicio.id, barbero?.id],
+                         { clave: claveDias(servicio.id, barbero?.id), vigencia: VIGENCIA_DISPONIBILIDAD });
+  // Antes de pintar: si no, por un instante se vería "No hay lugar…" hasta que se elige el día.
+  useLayoutEffect(() => {
     if (!dias.datos) return;
     const sigueValido = dias.datos.some((d) => d.fecha === fecha && d.libres > 0);
     if (!sigueValido) {
@@ -176,11 +193,14 @@ function PasoHorario({ servicio, barberos, barbero, setBarbero, asignado, setAsi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dias.datos]);
 
-  // Horarios del día elegido (GET /disponibilidad): los ocupados vienen tachados.
-  const slots = usePedido(
-    () => (fecha ? api("/disponibilidad", { params: { servicio: servicio.id, fecha, barbero: barbero?.id } }) : null),
-    [servicio.id, barbero?.id, fecha, aviso]
-  );
+  // Horarios del día elegido: los ocupados vienen tachados.
+  const slots = usePedido(() => (fecha ? pedirDia(servicio.id, barbero?.id, fecha) : null),
+                          [servicio.id, barbero?.id, fecha],
+                          { clave: fecha && claveDia(servicio.id, barbero?.id, fecha), vigencia: VIGENCIA_DISPONIBILIDAD });
+
+  // La primera vez se espera al equipo y a los días juntos: si no, "Con quién" aparecería
+  // después, arriba de los días, y empujaría todo hacia abajo.
+  const primeraCarga = !barberos.datos || !dias.datos;
 
   return (
     <section className="vista activa" aria-labelledby="t2">
@@ -192,53 +212,57 @@ function PasoHorario({ servicio, barberos, barbero, setBarbero, asignado, setAsi
 
       {aviso && <div className="aviso-error" role="alert">{aviso}</div>}
 
-      {queLoHacen.length > 1 && (
-        <div className="con-quien">
-          <h3>Con quién</h3>
-          <div className="chips" role="group" aria-label="Peluquero">
-            <button type="button" className="chip" aria-pressed={!barbero}
-                    onClick={() => { setBarbero(null); limpiarHora(); }}>
-              Cualquiera
-            </button>
-            {queLoHacen.map((b) => (
-              <button type="button" key={b.id} className="chip con-avatar" aria-pressed={barbero?.id === b.id}
-                      onClick={() => { setBarbero(b); limpiarHora(); }}>
-                <Avatar persona={b} className="avatar-chip" />
-                {b.nombre}
-              </button>
-            ))}
+      {primeraCarga ? (
+        <EstadoPedido cargando={!barberos.error && !dias.error} error={barberos.error ?? dias.error}
+                      alReintentar={barberos.error ? barberos.recargar : dias.recargar} texto="Buscando días con lugar…" />
+      ) : (
+        <>
+          {queLoHacen.length > 1 && (
+            <div className="con-quien">
+              <h3>Con quién</h3>
+              <div className="chips" role="group" aria-label="Peluquero">
+                <button type="button" className="chip" aria-pressed={!barbero}
+                        onClick={() => { setBarbero(null); limpiarHora(); }}>
+                  Cualquiera
+                </button>
+                {queLoHacen.map((b) => (
+                  <button type="button" key={b.id} className="chip con-avatar" aria-pressed={barbero?.id === b.id}
+                          onClick={() => { setBarbero(b); limpiarHora(); }}>
+                    <Avatar persona={b} className="avatar-chip" />
+                    {b.nombre}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Al cambiar de peluquero, los días de antes quedan atenuados hasta que llegan los nuevos */}
+          <div className={`dias${dias.cargando ? " recargando" : ""}`} role="group" aria-label="Días" aria-busy={dias.cargando}>
+            {dias.datos.map((d, i) => {
+              const f = aFecha(d.fecha);
+              return (
+                <button type="button" key={d.fecha} className="dia" aria-pressed={d.fecha === fecha}
+                        disabled={d.libres === 0}
+                        aria-label={`${fechaLarga(d.fecha)}: ${d.libres ? `${d.libres} horarios libres` : "sin lugar"}`}
+                        onClick={() => { setFecha(d.fecha); limpiarHora(); }}>
+                  <small>{i === 0 ? "Hoy" : DIAS_CORTOS[f.getDay()]}</small>
+                  <b>{f.getDate()}</b>
+                  <i>{d.libres ? `${d.libres} libres` : "—"}</i>
+                </button>
+              );
+            })}
           </div>
-        </div>
-      )}
 
-      <EstadoPedido {...dias} texto="Buscando días con lugar…" alReintentar={dias.recargar} />
-      {dias.datos && (
-        <div className="dias" role="group" aria-label="Días">
-          {dias.datos.map((d, i) => {
-            const f = aFecha(d.fecha);
-            return (
-              <button type="button" key={d.fecha} className="dia" aria-pressed={d.fecha === fecha}
-                      disabled={d.libres === 0}
-                      aria-label={`${fechaLarga(d.fecha)}: ${d.libres ? `${d.libres} horarios libres` : "sin lugar"}`}
-                      onClick={() => { setFecha(d.fecha); limpiarHora(); }}>
-                <small>{i === 0 ? "Hoy" : DIAS_CORTOS[f.getDay()]}</small>
-                <b>{f.getDate()}</b>
-                <i>{d.libres ? `${d.libres} libres` : "—"}</i>
-              </button>
-            );
-          })}
-        </div>
-      )}
-
-      {dias.datos && !fecha && (
-        <div className="vacio">No hay lugar para {servicio.nombre} en las próximas dos semanas.</div>
-      )}
-      {fecha && (
-        <Horarios slots={slots} hora={hora} alElegir={elegirHora} servicio={servicio}
-                  quienAtiende={!barbero && hora ? (
-                    <QuienAtiende slot={slots.datos?.slots.find((s) => s.hora === hora)} barberos={barberos}
-                                  asignado={asignado} setAsignado={setAsignado} />
-                  ) : null} />
+          {fecha ? (
+            <Horarios slots={slots} fecha={fecha} hora={hora} alElegir={elegirHora} servicio={servicio}
+                      quienAtiende={!barbero && hora ? (
+                        <QuienAtiende slot={slots.datos?.slots.find((s) => s.hora === hora)} barberos={equipo}
+                                      asignado={asignado} setAsignado={setAsignado} />
+                      ) : null} />
+          ) : (
+            <div className="vacio">No hay lugar para {servicio.nombre} en las próximas dos semanas.</div>
+          )}
+        </>
       )}
 
       <BarraCta>
@@ -288,41 +312,48 @@ function QuienAtiende({ slot, barberos, asignado, setAsignado }) {
   );
 }
 
-function Horarios({ slots, hora, alElegir, servicio, quienAtiende }) {
-  if (slots.cargando || slots.error) {
-    return <EstadoPedido {...slots} texto="Buscando horarios…" alReintentar={slots.recargar} />;
+/**
+ * La primera vez (o si falla) muestra el aviso. Después, al tocar otro día u otro peluquero,
+ * los horarios anteriores quedan atenuados hasta que llegan los nuevos: la grilla no desaparece.
+ */
+function Horarios({ slots, fecha, hora, alElegir, servicio, quienAtiende }) {
+  if (!slots.datos) {
+    return <EstadoPedido cargando={slots.cargando} error={slots.error} texto="Buscando horarios…"
+                         alReintentar={slots.recargar} />;
   }
-  const lista = slots.datos?.slots ?? [];
-  if (!lista.some((s) => s.libre)) {
-    return (
-      <div className="vacio">
-        No quedan horarios para {servicio.nombre} este día.<br />Probá con otra fecha.
-      </div>
-    );
-  }
-  return FRANJAS.map((f) => {
-    const delTramo = lista.filter((s) => {
-      const h = Number(s.hora.slice(0, 2));
-      return h >= f.desde && h < f.hasta;
-    });
-    if (!delTramo.length) return null;
-    const tieneLaElegida = delTramo.some((s) => s.hora === hora);
-    return (
-      <div className="franja" key={f.titulo}>
-        <h3>{f.titulo}</h3>
-        <div className="horarios">
-          {delTramo.map((s) => (
-            <button type="button" key={s.hora} className="hora" disabled={!s.libre} aria-pressed={s.hora === hora}
-                    aria-label={s.libre ? s.hora : `${s.hora}, ocupado`} onClick={() => alElegir(s)}>
-              {s.hora}
-            </button>
-          ))}
+  const recargando = slots.cargando || slots.datos.fecha !== fecha;
+  const lista = slots.datos.slots;
+  return (
+    <div className={`franjas${recargando ? " recargando" : ""}`} aria-busy={recargando}>
+      {!lista.some((s) => s.libre) ? (
+        <div className="vacio">
+          No quedan horarios para {servicio.nombre} este día.<br />Probá con otra fecha.
         </div>
-        {/* Justo debajo del horario tocado, para que se vea sin scrollear */}
-        {tieneLaElegida && quienAtiende}
-      </div>
-    );
-  });
+      ) : FRANJAS.map((f) => {
+        const delTramo = lista.filter((s) => {
+          const h = Number(s.hora.slice(0, 2));
+          return h >= f.desde && h < f.hasta;
+        });
+        if (!delTramo.length) return null;
+        const tieneLaElegida = delTramo.some((s) => s.hora === hora);
+        return (
+          <div className="franja" key={f.titulo}>
+            <h3>{f.titulo}</h3>
+            <div className="horarios">
+              {delTramo.map((s) => (
+                <button type="button" key={s.hora} className="hora" disabled={!s.libre} aria-pressed={s.hora === hora}
+                        aria-label={s.libre ? s.hora : `${s.hora}, ocupado`} onClick={() => !recargando && alElegir(s)}>
+                  {s.hora}
+                </button>
+              ))}
+            </div>
+            {/* Justo debajo del horario tocado, para que se vea sin scrollear */}
+            {tieneLaElegida && quienAtiende}
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 // ------------------------------------------------------------------

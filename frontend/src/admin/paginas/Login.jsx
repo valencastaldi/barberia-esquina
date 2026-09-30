@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useSesion } from "../sesion.jsx";
+import { Logo } from "../../componentes/Logo.jsx";
 
 /** RF-08: ingreso al panel. */
 export default function Login() {
@@ -38,7 +39,7 @@ export default function Login() {
 
   return (
     <main className="caja-login">
-      <img className="sello" src="/logo.jpg" alt="Barbería Esquina 1290" />
+      <Logo tamano={78} className="sello" alt="Barbería Esquina 1290" />
       <h1>Panel de gestión</h1>
       <p>Ingresá con tu cuenta para ver la agenda del día.</p>
 
