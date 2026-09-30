@@ -419,6 +419,44 @@ body.cliente {
   text-align: center;
 }
 .pie a { color: var(--texto-2); }
+.pie-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px 16px;
+  margin-top: 8px;
+}
+
+/* ---------- Páginas legales (/privacidad, /terminos) ---------- */
+.legal { padding-top: 24px; font-size: 14.5px; line-height: 1.6; color: var(--texto-2); }
+.legal h1 { font-size: 24px; color: var(--texto); }
+.legal .actualizado { margin-top: 6px; font-size: 12.5px; color: var(--texto-3); }
+.legal h2 { margin: 28px 0 8px; font-size: 16px; color: var(--texto); }
+.legal p { margin-top: 10px; }
+.legal strong { color: var(--texto); font-weight: 600; }
+.legal ul { margin: 10px 0 0; padding-left: 20px; }
+.legal li + li { margin-top: 6px; }
+.legal a { color: var(--texto); text-decoration: underline; text-underline-offset: 2px; overflow-wrap: anywhere; }
+.legal ul.datos {
+  padding: 0;
+  list-style: none;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  overflow: hidden;
+}
+.legal ul.datos li { display: flex; gap: 12px; margin: 0; padding: 10px 14px; color: var(--texto); }
+.legal ul.datos li + li { border-top: 1px solid var(--borde); }
+.legal ul.datos span { min-width: 78px; color: var(--texto-3); }
+.legal .aviso-legal {
+  margin-top: 32px;
+  padding: 14px 16px;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  font-size: 12.5px;
+  color: var(--texto-3);
+}
+.legal .aviso-legal p:first-child { margin-top: 0; }
+.legal .relacionado { margin-top: 28px; }
 
 /* ---------- Datos del local ---------- */
 .local {
