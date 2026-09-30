@@ -126,6 +126,10 @@ function Resto({ resenas, horarios }) {
 
       <footer className="pie">
         <p>{BARBERIA.nombre} · {BARBERIA.rotulo}</p>
+        <p className="pie-links">
+          <Link to="/terminos">Términos y condiciones</Link>
+          <Link to="/privacidad">Política de privacidad</Link>
+        </p>
         <p style={{ marginTop: 8 }}><Link to="/admin">Acceso del equipo →</Link></p>
       </footer>
     </>

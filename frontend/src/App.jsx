@@ -6,6 +6,8 @@ import Confirmacion from "./paginas/cliente/Confirmacion.jsx";
 import Cancelar from "./paginas/cliente/Cancelar.jsx";
 import Encuesta from "./paginas/cliente/Encuesta.jsx";
 import NoEncontrada from "./paginas/cliente/NoEncontrada.jsx";
+import Privacidad from "./paginas/cliente/Privacidad.jsx";
+import Terminos from "./paginas/cliente/Terminos.jsx";
 
 // El panel se descarga recién cuando alguien entra a /admin.
 const AdminApp = lazy(() => import("./admin/AdminApp.jsx"));
@@ -28,6 +30,8 @@ export default function App() {
       <Route path="/turno/confirmado" element={<Confirmacion />} />
       <Route path="/cancelar/:token" element={<Cancelar />} />
       <Route path="/encuesta/:idTurno" element={<Encuesta />} />
+      <Route path="/privacidad" element={<Privacidad />} />
+      <Route path="/terminos" element={<Terminos />} />
       <Route path="/admin/*" element={
         <Suspense fallback={<div className="cargando-panel">Cargando el panel…</div>}>
           <AdminApp />
