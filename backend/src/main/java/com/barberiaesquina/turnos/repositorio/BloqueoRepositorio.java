@@ -5,11 +5,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.time.LocalDate;
+import java.util.Collection;
 import java.util.List;
 
 public interface BloqueoRepositorio extends JpaRepository<Bloqueo, Long> {
 
     List<Bloqueo> findByBarberoIdAndFecha(Long idBarbero, LocalDate fecha);
+
+    List<Bloqueo> findByBarberoIdInAndFechaBetween(Collection<Long> idsBarberos, LocalDate desde, LocalDate hasta);
 
     @Query("""
             select b from Bloqueo b join fetch b.barbero

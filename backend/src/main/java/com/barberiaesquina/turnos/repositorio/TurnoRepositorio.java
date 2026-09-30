@@ -19,6 +19,13 @@ public interface TurnoRepositorio extends JpaRepository<Turno, Long> {
             """)
     List<Turno> delDia(Long idBarbero, LocalDate fecha, EstadoTurno excluido);
 
+    /** Lo mismo que delDia, pero de varios peluqueros y varios días en una sola consulta (disponibilidad). */
+    @Query("""
+            select t from Turno t
+            where t.barbero.id in :idsBarberos and t.fecha between :desde and :hasta and t.estado <> :excluido
+            """)
+    List<Turno> delRango(Collection<Long> idsBarberos, LocalDate desde, LocalDate hasta, EstadoTurno excluido);
+
     @Query("""
             select t from Turno t
             join fetch t.cliente join fetch t.servicio join fetch t.barbero

@@ -47,7 +47,7 @@ permisos, reglas de negocio, trazabilidad con los requerimientos de la tesis, pr
 ## Estado
 
 - [x] Maqueta de todas las pantallas
-- [x] API completa: 19 endpoints de la documentación + extensión (peluqueros, clientes, pagos, bloqueos) · 47 tests
+- [x] API completa: 19 endpoints de la documentación + extensión (peluqueros, clientes, pagos, bloqueos) · 52 tests
 - [x] Sitio del cliente: inicio, reserva en 3 pasos, confirmación, cancelación, encuesta
 - [x] Panel de gestión: agenda, pagos, clientes, dashboard, peluqueros, servicios, horarios
 - [ ] Datos reales de la barbería (precios, dirección, teléfono)

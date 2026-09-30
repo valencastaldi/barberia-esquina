@@ -45,7 +45,7 @@ Relaciona lo que pide la documentación de la materia (Etapas 0 a 5) con dónde 
 
 | RNF | Dónde se cumple | Estado |
 |---|---|---|
-| Respuesta en menos de 2 s | Consultas con índices (`turno(id_barbero, fecha)`, `turno(fecha)`); agregados con `GROUP BY` en clientes | ✅ en local (sin medición formal) |
+| Respuesta en menos de 2 s | Consultas con índices (`turno(id_barbero, fecha)`, `turno(fecha)`); agregados con `GROUP BY` en clientes; disponibilidad en 5 consultas sin importar días ni peluqueros; JSON comprimido con gzip; datos públicos con caché de 60 s | ✅ en local: todo por debajo de 20 ms (sin prueba de carga) |
 | 50 usuarios concurrentes | API sin estado (JWT), pool de conexiones de Hikari | ⚠ no se hizo prueba de carga |
 | Emails en menos de 2 min | Envío asíncrono inmediato después del commit | ✅ (depende del SMTP) |
 | Contraseñas con bcrypt costo ≥ 10 | `BCryptPasswordEncoder(10)` | ✅ |

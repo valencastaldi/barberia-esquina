@@ -28,6 +28,11 @@ se reparte.
 Los horarios ocupados también se devuelven (`libre: false`): el cliente los ve tachados y se da cuenta de qué tan lleno está
 el día.
 
+**Consultas:** los horarios, turnos y bloqueos de todos los candidatos y de todo el rango de días se traen en tres
+consultas, y cada día se calcula en memoria. `GET /disponibilidad/dias` cuesta lo mismo con uno o con diez peluqueros (antes
+eran tres consultas por peluquero y por día: 108 con los datos de ejemplo). La reserva, en cambio, vuelve a leer la agenda
+del peluquero después de bloquearlo (ver abajo).
+
 ## Reservas simultáneas
 
 Dos clientes pueden tocar "Confirmar" para el mismo horario al mismo tiempo. Para que se guarde uno solo:

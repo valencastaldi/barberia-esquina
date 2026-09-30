@@ -27,16 +27,18 @@ public class BarberoControlador {
 
     private final BarberoServicio barberos;
     private final FotoBarberoServicio fotos;
+    private final CachePublica cache;
 
-    public BarberoControlador(BarberoServicio barberos, FotoBarberoServicio fotos) {
+    public BarberoControlador(BarberoServicio barberos, FotoBarberoServicio fotos, CachePublica cache) {
         this.barberos = barberos;
         this.fotos = fotos;
+        this.cache = cache;
     }
 
     /** Público: para que el cliente elija con quién atenderse. */
     @GetMapping
-    public List<Publico> publicos() {
-        return barberos.publicos();
+    public ResponseEntity<List<Publico>> publicos() {
+        return cache.ok(barberos.publicos());
     }
 
     /** Ficha completa del equipo (email, comisión…): solo el dueño. */

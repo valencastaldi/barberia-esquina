@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * CalcularSlotsDisponibles (RF-27). Un horario está libre para un peluquero si:
@@ -48,7 +49,8 @@ public class DisponibilidadServicio {
 
     public Dia delDia(LocalDate fecha, Long idServicio, Long idBarbero) {
         Servicio servicio = servicioReservable(idServicio);
-        List<Slot> slots = fueraDeRango(fecha) ? List.of() : calcularSlots(fecha, servicio, candidatos(servicio, idBarbero));
+        List<Slot> slots = fueraDeRango(fecha) ? List.of()
+                : calcularSlots(agendas(candidatos(servicio, idBarbero), fecha, fecha, servicio.getDuracionMinutos()).delDia(fecha));
         return new Dia(fecha, servicio.getId(), servicio.getDuracionMinutos(), slots);
     }
 
@@ -59,12 +61,15 @@ public class DisponibilidadServicio {
      */
     public List<ResumenDia> proximosDias(Long idServicio, Long idBarbero, int cantidad) {
         Servicio servicio = servicioReservable(idServicio);
-        List<Barbero> candidatos = candidatos(servicio, idBarbero);
+        LocalDate desde = calendario.hoy();
+        LocalDate hasta = desde.plusDays(cantidad - 1L);
+        if (hasta.isAfter(calendario.ultimoDiaReservable())) hasta = calendario.ultimoDiaReservable();
+        Agendas agendas = agendas(candidatos(servicio, idBarbero), desde, hasta, servicio.getDuracionMinutos());
+
         List<ResumenDia> dias = new ArrayList<>();
         boolean conHorarios = false;
-        LocalDate fecha = calendario.hoy();
-        for (int i = 0; i < cantidad && !fueraDeRango(fecha); i++, fecha = fecha.plusDays(1)) {
-            List<Slot> slots = calcularSlots(fecha, servicio, candidatos);
+        for (LocalDate fecha = desde; !fecha.isAfter(hasta); fecha = fecha.plusDays(1)) {
+            List<Slot> slots = calcularSlots(agendas.delDia(fecha));
             int libres = (int) slots.stream().filter(Slot::libre).count();
             boolean primeroConLugar = libres > 0 && !conHorarios;
             dias.add(new ResumenDia(fecha, !slots.isEmpty(), libres, primeroConLugar ? slots : null));
@@ -108,11 +113,10 @@ public class DisponibilidadServicio {
 
     // ---------------------------------------------------------------
 
-    private List<Slot> calcularSlots(LocalDate fecha, Servicio servicio, List<Barbero> candidatos) {
+    /** Los horarios de un día, cada uno con los peluqueros que lo tienen libre. */
+    private static List<Slot> calcularSlots(Map<Barbero, Agenda> agendas) {
         // Primero el que tiene menos turnos ese día: la lista de libres de cada horario sale
         // en ese orden y el front sugiere al primero, así el trabajo se reparte.
-        Map<Barbero, Agenda> agendas = new LinkedHashMap<>();
-        candidatos.forEach(b -> agendaDelDia(b, fecha, servicio.getDuracionMinutos()).ifPresent(a -> agendas.put(b, a)));
         List<Map.Entry<Barbero, Agenda>> porCarga = agendas.entrySet().stream()
                 .sorted(Comparator.comparingInt((Map.Entry<Barbero, Agenda> e) -> e.getValue().ocupados().size())
                         .thenComparing(e -> e.getKey().getId()))
@@ -132,6 +136,28 @@ public class DisponibilidadServicio {
                 .toList();
     }
 
+    /**
+     * Horarios, turnos y bloqueos de los candidatos en todo el rango: tres consultas en total,
+     * no tres por peluquero y por día. Después cada día se arma en memoria.
+     */
+    private Agendas agendas(List<Barbero> candidatos, LocalDate desde, LocalDate hasta, int duracion) {
+        List<Long> ids = candidatos.stream().map(Barbero::getId).toList();
+        if (ids.isEmpty()) return new Agendas(List.of(), duracion, Map.of(), Map.of(), Map.of(), calendario.ahora());
+        Map<Long, Map<Integer, HorarioAtencion>> horarioPorDia = horarios.findByBarberoIdIn(ids).stream()
+                .filter(HorarioAtencion::isActivo)
+                .collect(Collectors.groupingBy(h -> h.getBarbero().getId(),
+                        Collectors.toMap(HorarioAtencion::getDiaSemana, h -> h)));
+        Map<Long, Map<LocalDate, List<Turno>>> turnosPorDia = turnos.delRango(ids, desde, hasta, EstadoTurno.CANCELADO).stream()
+                .collect(Collectors.groupingBy(t -> t.getBarbero().getId(), Collectors.groupingBy(Turno::getFecha)));
+        Map<Long, Map<LocalDate, List<Bloqueo>>> bloqueosPorDia = bloqueos.findByBarberoIdInAndFechaBetween(ids, desde, hasta).stream()
+                .collect(Collectors.groupingBy(b -> b.getBarbero().getId(), Collectors.groupingBy(Bloqueo::getFecha)));
+        return new Agendas(candidatos, duracion, horarioPorDia, turnosPorDia, bloqueosPorDia, calendario.ahora());
+    }
+
+    /**
+     * La agenda de un peluquero en un día, leída de la base en ese momento. La usa la reserva
+     * después de bloquear al peluquero: tiene que ver el turno que otro cliente acaba de guardar.
+     */
     private Optional<Agenda> agendaDelDia(Barbero barbero, LocalDate fecha, int duracion) {
         return horarios.findByBarberoIdAndDiaSemana(barbero.getId(), Calendario.diaSemana(fecha))
                 .filter(HorarioAtencion::isActivo)
@@ -139,6 +165,28 @@ public class DisponibilidadServicio {
                         turnos.delDia(barbero.getId(), fecha, EstadoTurno.CANCELADO),
                         bloqueos.findByBarberoIdAndFecha(barbero.getId(), fecha),
                         calendario.ahora()));
+    }
+
+    /** Lo cargado para un rango de días: alcanza para armar la agenda de cualquiera de esos días. */
+    private record Agendas(List<Barbero> candidatos, int duracion,
+                           Map<Long, Map<Integer, HorarioAtencion>> horarioPorDia,
+                           Map<Long, Map<LocalDate, List<Turno>>> turnosPorDia,
+                           Map<Long, Map<LocalDate, List<Bloqueo>>> bloqueosPorDia,
+                           LocalDateTime ahora) {
+
+        /** La agenda de cada candidato que atiende ese día. */
+        Map<Barbero, Agenda> delDia(LocalDate fecha) {
+            Map<Barbero, Agenda> agendas = new LinkedHashMap<>();
+            for (Barbero b : candidatos) {
+                HorarioAtencion horario = horarioPorDia.getOrDefault(b.getId(), Map.of()).get(Calendario.diaSemana(fecha));
+                if (horario == null) continue;
+                agendas.put(b, new Agenda(horario, duracion, fecha,
+                        turnosPorDia.getOrDefault(b.getId(), Map.of()).getOrDefault(fecha, List.of()),
+                        bloqueosPorDia.getOrDefault(b.getId(), Map.of()).getOrDefault(fecha, List.of()),
+                        ahora));
+            }
+            return agendas;
+        }
     }
 
     /** La agenda de un peluquero en un día, lista para preguntarle si una hora está libre. */

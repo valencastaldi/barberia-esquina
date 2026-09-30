@@ -5,6 +5,10 @@ Base: `http://localhost:8080/api/v1`. Todo en JSON. Fechas `AAAA-MM-DD`, horas `
 **Acceso:** 🔓 público · 🔑 con login (cualquier rol) · 👑 solo dueño.
 Con login, cada pedido lleva el header `Authorization: Bearer <token>`.
 
+**Compresión y caché:** el JSON sale comprimido con gzip (la agenda de un mes: 137 KB → 11 KB). `GET /servicios`, `/barberos`,
+`/horarios` y `/resenas` sin login responden `Cache-Control: max-age=60, public` (el navegador las reusa un minuto); con
+login, `no-store`, porque el panel tiene que ver en el momento lo que acaba de editar. Todo lo demás es `no-store`.
+
 ## Resumen
 
 ### Los 19 endpoints de la Etapa 4

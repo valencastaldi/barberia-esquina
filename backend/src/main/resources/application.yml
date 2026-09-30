@@ -24,6 +24,10 @@ spring:
 
 server:
   port: ${PORT:8080}
+  # JSON comprimido con gzip: la agenda de un mes pasa de ~137 KB a ~11 KB.
+  # La API no usa cookies (el token va en un header), así que comprimir no habilita ataques tipo BREACH.
+  compression:
+    enabled: true
 
 app:
   zona-horaria: America/Argentina/Cordoba

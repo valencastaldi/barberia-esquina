@@ -52,8 +52,8 @@ ejemplo (3 peluqueros, 150 clientes, ~550 turnos de las últimas 6 semanas y la 
 ./mvnw test
 ```
 
-44 tests de integración sobre H2 con un reloj fijo (martes 22/09/2026 11:00):
-disponibilidad, reserva, reservas simultáneas, cancelación, encuesta, pagos, permisos por rol, sesiones revocadas y rate limiting (reservas y login).
+52 tests de integración sobre H2 con un reloj fijo (martes 22/09/2026 11:00):
+disponibilidad, reserva, reservas simultáneas, cancelación, encuesta, pagos, permisos por rol, sesiones revocadas, rate limiting (reservas y login), fotos y caché HTTP.
 
 ## Arquitectura en capas
 

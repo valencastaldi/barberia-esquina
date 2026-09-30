@@ -7,6 +7,7 @@ import com.barberiaesquina.turnos.web.dto.ServicioDtos.Pedido;
 import com.barberiaesquina.turnos.web.dto.ServicioDtos.Respuesta;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -19,16 +20,18 @@ public class ServicioControlador {
 
     private final ServicioServicio servicios;
     private final SesionActual sesion;
+    private final CachePublica cache;
 
-    public ServicioControlador(ServicioServicio servicios, SesionActual sesion) {
+    public ServicioControlador(ServicioServicio servicios, SesionActual sesion, CachePublica cache) {
         this.servicios = servicios;
         this.sesion = sesion;
+        this.cache = cache;
     }
 
     /** Público: el cliente ve solo los activos. Con ?todos=true el panel ve también los ocultos. */
     @GetMapping
-    public List<Respuesta> listar(@RequestParam(defaultValue = "false") boolean todos) {
-        return servicios.listar(todos && sesion.estaAutenticado());
+    public ResponseEntity<List<Respuesta>> listar(@RequestParam(defaultValue = "false") boolean todos) {
+        return cache.ok(servicios.listar(todos && sesion.estaAutenticado()));
     }
 
     @PostMapping

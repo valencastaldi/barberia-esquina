@@ -5,12 +5,16 @@ import com.barberiaesquina.turnos.modelo.Bloqueo;
 import com.barberiaesquina.turnos.modelo.EstadoTurno;
 import com.barberiaesquina.turnos.repositorio.BloqueoRepositorio;
 import com.jayway.jsonpath.JsonPath;
+import jakarta.persistence.EntityManagerFactory;
+import org.hibernate.SessionFactory;
+import org.hibernate.stat.Statistics;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalTime;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -20,6 +24,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class DisponibilidadTest extends PruebaDeIntegracion {
 
     @Autowired BloqueoRepositorio bloqueos;
+    @Autowired EntityManagerFactory emf;
 
     @Test
     void hoyNoOfreceHorariosQueYaPasaron() throws Exception {
@@ -175,6 +180,27 @@ class DisponibilidadTest extends PruebaDeIntegracion {
                 .andExpect(jsonPath("$[7].slots").value(JsonPath.<Object>read(delDia, "$.slots")))
                 .andExpect(jsonPath("$[7].slots", hasSize(20)))
                 .andExpect(jsonPath("$[13].slots").doesNotExist());
+    }
+
+    @Test
+    void losDiasNoHacenUnaConsultaPorPeluqueroYPorDia() throws Exception {
+        // Horarios, turnos y bloqueos de todo el rango se traen de una vez y el cálculo es en memoria:
+        // 14 días con dos peluqueros cuestan lo mismo que uno solo.
+        turnoGuardado(agustin, corte, HOY.plusDays(7), "15:00", EstadoTurno.PENDIENTE);
+        Statistics estadisticas = emf.unwrap(SessionFactory.class).getStatistics();
+        estadisticas.setStatisticsEnabled(true);
+        try {
+            estadisticas.clear();
+            mvc.perform(get("/api/v1/disponibilidad/dias")
+                            .param("servicio", corte.getId().toString())
+                            .param("cantidad", "14"))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$", hasSize(14)))
+                    .andExpect(jsonPath("$[7].libres").value(20));   // a las 15:00 sigue libre Santiago
+            assertThat(estadisticas.getPrepareStatementCount()).isLessThanOrEqualTo(5);
+        } finally {
+            estadisticas.setStatisticsEnabled(false);
+        }
     }
 
     @Test

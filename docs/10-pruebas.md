@@ -7,7 +7,7 @@ cd backend
 ./mvnw test
 ```
 
-**44 tests de integración.** Levantan la API completa (Spring, seguridad, JPA, Flyway) sobre **H2 en memoria en modo MySQL**,
+**52 tests de integración.** Levantan la API completa (Spring, seguridad, JPA, Flyway) sobre **H2 en memoria en modo MySQL**,
 con las mismas migraciones que la base real, y le hacen pedidos HTTP con MockMvc.
 
 Usan un **reloj fijo**: martes 22/09/2026 a las 11:00 (Córdoba). Así "hoy" y "ya pasó" dan siempre lo mismo, se corran el
@@ -20,7 +20,7 @@ La base común está en `PruebaDeIntegracion.java`.
 
 ### Qué cubren
 
-**`DisponibilidadTest`** (10) — cálculo de horarios
+**`DisponibilidadTest`** (12) — cálculo de horarios
 - no ofrece horarios que ya pasaron
 - un servicio largo no puede empezar si pisa un turno
 - los cancelados no ocupan lugar
@@ -30,6 +30,8 @@ La base común está en `PruebaDeIntegracion.java`.
 - un día que nadie atiende no tiene horarios
 - no se ofrecen días pasados ni demasiado lejanos
 - el selector de días cuenta los libres
+- el primer día con lugar trae sus horarios (los mismos que `GET /disponibilidad`)
+- los días no hacen una consulta por peluquero y por día (14 días con dos peluqueros: 5 consultas como máximo)
 - un peluquero que no hace el servicio da error
 
 **`FlujoDeTurnosTest`** (12) — reserva, cancelación, encuesta, cobro
@@ -65,6 +67,16 @@ La base común está en `PruebaDeIntegracion.java`.
 - la limpieza borra solo los tokens revocados que ya vencieron
 - una reserva pública no cambia los datos de un cliente que ya existe
 - los reportes del panel no aceptan rangos de más de un año
+
+**`FotoBarberoTest`** (3) — foto de perfil
+- el dueño sube la foto y se ve sin login
+- solo se aceptan imágenes de verdad (se mira el contenido, no lo que dice el navegador)
+- un barbero no cambia fotos
+
+**`CacheHttpTest`** (3) — qué puede guardar el navegador
+- servicios, peluqueros, horario y reseñas se guardan un minuto (`Cache-Control: max-age=60`)
+- con sesión no se guarda nada: el panel tiene que ver lo que acaba de editar
+- la disponibilidad no se guarda nunca
 
 ### H2 no es MySQL
 

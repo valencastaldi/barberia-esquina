@@ -5,6 +5,7 @@ import com.barberiaesquina.turnos.servicio.HorarioServicio;
 import com.barberiaesquina.turnos.web.dto.HorarioDtos.Dia;
 import com.barberiaesquina.turnos.web.dto.HorarioDtos.Pedido;
 import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -17,16 +18,18 @@ public class HorarioControlador {
 
     private final HorarioServicio horarios;
     private final SesionActual sesion;
+    private final CachePublica cache;
 
-    public HorarioControlador(HorarioServicio horarios, SesionActual sesion) {
+    public HorarioControlador(HorarioServicio horarios, SesionActual sesion, CachePublica cache) {
         this.horarios = horarios;
         this.sesion = sesion;
+        this.cache = cache;
     }
 
     /** Público. Sin ?barbero devuelve el horario general de la barbería. */
     @GetMapping
-    public List<Dia> ver(@RequestParam(required = false) Long barbero) {
-        return barbero == null ? horarios.deLaBarberia() : horarios.deBarbero(barbero);
+    public ResponseEntity<List<Dia>> ver(@RequestParam(required = false) Long barbero) {
+        return cache.ok(barbero == null ? horarios.deLaBarberia() : horarios.deBarbero(barbero));
     }
 
     /** Los horarios los define el dueño. Sin ?barbero se guarda el suyo. */
