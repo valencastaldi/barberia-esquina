@@ -1,13 +1,13 @@
 /**
  * Datos fijos del local. No están en la base porque no los define la documentación.
- * ⚠ Dirección, teléfono e Instagram son de relleno: faltan los reales de la barbería.
+ * ⚠ El Instagram es de relleno: falta el real de la barbería.
  */
 export const BARBERIA = {
   nombre: "Barbería Esquina",
   rotulo: "Esquina 1290",
-  direccion: "Av. Rivadavia 1290, esquina Sarmiento",
-  telefono: "+54 9 351 000-0000",
-  whatsapp: "5493510000000",
+  direccion: "Av. San Martín 992",
+  telefono: "+54 9 3517 59-0663",
+  whatsapp: "5493517590663",
   instagram: "barberiaesquina",
 };
 
@@ -17,10 +17,10 @@ export const BARBERIA = {
  * y los textos finales conviene que los revise un abogado.
  */
 export const LEGAL = {
-  razonSocial: "[Razón social o nombre del titular]",
-  cuit: "[CUIT]",
-  domicilio: "[Domicilio legal]",
-  emailDatos: "[Email para consultas sobre datos personales]",
+  razonSocial: "Barbería Esquina 1290",
+  cuit: "",   // todavía no lo pasaron: mientras esté vacío no se muestra
+  domicilio: "Av. San Martín 992",
+  emailDatos: "franbossana@gmail.com",
   actualizado: "30 de septiembre de 2026",
   // Cuánto se guardan los datos de un cliente que no vuelve. Lo decide el dueño.
   conservacion: "[plazo, por ejemplo 2 años]",

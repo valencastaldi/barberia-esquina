@@ -20,7 +20,7 @@ export default function Privacidad() {
         <h2>Quién es el responsable</h2>
         <ul className="datos">
           <li><span>Titular</span>{LEGAL.razonSocial}</li>
-          <li><span>CUIT</span>{LEGAL.cuit}</li>
+          {LEGAL.cuit && <li><span>CUIT</span>{LEGAL.cuit}</li>}
           <li><span>Domicilio</span>{LEGAL.domicilio}</li>
           <li><span>Contacto</span>{LEGAL.emailDatos}</li>
         </ul>

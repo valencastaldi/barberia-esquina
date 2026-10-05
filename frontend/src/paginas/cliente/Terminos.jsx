@@ -20,7 +20,7 @@ export default function Terminos() {
         <h2>Quiénes somos</h2>
         <ul className="datos">
           <li><span>Titular</span>{LEGAL.razonSocial}</li>
-          <li><span>CUIT</span>{LEGAL.cuit}</li>
+          {LEGAL.cuit && <li><span>CUIT</span>{LEGAL.cuit}</li>}
           <li><span>Domicilio</span>{LEGAL.domicilio}</li>
           <li><span>Local</span>{BARBERIA.direccion}</li>
           <li><span>Teléfono</span>{BARBERIA.telefono}</li>
