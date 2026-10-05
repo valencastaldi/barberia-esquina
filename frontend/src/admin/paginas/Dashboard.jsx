@@ -16,10 +16,11 @@ export default function Dashboard() {
   const hasta = hoyIso();
   const rango = { desde: sumarDias(hasta, -(dias - 1)), hasta };
 
-  const resumen = usePedidoAdmin("/dashboard/resumen", rango);
-  const evolucion = usePedidoAdmin("/dashboard/evolucion", rango);
-  const equipo = usePedidoAdmin("/dashboard/barberos", rango);
-  const r = resumen.datos;
+  // Resumen, gráfico y peluqueros llegan en una sola respuesta.
+  const panel = usePedidoAdmin("/dashboard", rango);
+  const r = panel.datos?.resumen;
+  const evolucion = panel.datos?.evolucion;
+  const equipo = panel.datos?.barberos;
 
   return (
     <>
@@ -27,7 +28,7 @@ export default function Dashboard() {
         <Segmentos opciones={PERIODOS} valor={dias} alCambiar={setDias} etiqueta="Período" />
       </Cabecera>
 
-      <EstadoCarga pedido={resumen} />
+      <EstadoCarga pedido={panel} />
       {r && (
         <section className="kpis">
           <Kpi destacado etiqueta="Turnos completados" valor={r.completados}
@@ -47,8 +48,8 @@ export default function Dashboard() {
             <div><h2>Turnos completados por día</h2><p>Últimos {dias} días</p></div>
           </header>
           <div className="cuerpo envoltorio-grafico">
-            <EstadoCarga pedido={evolucion} />
-            {evolucion.datos && <GraficoBarras datos={evolucion.datos} />}
+            <EstadoCarga pedido={panel} />
+            {evolucion && <GraficoBarras datos={evolucion} />}
           </div>
         </section>
 
@@ -93,7 +94,7 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {equipo.datos && equipo.datos.length > 1 && (
+      {equipo && equipo.length > 1 && (
         <section className="bloque">
           <header><div><h2>Por peluquero</h2><p>Últimos {dias} días</p></div><span className="tag-ext">Extensión</span></header>
           <table className="datos">
@@ -101,7 +102,7 @@ export default function Dashboard() {
               <tr><th>Peluquero</th><th>Completados</th><th>Ausentes</th><th>Facturado</th><th className="fin">Satisfacción</th></tr>
             </thead>
             <tbody>
-              {equipo.datos.map((b) => (
+              {equipo.map((b) => (
                 <tr key={b.idBarbero}>
                   <td><b>{b.nombre}</b></td>
                   <td className="num">{b.completados}</td>

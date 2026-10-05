@@ -12,7 +12,10 @@ public final class ClienteDtos {
                           long visitas, long ausencias, BigDecimal gastado,
                           LocalDate ultimaVisita, LocalDate primeraVisita, TurnoDtos.Ref habitual) {}
 
-    public record Pagina(List<Resumen> contenido, long total, int pagina, int tamano) {}
+    /** totales: cuántos clientes hay en cada filtro (sin la búsqueda), para las tarjetas de arriba. */
+    public record Pagina(List<Resumen> contenido, long total, int pagina, int tamano, Totales totales) {}
+
+    public record Totales(long todos, long frecuentes, long nuevos, long perdidos) {}
 
     public record Ficha(Resumen cliente, Double satisfaccion, TurnoDtos.Detalle proximoTurno,
                         List<TurnoDtos.Detalle> historial) {}

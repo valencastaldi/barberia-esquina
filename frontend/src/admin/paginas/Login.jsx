@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useSesion } from "../sesion.jsx";
 import { Logo } from "../../componentes/Logo.jsx";
@@ -13,7 +13,7 @@ export default function Login() {
   const [error, setError] = useState(state?.motivo ?? null);
   const [enviando, setEnviando] = useState(false);
 
-  useEffect(() => {
+  useLayoutEffect(() => {   // antes de pintar, como en el resto del panel
     document.body.className = "admin login";
     document.title = "Ingresar — Barbería Esquina";
   }, []);

@@ -10,7 +10,7 @@ spring:
     password: ${DB_PASSWORD:esquina}
   servlet:
     multipart:
-      max-file-size: 2MB      # fotos de perfil (el front ya las achica a 400x400)
+      max-file-size: 2MB      # fotos de perfil (el front ya las achica a 240x240)
       max-request-size: 3MB
   jpa:
     open-in-view: false

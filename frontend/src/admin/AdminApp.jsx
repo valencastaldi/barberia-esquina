@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useLayoutEffect } from "react";
 import { Navigate, Outlet, Route, Routes } from "react-router-dom";
 import "../estilos/admin.css";
 import "../estilos/panel.css";
@@ -42,7 +42,9 @@ export default function AdminApp() {
 }
 
 function Layout() {
-  useEffect(() => {
+  // Antes de pintar: los estilos del panel cuelgan de body.admin, y con useEffect el primer
+  // cuadro podía salir sin ellos.
+  useLayoutEffect(() => {
     document.body.className = "admin";
     document.title = "Panel — Barbería Esquina";
   }, []);

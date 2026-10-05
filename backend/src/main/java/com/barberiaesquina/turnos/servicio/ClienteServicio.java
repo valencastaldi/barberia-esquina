@@ -9,6 +9,7 @@ import com.barberiaesquina.turnos.servicio.excepcion.ReglaNegocioException;
 import com.barberiaesquina.turnos.web.dto.ClienteDtos.Ficha;
 import com.barberiaesquina.turnos.web.dto.ClienteDtos.Pagina;
 import com.barberiaesquina.turnos.web.dto.ClienteDtos.Resumen;
+import com.barberiaesquina.turnos.web.dto.ClienteDtos.Totales;
 import com.barberiaesquina.turnos.web.dto.TurnoDtos;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -47,15 +48,27 @@ public class ClienteServicio {
 
         List<Resumen> todos = clientes.findAll().stream()
                 .map(c -> acumulados.getOrDefault(c.getId(), new Acumulado()).resumen(c))
+                .toList();
+        List<Resumen> elegidos = todos.stream()
                 .filter(coincide(busqueda))
                 .filter(filtro(filtro == null ? Filtro.TODOS : filtro, conProximoTurno))
                 .sorted(Comparator.comparing(Resumen::ultimaVisita, Comparator.nullsLast(Comparator.reverseOrder()))
                         .thenComparing(Resumen::visitas, Comparator.reverseOrder()))
                 .toList();
 
-        int desde = Math.min(pagina * tamano, todos.size());
-        int hasta = Math.min(desde + tamano, todos.size());
-        return new Pagina(todos.subList(desde, hasta), todos.size(), pagina, tamano);
+        // Los totales de las tarjetas salen de los mismos datos: la pantalla no tiene que pedir cada filtro aparte.
+        Totales totales = new Totales(todos.size(),
+                cuantos(todos, filtro(Filtro.FRECUENTES, conProximoTurno)),
+                cuantos(todos, filtro(Filtro.NUEVOS, conProximoTurno)),
+                cuantos(todos, filtro(Filtro.PERDIDOS, conProximoTurno)));
+
+        int desde = Math.min(pagina * tamano, elegidos.size());
+        int hasta = Math.min(desde + tamano, elegidos.size());
+        return new Pagina(elegidos.subList(desde, hasta), elegidos.size(), pagina, tamano, totales);
+    }
+
+    private static long cuantos(List<Resumen> lista, Predicate<Resumen> condicion) {
+        return lista.stream().filter(condicion).count();
     }
 
     public Ficha ficha(Long idCliente) {

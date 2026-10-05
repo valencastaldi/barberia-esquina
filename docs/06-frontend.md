@@ -11,7 +11,7 @@ frontend/src/
 ├── config.js                Datos fijos del local (⚠ de relleno: dirección, teléfono, WhatsApp)
 ├── api/
 │   ├── api.js               fetch a /api/v1: arma la URL, manda el JSON, convierte errores en ErrorApi
-│   ├── usePedido.js         Hook para cargar datos: { datos, error, cargando, recargar }
+│   ├── usePedido.js         Hook para cargar datos: { datos, error, cargando, recargar, cambiar }
 │   ├── cache.js             Respuestas recientes en memoria, para no pedir dos veces lo mismo
 │   └── disponibilidad.js    Pedidos del paso 2 de la reserva (días y horarios)
 ├── lib/
@@ -97,6 +97,22 @@ Escritorio, desde 1024 px (RNF-10). Detalle de qué ve cada rol en [7. Roles y p
 | `/admin/peluqueros` | Tarjetas del equipo con números de 30 días; alta y edición, con foto de perfil |
 | `/admin/servicios` | Tabla del catálogo; alta, edición, ocultar, borrar |
 | `/admin/horarios` | Semana de cada peluquero y slot base ("Mis horarios", sin editar, para el barbero) |
+
+### Fluidez del panel
+
+Sin cambiar cómo se ve:
+
+- **Las acciones de la Agenda no recargan la agenda.** Completar, cobrar, marcar ausente, cancelar, corregir, borrar,
+  bloquear o cargar un turno ponen en pantalla lo que devuelve la API (`cambiar` de `usePedido`), en lugar de volver a
+  pedir turnos, bloqueos y la tira de días. Cancelar un turno con 50 ms de latencia: de 3 pedidos a 1 y de 157 ms a
+  65 ms hasta ver la fila cambiada. Si la acción falla, se muestra el motivo y ahí sí se vuelve a pedir todo.
+- **Clientes y Dashboard en un pedido.** `GET /clientes` trae también los totales de las tarjetas (antes eran 5 pedidos y
+  30 consultas a la base; ahora 1 y 6) y la pantalla Dashboard usa `GET /dashboard` (antes 3 pedidos y 12 consultas;
+  ahora 1 y 5).
+- **Fotos de 240 px.** `lib/imagen.js` las achica a 240×240 antes de subirlas (antes 400): la más grande se muestra a
+  76 px, así que alcanza hasta para pantallas 3x, y pesan la mitad.
+- **Sin cuadro sin estilos.** Como en el sitio del cliente, la clase de `body` se pone con `useLayoutEffect`, antes de
+  pintar.
 
 ### Sesión
 

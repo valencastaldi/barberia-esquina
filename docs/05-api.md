@@ -36,6 +36,7 @@ login, `no-store`, porque el panel tiene que ver en el momento lo que acaba de e
 | `GET /clientes` · `GET /clientes/{id}` | 👑 | *Extensión:* clientes |
 | `GET /pagos` · `POST /pagos` | 👑 · 🔑 | *Extensión:* cobros y liquidación |
 | `GET /dashboard/barberos` | 👑 | *Extensión:* rendimiento por peluquero |
+| `GET /dashboard` | 👑 | La pantalla Dashboard en un solo pedido (resumen, evolución y peluqueros) |
 | `GET /barberos/{id}/foto` · `POST /barberos/{id}/foto` · `DELETE /barberos/{id}/foto` | 🔓 · 👑 · 👑 | *Extensión:* foto de perfil del peluquero |
 | `GET /opiniones` | 🔑 | Encuestas con promedio por peluquero, para todo el equipo |
 | `POST /turnos/panel` | 🔑 | *Extensión:* cargar un turno desde el panel (por teléfono o sin reserva) |
@@ -288,6 +289,11 @@ Token incorrecto o turno no completado → 404. Ya respondida → 409.
 
 Sin fechas: los últimos 30 días.
 
+### `GET /dashboard?desde=&hasta=` — `{ "resumen": {…}, "evolucion": […], "barberos": […] }`
+
+Lo mismo que los tres de abajo juntos (sin filtro por peluquero): es lo que usa la pantalla Dashboard. Lee los turnos y
+las encuestas del período una sola vez.
+
 ### `GET /dashboard/resumen?desde=&hasta=&barbero=`
 
 ```json
@@ -349,8 +355,12 @@ vuelven hace más de 3 semanas y no tienen turno sacado).
 { "contenido": [{ "id": 1, "nombre": "Mateo", "apellido": "Giménez", "email": "…", "telefono": "…",
                   "visitas": 6, "ausencias": 0, "gastado": 54000.00, "ultimaVisita": "2026-09-22",
                   "primeraVisita": "2026-08-10", "habitual": { "id": 1, "nombre": "Agustín" } }],
-  "total": 151, "pagina": 0, "tamano": 25 }
+  "total": 151, "pagina": 0, "tamano": 25,
+  "totales": { "todos": 151, "frecuentes": 38, "nuevos": 12, "perdidos": 9 } }
 ```
+
+`totales` es cuántos clientes hay en cada filtro sin contar la búsqueda: son los números de las tarjetas de arriba, que
+así no necesitan un pedido por filtro.
 
 ### `GET /clientes/{id}` 👑 — `{ cliente, satisfaccion, proximoTurno, historial: [turnos] }`
 

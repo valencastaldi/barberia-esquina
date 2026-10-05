@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ErrorApi } from "../../api/api.js";
 import { DIAS_CORTOS, aFecha, fechaLarga, pesos, sumarMinutos } from "../../lib/formato.js";
 import { useSesion, usePedidoAdmin } from "../sesion.jsx";
@@ -65,20 +65,45 @@ export default function Agenda() {
 
   const recargar = () => { turnos.recargar(); bloqueos.recargar(); tira.recargar(); };
 
-  /** Ejecuta una acción; si falla, muestra el motivo que da la API. */
+  // Después de una acción no se vuelve a pedir la agenda: se pone en pantalla lo que devolvió
+  // la API (el turno cambiado, el bloqueo nuevo…) y la fila cambia apenas responde el servidor.
+  // `mirando` es lo que hay en pantalla cuando llega la respuesta: mientras se esperaba, se pudo
+  // haber pasado a otro día o a otro peluquero.
+  const mirando = useRef(null);
+  mirando.current = { desde, hasta, proximos, idBarbero };
+  /** ¿Entra en lo que se está mirando? (fechas y filtro de peluquero) */
+  const corresponde =(fecha, idDelBarbero, d = mirando.current.desde, h = mirando.current.hasta) =>
+    fecha >= d && fecha <= h && (mirando.current.idBarbero == null || idDelBarbero === mirando.current.idBarbero);
+  function ponerTurno(t) {
+    turnos.cambiar((l) => conTurno(l, t, corresponde(t.fecha, t.barbero.id) && (!mirando.current.proximos || t.estado === "pendiente")));
+    tira.cambiar((l) => conTurno(l, t, corresponde(t.fecha, t.barbero.id, hoyIso(), sumarDias(hoyIso(), 13))));
+  }
+  function sacarTurno(id) {
+    turnos.cambiar((l) => l.filter((x) => x.id !== id));
+    tira.cambiar((l) => l.filter((x) => x.id !== id));
+  }
+  function ponerBloqueo(b) {
+    if (corresponde(b.fecha, b.idBarbero)) bloqueos.cambiar((l) => [...l, b].sort(porHorario));
+  }
+
+  /** Ejecuta una acción; si falla, muestra el motivo que da la API y vuelve a pedir la agenda como quedó. */
   async function accion(fn) {
     setAviso(null);
     try {
       await fn();
     } catch (e) {
       setAviso(e.message);
-    } finally {
       recargar();
     }
   }
 
   const cambiarEstado = (t, estado) =>
     pedir(`/turnos/${t.id}/estado`, { metodo: "PATCH", cuerpo: { estado } });
+  const marcar = (t, estado) => accion(async () => ponerTurno(await cambiarEstado(t, estado)));
+  const quitarBloqueo = (b) => accion(async () => {
+    await pedir(`/bloqueos/${b.id}`, { metodo: "DELETE" });
+    bloqueos.cambiar((l) => l.filter((x) => x.id !== b.id));
+  });
 
   const lista = turnos.datos ?? [];
   // El barbero ve la agenda de todos, pero los números son solo de sus turnos.
@@ -175,7 +200,7 @@ export default function Agenda() {
             <Cronograma turnos={lista} bloqueos={bloqueos.datos ?? []} horarioDelDia={horarioDelDia} esHoy={esHoy}
                         barberos={idBarbero ? activos.filter((b) => b.id === idBarbero) : activos}
                         puedeTocar={puedeTocar} esDueno={esDueno} alElegirTurno={setDetalle}
-                        alQuitarBloqueo={(b) => accion(() => pedir(`/bloqueos/${b.id}`, { metodo: "DELETE" }))} />
+                        alQuitarBloqueo={quitarBloqueo} />
           )}
         </section>
       )}
@@ -203,11 +228,11 @@ export default function Agenda() {
             )}
             {filas.map((f) => f.tipo === "bloqueo"
               ? <FilaBloqueo key={`b${f.b.id}`} b={f.b} puedeQuitar={esDueno}
-                             alQuitar={() => accion(() => pedir(`/bloqueos/${f.b.id}`, { metodo: "DELETE" }))} />
+                             alQuitar={() => quitarBloqueo(f.b)} />
               : <FilaTurno key={f.t.id} t={f.t} puedeTocar={esDueno || f.t.barbero.id === usuario.id}
                            alCompletar={() => setCobrando({ turno: f.t, completar: true })}
                            alCobrar={() => setCobrando({ turno: f.t, completar: false })}
-                           alAusente={() => accion(() => cambiarEstado(f.t, "ausente"))}
+                           alAusente={() => marcar(f.t, "ausente")}
                            alCancelar={() => setCancelando(f.t)}
                            alEditar={() => setEditando(f.t)}
                            alBorrar={() => setBorrando(f.t)} />)}
@@ -219,7 +244,7 @@ export default function Agenda() {
       <ModalDetalle turno={detalle} puedeTocar={detalle ? puedeTocar(detalle) : false} alCerrar={() => setDetalle(null)}
                     alCompletar={(t) => { setDetalle(null); setCobrando({ turno: t, completar: true }); }}
                     alCobrar={(t) => { setDetalle(null); setCobrando({ turno: t, completar: false }); }}
-                    alAusente={(t) => { setDetalle(null); accion(() => cambiarEstado(t, "ausente")); }}
+                    alAusente={(t) => { setDetalle(null); marcar(t, "ausente"); }}
                     alCancelar={(t) => { setDetalle(null); setCancelando(t); }}
                     alEditar={(t) => { setDetalle(null); setEditando(t); }}
                     alBorrar={(t) => { setDetalle(null); setBorrando(t); }} />
@@ -228,8 +253,12 @@ export default function Agenda() {
                   alConfirmar={(medio) => accion(async () => {
                     const { turno, completar } = cobrando;
                     setCobrando(null);
-                    if (completar) await cambiarEstado(turno, "completado");
-                    if (medio) await pedir("/pagos", { metodo: "POST", cuerpo: { idTurno: turno.id, monto: turno.precio, medio } });
+                    let t = turno;
+                    if (completar) ponerTurno(t = await cambiarEstado(turno, "completado"));
+                    if (medio) {
+                      const pago = await pedir("/pagos", { metodo: "POST", cuerpo: { idTurno: turno.id, monto: turno.precio, medio } });
+                      ponerTurno({ ...t, pago: { medio: pago.medio, monto: pago.monto, fecha: pago.fecha } });
+                    }
                   })} />
 
       <Modal abierto={!!cancelando} alCerrar={() => setCancelando(null)} titulo="¿Cancelar este turno?"
@@ -245,7 +274,7 @@ export default function Agenda() {
               <button type="button" className="btn btn-peligro" onClick={() => {
                 const t = cancelando;
                 setCancelando(null);
-                accion(() => cambiarEstado(t, "cancelado"));
+                marcar(t, "cancelado");
               }}>Sí, cancelar</button>
             </div>
           </>
@@ -254,9 +283,9 @@ export default function Agenda() {
 
       <ModalEditar turno={editando} equipo={activos} esDueno={esDueno} alCerrar={() => setEditando(null)}
                    alGuardar={async (cuerpo) => {
-                     await pedir(`/turnos/${editando.id}`, { metodo: "PUT", cuerpo });
+                     const t = await pedir(`/turnos/${editando.id}`, { metodo: "PUT", cuerpo });
                      setEditando(null);
-                     recargar();
+                     ponerTurno(t);
                    }} />
 
       <Modal abierto={!!borrando} alCerrar={() => setBorrando(null)} titulo="¿Borrar este turno?"
@@ -273,7 +302,10 @@ export default function Agenda() {
               <button type="button" className="btn btn-peligro" onClick={() => {
                 const t = borrando;
                 setBorrando(null);
-                accion(() => pedir(`/turnos/${t.id}`, { metodo: "DELETE" }));
+                accion(async () => {
+                  await pedir(`/turnos/${t.id}`, { metodo: "DELETE" });
+                  sacarTurno(t.id);
+                });
               }}>Sí, borrar</button>
             </div>
           </>
@@ -283,19 +315,29 @@ export default function Agenda() {
       <ModalBloqueo abierto={bloqueando} alCerrar={() => setBloqueando(false)} fechaInicial={fecha}
                     equipo={esDueno ? activos : activos.filter((b) => b.id === usuario.id)}
                     idPropio={usuario.id} alGuardar={async (cuerpo) => {
-                      await pedir("/bloqueos", { metodo: "POST", cuerpo });
+                      const b = await pedir("/bloqueos", { metodo: "POST", cuerpo });
                       setBloqueando(false);
-                      recargar();
+                      ponerBloqueo(b);
                     }} />
 
       <ModalTurno abierto={cargandoTurno} alCerrar={() => setCargandoTurno(false)} fechaInicial={fecha}
                   equipo={activos} esDueno={esDueno} idPropio={usuario.id} alGuardar={async (cuerpo) => {
-                    await pedir("/turnos/panel", { metodo: "POST", cuerpo });
+                    const t = await pedir("/turnos/panel", { metodo: "POST", cuerpo });
                     setCargandoTurno(false);
-                    recargar();
+                    ponerTurno(t);
                   }} />
     </>
   );
+}
+
+/** En el orden de la API: por día y hora (y, si coinciden, por cuál se cargó primero). */
+const porHorario = (a, b) => (a.fecha + a.horaInicio).localeCompare(b.fecha + b.horaInicio) || a.id - b.id;
+
+/** La lista con el turno: reemplazado en su lugar, agregado en orden si es nuevo, o afuera si ya no corresponde. */
+function conTurno(lista, t, entra) {
+  if (!entra) return lista.filter((x) => x.id !== t.id);
+  if (lista.some((x) => x.id === t.id)) return lista.map((x) => (x.id === t.id ? t : x));
+  return [...lista, t].sort(porHorario);
 }
 
 function FilaTurno({ t, puedeTocar, alCompletar, alCobrar, alAusente, alCancelar, alEditar, alBorrar }) {

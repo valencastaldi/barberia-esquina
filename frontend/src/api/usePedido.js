@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { leerGuardado, olvidar, pedirGuardado } from "./cache.js";
 
 /**
  * Pide datos a la API cuando cambian las dependencias.
- * Devuelve { datos, error, cargando, recargar }. Mientras llega lo nuevo quedan los
+ * Devuelve { datos, error, cargando, recargar, cambiar }. Mientras llega lo nuevo quedan los
  * datos anteriores (con cargando = true), así la pantalla no se vacía. Si llega una
  * respuesta vieja (el usuario ya cambió de opción), se descarta.
  *
@@ -41,5 +41,20 @@ export function usePedido(pedir, dependencias, { clave, vigencia = 0 } = {}) {
     if (clave) olvidar(clave);
     setVuelta((v) => v + 1);
   }, [clave]);
-  return { ...estado, recargar };
+
+  // `cambiar(fn)` aplica un cambio a lo que ya está en pantalla sin volver a pedirlo (por ejemplo,
+  // la fila que devolvió la API después de una acción). Solo cambia lo que ve esta pantalla, no lo
+  // guardado en cache.js. Si justo hay un pedido en camino, se pide de nuevo: esa respuesta podría
+  // ser de antes del cambio y lo taparía.
+  const actual = useRef(estado);
+  actual.current = estado;
+  const cambiar = useCallback((fn) => {
+    if (actual.current.cargando) {
+      recargar();
+      return;
+    }
+    setEstado((e) => (e.datos == null ? e : { ...e, datos: fn(e.datos) }));
+  }, [recargar]);
+
+  return { ...estado, recargar, cambiar };
 }

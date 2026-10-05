@@ -18,7 +18,7 @@ import java.util.Arrays;
 @Transactional
 public class FotoBarberoServicio {
 
-    /** El front la manda recortada a 400x400 (pesa unos 30-60 KB); esto es un tope de seguridad. */
+    /** El front la manda recortada a 240x240 (pesa unos 15-25 KB); esto es un tope de seguridad. */
     public static final int TAMANO_MAXIMO = 2 * 1024 * 1024;
 
     private final BarberoRepositorio barberos;

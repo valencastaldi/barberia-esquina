@@ -1,11 +1,13 @@
 /**
  * Prepara una foto de perfil antes de subirla: la recorta cuadrada desde el centro y
- * la achica a 400x400 en JPEG. Así pesa unos 30-60 KB aunque venga de un celular de 12 MP,
+ * la achica a 240x240 en JPEG. Así pesa unos 15-25 KB aunque venga de un celular de 12 MP,
  * y al redibujarla se pierden los datos ocultos del archivo (ubicación GPS, modelo del celular).
  *
  * Devuelve { blob, vistaPrevia } o lanza un Error con un mensaje para mostrar.
  */
-const LADO = 400;
+// La foto más grande que se muestra mide 76 px (al editar un peluquero): 240 alcanza para que
+// se vea nítida hasta en pantallas de densidad 3x, que dibujan 228 px reales.
+const LADO = 240;
 
 export async function prepararFoto(archivo) {
   if (!/^image\/(jpeg|png|webp)$/.test(archivo.type)) {

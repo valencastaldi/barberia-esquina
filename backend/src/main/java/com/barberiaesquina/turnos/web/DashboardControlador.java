@@ -2,6 +2,7 @@ package com.barberiaesquina.turnos.web;
 
 import com.barberiaesquina.turnos.servicio.Calendario;
 import com.barberiaesquina.turnos.servicio.DashboardServicio;
+import com.barberiaesquina.turnos.web.dto.DashboardDtos.Completo;
 import com.barberiaesquina.turnos.web.dto.DashboardDtos.PuntoEvolucion;
 import com.barberiaesquina.turnos.web.dto.DashboardDtos.RendimientoBarbero;
 import com.barberiaesquina.turnos.web.dto.DashboardDtos.Resumen;
@@ -27,6 +28,13 @@ public class DashboardControlador {
     public DashboardControlador(DashboardServicio dashboard, Calendario calendario) {
         this.dashboard = dashboard;
         this.calendario = calendario;
+    }
+
+    /** Lo que muestra la pantalla Dashboard (resumen, evolución y peluqueros) en un solo pedido. */
+    @GetMapping
+    public Completo completo(@RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate desde,
+                             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate hasta) {
+        return dashboard.completo(desde(desde), hasta(hasta));
     }
 
     @GetMapping("/resumen")

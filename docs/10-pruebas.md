@@ -7,7 +7,7 @@ cd backend
 ./mvnw test
 ```
 
-**52 tests de integración.** Levantan la API completa (Spring, seguridad, JPA, Flyway) sobre **H2 en memoria en modo MySQL**,
+**69 tests de integración.** Levantan la API completa (Spring, seguridad, JPA, Flyway) sobre **H2 en memoria en modo MySQL**,
 con las mismas migraciones que la base real, y le hacen pedidos HTTP con MockMvc.
 
 Usan un **reloj fijo**: martes 22/09/2026 a las 11:00 (Córdoba). Así "hoy" y "ya pasó" dan siempre lo mismo, se corran el
@@ -34,7 +34,7 @@ La base común está en `PruebaDeIntegracion.java`.
 - los días no hacen una consulta por peluquero y por día (14 días con dos peluqueros: 5 consultas como máximo)
 - un peluquero que no hace el servicio da error
 
-**`FlujoDeTurnosTest`** (12) — reserva, cancelación, encuesta, cobro
+**`FlujoDeTurnosTest`** (13) — reserva, cancelación, encuesta, cobro
 - reservar ocupa el horario y no se puede reservar dos veces
 - **8 reservas simultáneas al mismo horario guardan una sola**
 - sin peluquero elegido se asigna uno libre
@@ -47,6 +47,27 @@ La base común está en `PruebaDeIntegracion.java`.
 - no se completa un turno que todavía no empezó
 - cobrar un turno y verlo en el reporte (liquidación incluida)
 - la agenda lista los turnos del día con su cobro
+- sin aceptar los términos no se reserva
+
+**`TurnoDesdePanelTest`** (7) — turnos cargados desde el panel
+- sin sesión no se puede
+- el dueño carga un turno sin email para otro peluquero
+- el cliente sin email se reconoce por el teléfono; con email, se usa el cliente que ya existe
+- un barbero solo se carga turnos a sí mismo
+- respeta la disponibilidad
+- el email, si viene, tiene que ser válido
+
+**`EdicionDeTurnoTest`** (6) — corregir o borrar un turno completado
+- el barbero corrige su turno cobrado y Pagos lo refleja
+- solo el dueño pasa un turno a otro peluquero
+- borrar un turno cobrado lo saca de Pagos; un barbero no borra turnos ajenos
+- solo se corrigen o borran turnos completados
+- un turno cobrado no queda sin medio de pago
+
+**`ConsultasDelPanelTest`** (3) — pantallas del panel en un pedido
+- `GET /clientes` trae los totales de cada filtro (los mismos que pidiéndolos uno por uno); buscar no los cambia
+- `GET /dashboard` da lo mismo que `/dashboard/resumen`, `/evolucion` y `/barberos` juntos
+- Clientes cuesta 6 consultas como máximo y el Dashboard 5 (antes, con todos sus pedidos, 30 y 12)
 
 **`SeguridadTest`** (22) — login y permisos
 - el panel pide login; lo que usa el cliente es público

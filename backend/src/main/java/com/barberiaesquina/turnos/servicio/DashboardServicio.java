@@ -31,15 +31,39 @@ public class DashboardServicio {
         this.barberos = barberos;
     }
 
+    /**
+     * La pantalla Dashboard entera: resumen, evolución y peluqueros salen de los mismos turnos
+     * y encuestas, así que se leen una sola vez en lugar de una por cada parte.
+     */
+    public Completo completo(LocalDate desde, LocalDate hasta) {
+        List<Turno> lista = delPeriodo(desde, hasta, null);
+        List<Encuesta> respuestas = encuestasDe(lista);
+        return new Completo(resumen(lista, respuestas), evolucion(lista, desde, hasta), porBarbero(lista, respuestas));
+    }
+
     public Resumen resumen(LocalDate desde, LocalDate hasta, Long idBarbero) {
         List<Turno> lista = delPeriodo(desde, hasta, idBarbero);
+        return resumen(lista, encuestasDe(lista));
+    }
+
+    /** Turnos por día, con los días sin turnos en cero para que el gráfico no tenga huecos. */
+    public List<PuntoEvolucion> evolucion(LocalDate desde, LocalDate hasta, Long idBarbero) {
+        return evolucion(delPeriodo(desde, hasta, idBarbero), desde, hasta);
+    }
+
+    /** [Extensión] Cómo le fue a cada peluquero en el período. */
+    public List<RendimientoBarbero> porBarbero(LocalDate desde, LocalDate hasta) {
+        List<Turno> lista = delPeriodo(desde, hasta, null);
+        return porBarbero(lista, encuestasDe(lista));
+    }
+
+    private Resumen resumen(List<Turno> lista, List<Encuesta> respuestas) {
         Map<EstadoTurno, Long> porEstado = lista.stream()
                 .collect(Collectors.groupingBy(Turno::getEstado, () -> new EnumMap<>(EstadoTurno.class), Collectors.counting()));
         long completados = porEstado.getOrDefault(EstadoTurno.COMPLETADO, 0L);
         long ausentes = porEstado.getOrDefault(EstadoTurno.AUSENTE, 0L);
         double ausentismo = completados + ausentes == 0 ? 0 : (double) ausentes / (completados + ausentes);
 
-        List<Encuesta> respuestas = encuestasDe(lista);
         Map<Integer, Long> distribucion = new LinkedHashMap<>();
         for (int estrellas = 5; estrellas >= 1; estrellas--) distribucion.put(estrellas, 0L);
         respuestas.forEach(e -> distribucion.merge(e.getCalificacion(), 1L, Long::sum));
@@ -57,9 +81,8 @@ public class DashboardServicio {
                 promedio(respuestas), respuestas.size(), distribucion, comentarios);
     }
 
-    /** Turnos por día, con los días sin turnos en cero para que el gráfico no tenga huecos. */
-    public List<PuntoEvolucion> evolucion(LocalDate desde, LocalDate hasta, Long idBarbero) {
-        Map<LocalDate, List<Turno>> porDia = delPeriodo(desde, hasta, idBarbero).stream()
+    private static List<PuntoEvolucion> evolucion(List<Turno> lista, LocalDate desde, LocalDate hasta) {
+        Map<LocalDate, List<Turno>> porDia = lista.stream()
                 .filter(t -> t.getEstado() != EstadoTurno.CANCELADO)
                 .collect(Collectors.groupingBy(Turno::getFecha));
         List<PuntoEvolucion> puntos = new ArrayList<>();
@@ -71,10 +94,8 @@ public class DashboardServicio {
         return puntos;
     }
 
-    /** [Extensión] Cómo le fue a cada peluquero en el período. */
-    public List<RendimientoBarbero> porBarbero(LocalDate desde, LocalDate hasta) {
-        List<Turno> lista = delPeriodo(desde, hasta, null);
-        Map<Long, List<Encuesta>> encuestasPorBarbero = encuestasDe(lista).stream()
+    private List<RendimientoBarbero> porBarbero(List<Turno> lista, List<Encuesta> respuestas) {
+        Map<Long, List<Encuesta>> encuestasPorBarbero = respuestas.stream()
                 .collect(Collectors.groupingBy(e -> e.getTurno().getBarbero().getId()));
         List<RendimientoBarbero> filas = new ArrayList<>();
         for (Barbero b : barberos.findAllByOrderByIdAsc()) {

@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { fechaLarga, pesos, decimal } from "../../lib/formato.js";
-import { useSesion, usePedidoAdmin } from "../sesion.jsx";
+import { usePedidoAdmin } from "../sesion.jsx";
 import { Cabecera, ChipEstado, EstadoCarga, Kpi, Modal, Segmentos } from "../componentes/ui.jsx";
 
 const FILTROS = [
@@ -17,7 +17,6 @@ const fechaCorta = (iso) => (iso ? fechaLarga(iso) : "—");
 
 /** [Extensión] Clientes: se registran solos al reservar; acá solo se consultan. */
 export default function Clientes() {
-  const { pedir } = useSesion();
   const [texto, setTexto] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [filtro, setFiltro] = useState("todos");
@@ -30,18 +29,11 @@ export default function Clientes() {
     return () => clearTimeout(t);
   }, [texto]);
 
+  // La misma respuesta trae los totales de cada filtro para las tarjetas.
   const lista = usePedidoAdmin("/clientes", { q: busqueda, filtro, pagina, tamano: TAMANO });
 
-  // Totales para las tarjetas: el total de cada filtro, pidiendo páginas de 1.
-  const [totales, setTotales] = useState(null);
-  useEffect(() => {
-    const total = (f) => pedir("/clientes", { params: { filtro: f, tamano: 1 } }).then((p) => p.total);
-    Promise.all(["todos", "frecuentes", "nuevos", "perdidos"].map(total))
-      .then(([todos, frecuentes, nuevos, perdidos]) => setTotales({ todos, frecuentes, nuevos, perdidos }))
-      .catch(() => setTotales(null));
-  }, [pedir]);
-
   const p = lista.datos;
+  const totales = p?.totales;
   return (
     <>
       <Cabecera titulo="Clientes" extension bajada="Se registran solos la primera vez que reservan. Nadie tiene que cargarlos a mano." />

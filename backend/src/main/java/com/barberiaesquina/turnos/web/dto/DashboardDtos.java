@@ -28,4 +28,7 @@ public final class DashboardDtos {
     /** [Extensión] Rendimiento de cada peluquero en el período. */
     public record RendimientoBarbero(Long idBarbero, String nombre, long completados, long ausentes,
                                      BigDecimal facturado, Double satisfaccion) {}
+
+    /** Todo lo que muestra la pantalla Dashboard, en una sola respuesta. */
+    public record Completo(Resumen resumen, List<PuntoEvolucion> evolucion, List<RendimientoBarbero> barberos) {}
 }
