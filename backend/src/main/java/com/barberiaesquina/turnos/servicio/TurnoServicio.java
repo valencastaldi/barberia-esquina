@@ -28,6 +28,7 @@ public class TurnoServicio {
     private final TurnoRepositorio turnos;
     private final ClienteRepositorio clientes;
     private final BarberoRepositorio barberos;
+    private final ServicioRepositorio servicios;
     private final PagoRepositorio pagos;
     private final EncuestaRepositorio encuestas;
     private final DisponibilidadServicio disponibilidad;
@@ -37,12 +38,13 @@ public class TurnoServicio {
     private final AppProperties props;
 
     public TurnoServicio(TurnoRepositorio turnos, ClienteRepositorio clientes, BarberoRepositorio barberos,
-                         PagoRepositorio pagos, EncuestaRepositorio encuestas, DisponibilidadServicio disponibilidad,
+                         ServicioRepositorio servicios, PagoRepositorio pagos, EncuestaRepositorio encuestas, DisponibilidadServicio disponibilidad,
                          Calendario calendario, SesionActual sesion, ApplicationEventPublisher eventos,
                          AppProperties props) {
         this.turnos = turnos;
         this.clientes = clientes;
         this.barberos = barberos;
+        this.servicios = servicios;
         this.pagos = pagos;
         this.encuestas = encuestas;
         this.disponibilidad = disponibilidad;
@@ -239,10 +241,7 @@ public class TurnoServicio {
     }
 
     public Detalle cambiarEstado(Long idTurno, EstadoTurno nuevo) {
-        Turno t = turnos.conDetalle(idTurno).orElseThrow(() -> NoEncontradoException.de("Turno", idTurno));
-        if (!sesion.esDueno() && !t.getBarbero().getId().equals(sesion.idBarbero())) {
-            throw new AccessDeniedException("Solo el dueño puede modificar turnos de otro peluquero");
-        }
+        Turno t = propioOdelDueno(idTurno);
         if (nuevo == EstadoTurno.PENDIENTE) {
             throw new ReglaNegocioException("Un turno no puede volver a pendiente");
         }
@@ -264,6 +263,64 @@ public class TurnoServicio {
             default -> { }
         }
         return detalles(List.of(t)).getFirst();
+    }
+
+    // ------------------------------------------------------------------
+    // [Extensión] Corregir o borrar un turno completado
+    // ------------------------------------------------------------------
+
+    /**
+     * Arregla un turno completado que se cargó mal (otro servicio, otro precio, otro medio de pago).
+     * El horario no se toca: ya pasó. Si el turno está cobrado, el monto del cobro pasa a ser el
+     * precio nuevo, así la pantalla de Pagos y la liquidación quedan con lo corregido.
+     */
+    public Detalle editar(Long idTurno, EdicionPedido pedido) {
+        Turno t = completado(idTurno);
+        if (pedido.idBarbero() != null && !pedido.idBarbero().equals(t.getBarbero().getId())) {
+            if (!sesion.esDueno()) {
+                throw new AccessDeniedException("Solo el dueño puede pasar un turno a otro peluquero");
+            }
+            t.setBarbero(barberos.findById(pedido.idBarbero())
+                    .orElseThrow(() -> NoEncontradoException.de("Peluquero", pedido.idBarbero())));
+        }
+        t.setServicio(servicios.findById(pedido.idServicio())
+                .orElseThrow(() -> NoEncontradoException.de("Servicio", pedido.idServicio())));
+        t.setPrecio(pedido.precio());
+
+        pagos.findByTurnoId(t.getId()).ifPresent(p -> {
+            if (pedido.medio() == null) throw new ReglaNegocioException("Falta el medio de pago del cobro");
+            p.setMonto(pedido.precio());
+            p.setMedio(pedido.medio());
+        });
+        return detalles(List.of(t)).getFirst();
+    }
+
+    /**
+     * Borra un turno completado cargado por error, junto con su cobro y su encuesta:
+     * si quedara, el cobro seguiría sumando en Pagos y las cuentas del mes no cerrarían.
+     */
+    public void borrar(Long idTurno) {
+        Turno t = completado(idTurno);
+        pagos.findByTurnoId(t.getId()).ifPresent(pagos::delete);
+        encuestas.findByTurnoId(t.getId()).ifPresent(encuestas::delete);
+        turnos.delete(t);
+    }
+
+    private Turno completado(Long idTurno) {
+        Turno t = propioOdelDueno(idTurno);
+        if (t.getEstado() != EstadoTurno.COMPLETADO) {
+            throw new ReglaNegocioException("Solo se pueden corregir o borrar turnos completados");
+        }
+        return t;
+    }
+
+    /** El dueño toca cualquier turno; un barbero, solo los suyos. */
+    private Turno propioOdelDueno(Long idTurno) {
+        Turno t = turnos.conDetalle(idTurno).orElseThrow(() -> NoEncontradoException.de("Turno", idTurno));
+        if (!sesion.esDueno() && !t.getBarbero().getId().equals(sesion.idBarbero())) {
+            throw new AccessDeniedException("Solo el dueño puede modificar turnos de otro peluquero");
+        }
+        return t;
     }
 
     /** Arma los DTO trayendo pagos y encuestas de todos los turnos en dos consultas. */

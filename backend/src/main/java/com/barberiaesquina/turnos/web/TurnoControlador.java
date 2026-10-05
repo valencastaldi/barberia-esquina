@@ -55,6 +55,19 @@ public class TurnoControlador {
         return turnos.cambiarEstado(id, pedido.estado());
     }
 
+    /** [Extensión] Corregir un turno completado (y su cobro, si lo tiene). */
+    @PutMapping("/{id}")
+    public Detalle editar(@PathVariable Long id, @Valid @RequestBody EdicionPedido pedido) {
+        return turnos.editar(id, pedido);
+    }
+
+    /** [Extensión] Borrar un turno completado cargado por error: se va con su cobro y su encuesta. */
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void borrar(@PathVariable Long id) {
+        turnos.borrar(id);
+    }
+
     /** Público: datos del turno para la pantalla de cancelación (link del email). */
     @GetMapping("/cancelar/{token}")
     public Publico verParaCancelar(@PathVariable String token) {
