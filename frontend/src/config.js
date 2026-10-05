@@ -1,6 +1,5 @@
 /**
  * Datos fijos del local. No están en la base porque no los define la documentación.
- * ⚠ El Instagram es de relleno: falta el real de la barbería.
  */
 export const BARBERIA = {
   nombre: "Barbería Esquina",
@@ -8,7 +7,7 @@ export const BARBERIA = {
   direccion: "Av. San Martín 992",
   telefono: "+54 9 3517 59-0663",
   whatsapp: "5493517590663",
-  instagram: "barberiaesquina",
+  instagram: "esquina1290",   // instagram.com/esquina1290
 };
 
 /**
