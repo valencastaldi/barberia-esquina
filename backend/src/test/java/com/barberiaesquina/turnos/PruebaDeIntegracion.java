@@ -171,7 +171,8 @@ public abstract class PruebaDeIntegracion {
     protected static String reserva(Long idServicio, Long idBarbero, LocalDate fecha, String hora, String email) {
         return """
                 {"idServicio": %d, "idBarbero": %s, "fecha": "%s", "hora": "%s",
-                 "cliente": {"nombre": "Lucas", "apellido": "Ferreyra", "email": "%s", "telefono": "351 711-0043"}}
+                 "cliente": {"nombre": "Lucas", "apellido": "Ferreyra", "email": "%s", "telefono": "351 711-0043"},
+                 "aceptaTerminos": true}
                 """.formatted(idServicio, idBarbero == null ? "null" : idBarbero.toString(), fecha, hora, email);
     }
 }

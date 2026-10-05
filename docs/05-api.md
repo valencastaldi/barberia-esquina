@@ -39,6 +39,7 @@ login, `no-store`, porque el panel tiene que ver en el momento lo que acaba de e
 | `GET /barberos/{id}/foto` · `POST /barberos/{id}/foto` · `DELETE /barberos/{id}/foto` | 🔓 · 👑 · 👑 | *Extensión:* foto de perfil del peluquero |
 | `GET /opiniones` | 🔑 | Encuestas con promedio por peluquero, para todo el equipo |
 | `POST /turnos/panel` | 🔑 | *Extensión:* cargar un turno desde el panel (por teléfono o sin reserva) |
+| `PUT /turnos/{id}` · `DELETE /turnos/{id}` | 🔑 | *Extensión:* corregir o borrar un turno completado (y su cobro) |
 
 ## Errores
 
@@ -175,11 +176,13 @@ día que la pantalla muestra al entrar, y así no necesita un segundo pedido. Lo
 ```json
 {
   "idServicio": 3, "idBarbero": 2, "fecha": "2026-09-25", "hora": "10:30",
-  "cliente": { "nombre": "Lucas", "apellido": "Ferreyra", "email": "lucas@gmail.com", "telefono": "351 711-0043" }
+  "cliente": { "nombre": "Lucas", "apellido": "Ferreyra", "email": "lucas@gmail.com", "telefono": "351 711-0043" },
+  "aceptaTerminos": true
 }
 ```
 
-`idBarbero` puede ser `null`: se asigna el libre con menos turnos ese día. Respuesta 201:
+`idBarbero` puede ser `null`: se asigna el libre con menos turnos ese día. `aceptaTerminos` tiene que ser `true`
+(aceptó los Términos y la Política de privacidad); si falta o es `false` → 400. Respuesta 201:
 
 ```json
 {
@@ -195,7 +198,8 @@ Después del commit se envía el email de confirmación con el link `/cancelar/{
 
 ### `POST /turnos/panel` 🔑 — cargar un turno desde el panel
 
-*Extensión.* Mismo cuerpo que `POST /turnos`, pero `cliente.email` es **opcional** (puede ser `null` o `""`).
+*Extensión.* Mismo cuerpo que `POST /turnos`, pero `cliente.email` es **opcional** (puede ser `null` o `""`) y no lleva
+`aceptaTerminos`.
 Mismas reglas de disponibilidad (409 si el horario está ocupado, 422 fuera de rango); no tiene límite por IP.
 
 - **Dueño:** a cualquier peluquero; con `idBarbero: null` se asigna el libre con menos turnos.
@@ -231,6 +235,25 @@ Para un **barbero**, en los turnos de otros peluqueros `cliente.telefono`, `clie
 
 `completado` o `ausente` solo desde la hora de inicio (si no, 422). Un turno cerrado no cambia más (409). El barbero solo
 cambia los suyos (403). `completado` envía la encuesta; `cancelado`, un aviso al cliente.
+
+### `PUT /turnos/{id}` 🔑 — corregir un turno completado
+
+*Extensión.* Para arreglar un turno que se cargó mal después de completarlo y cobrarlo.
+
+```json
+{ "idServicio": 3, "idBarbero": 2, "precio": 15000, "medio": "transferencia" }
+```
+
+- Solo turnos `completado` (si no, 422). El horario no cambia.
+- `precio` reemplaza el del turno y, si está cobrado, también el monto del cobro; `medio` es obligatorio si está cobrado
+  (422) y se ignora si no.
+- `idBarbero` es opcional: pasarlo a otro peluquero solo lo puede hacer el dueño (403).
+- El barbero solo corrige los suyos (403). Respuesta 200: el turno como en `GET /turnos`.
+
+### `DELETE /turnos/{id}` 🔑 → 204
+
+*Extensión.* Borra un turno `completado` cargado por error, **con su cobro y su encuesta**: deja de sumar en Pagos y en la
+liquidación. Otro estado → 422. El barbero solo borra los suyos (403). No se puede deshacer.
 
 ### `GET /turnos/cancelar/{token}` · `PATCH /turnos/cancelar/{token}` 🔓
 

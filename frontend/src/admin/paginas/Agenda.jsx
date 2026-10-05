@@ -36,6 +36,8 @@ export default function Agenda() {
   const [aviso, setAviso] = useState(null);
   const [cobrando, setCobrando] = useState(null);     // turno a completar/cobrar
   const [cancelando, setCancelando] = useState(null);  // turno a cancelar
+  const [editando, setEditando] = useState(null);      // turno completado a corregir
+  const [borrando, setBorrando] = useState(null);      // turno completado a borrar
   const [bloqueando, setBloqueando] = useState(false);
   const [cargandoTurno, setCargandoTurno] = useState(false);
   const [detalle, setDetalle] = useState(null);        // turno abierto desde el cronograma
@@ -163,7 +165,7 @@ export default function Agenda() {
           <header>
             <div>
               <h2>Cronograma del día</h2>
-              <p>Tocá un turno para marcarlo, cobrarlo o cancelarlo.</p>
+              <p>Tocá un turno para marcarlo, cobrarlo, cancelarlo o corregirlo.</p>
             </div>
             <Leyenda />
           </header>
@@ -206,7 +208,9 @@ export default function Agenda() {
                            alCompletar={() => setCobrando({ turno: f.t, completar: true })}
                            alCobrar={() => setCobrando({ turno: f.t, completar: false })}
                            alAusente={() => accion(() => cambiarEstado(f.t, "ausente"))}
-                           alCancelar={() => setCancelando(f.t)} />)}
+                           alCancelar={() => setCancelando(f.t)}
+                           alEditar={() => setEditando(f.t)}
+                           alBorrar={() => setBorrando(f.t)} />)}
           </div>
         ))}
       </section>
@@ -216,7 +220,9 @@ export default function Agenda() {
                     alCompletar={(t) => { setDetalle(null); setCobrando({ turno: t, completar: true }); }}
                     alCobrar={(t) => { setDetalle(null); setCobrando({ turno: t, completar: false }); }}
                     alAusente={(t) => { setDetalle(null); accion(() => cambiarEstado(t, "ausente")); }}
-                    alCancelar={(t) => { setDetalle(null); setCancelando(t); }} />
+                    alCancelar={(t) => { setDetalle(null); setCancelando(t); }}
+                    alEditar={(t) => { setDetalle(null); setEditando(t); }}
+                    alBorrar={(t) => { setDetalle(null); setBorrando(t); }} />
 
       <ModalCobro datos={cobrando} alCerrar={() => setCobrando(null)}
                   alConfirmar={(medio) => accion(async () => {
@@ -246,6 +252,34 @@ export default function Agenda() {
         )}
       </Modal>
 
+      <ModalEditar turno={editando} equipo={activos} esDueno={esDueno} alCerrar={() => setEditando(null)}
+                   alGuardar={async (cuerpo) => {
+                     await pedir(`/turnos/${editando.id}`, { metodo: "PUT", cuerpo });
+                     setEditando(null);
+                     recargar();
+                   }} />
+
+      <Modal abierto={!!borrando} alCerrar={() => setBorrando(null)} titulo="¿Borrar este turno?"
+             bajada="Es para turnos cargados por error: se borra junto con su cobro y deja de contar en Pagos. No se puede deshacer.">
+        {borrando && (
+          <>
+            <div className="cobro-resumen">
+              <b>{borrando.cliente.nombre} {borrando.cliente.apellido}</b> · {borrando.servicio.nombre} con {borrando.barbero.nombre} ·{" "}
+              {fechaLarga(borrando.fecha)} {borrando.horaInicio}
+              {borrando.pago && <> · cobrado <b>{pesos(borrando.pago.monto)}</b> en {NOMBRE_MEDIO[borrando.pago.medio]}</>}
+            </div>
+            <div className="modal-pie">
+              <button type="button" className="btn btn-secundario" onClick={() => setBorrando(null)}>Volver</button>
+              <button type="button" className="btn btn-peligro" onClick={() => {
+                const t = borrando;
+                setBorrando(null);
+                accion(() => pedir(`/turnos/${t.id}`, { metodo: "DELETE" }));
+              }}>Sí, borrar</button>
+            </div>
+          </>
+        )}
+      </Modal>
+
       <ModalBloqueo abierto={bloqueando} alCerrar={() => setBloqueando(false)} fechaInicial={fecha}
                     equipo={esDueno ? activos : activos.filter((b) => b.id === usuario.id)}
                     idPropio={usuario.id} alGuardar={async (cuerpo) => {
@@ -264,7 +298,7 @@ export default function Agenda() {
   );
 }
 
-function FilaTurno({ t, puedeTocar, alCompletar, alCobrar, alAusente, alCancelar }) {
+function FilaTurno({ t, puedeTocar, alCompletar, alCobrar, alAusente, alCancelar, alEditar, alBorrar }) {
   const cerrado = t.estado !== "pendiente";
   let acciones;
   if (!cerrado && puedeTocar) {
@@ -279,9 +313,12 @@ function FilaTurno({ t, puedeTocar, alCompletar, alCobrar, alAusente, alCancelar
     acciones = (
       <>
         {t.pago ? <ChipMedio medio={t.pago.medio} />
-                : puedeTocar ? <button type="button" className="mini cobrar" onClick={alCobrar}>Registrar cobro</button>
-                             : <ChipMedio medio={null} />}
+                : <button type="button" className="mini cobrar" onClick={alCobrar}>Registrar cobro</button>}
         <ChipEstado estado="completado" />
+        <div className="acciones-turno">
+          <button type="button" className="mini" onClick={alEditar}>Editar</button>
+          <button type="button" className="mini no" onClick={alBorrar}>Borrar</button>
+        </div>
       </>
     );
   } else {
@@ -345,8 +382,9 @@ function Leyenda() {
 }
 
 /** Detalle de un turno tocado en el cronograma, con las mismas acciones que la lista. */
-function ModalDetalle({ turno: t, puedeTocar, alCerrar, alCompletar, alCobrar, alAusente, alCancelar }) {
+function ModalDetalle({ turno: t, puedeTocar, alCerrar, alCompletar, alCobrar, alAusente, alCancelar, alEditar, alBorrar }) {
   const pendiente = t?.estado === "pendiente";
+  const completado = t?.estado === "completado";
   const faltaCobrar = t?.estado === "completado" && !t?.pago;
   return (
     <Modal abierto={!!t} alCerrar={alCerrar} titulo={t ? `${t.cliente.nombre} ${t.cliente.apellido}` : ""}
@@ -379,10 +417,16 @@ function ModalDetalle({ turno: t, puedeTocar, alCerrar, alCompletar, alCobrar, a
                 <button type="button" className="btn btn-primario" onClick={() => alCompletar(t)}>Completado</button>
               </>
             )}
+            {puedeTocar && completado && (
+              <>
+                <button type="button" className="btn btn-peligro" onClick={() => alBorrar(t)}>Borrar</button>
+                <button type="button" className="btn btn-secundario" onClick={() => alEditar(t)}>Editar</button>
+              </>
+            )}
             {puedeTocar && faltaCobrar && (
               <button type="button" className="btn btn-primario" onClick={() => alCobrar(t)}>Registrar cobro</button>
             )}
-            {!(puedeTocar && (pendiente || faltaCobrar)) && (
+            {!(puedeTocar && (pendiente || completado)) && (
               <button type="button" className="btn btn-secundario" onClick={alCerrar}>Cerrar</button>
             )}
           </div>
@@ -438,6 +482,116 @@ function ModalCobro({ datos, alCerrar, alConfirmar }) {
             <button type="button" className="btn btn-primario" onClick={() => alConfirmar(medio)}>Registrar cobro</button>
           </div>
         </>
+      )}
+    </Modal>
+  );
+}
+
+/**
+ * Extensión: corregir un turno completado que se cargó mal. Se puede cambiar el servicio,
+ * el importe y, si ya se cobró, el medio de pago. El peluquero solo lo cambia el dueño.
+ */
+function ModalEditar({ turno: t, equipo, esDueno, alCerrar, alGuardar }) {
+  const [form, setForm] = useState(null);
+  const [error, setError] = useState(null);
+  const [guardando, setGuardando] = useState(false);
+
+  // Cada vez que se abre, arranca con los datos del turno.
+  if (t && form?.id !== t.id) {
+    setForm({ id: t.id, idServicio: String(t.servicio.id), idBarbero: String(t.barbero.id),
+              precio: String(Number(t.precio)), medio: t.pago?.medio ?? null });
+    setError(null);
+  }
+  if (!t && form) setForm(null);
+
+  const servicios = usePedidoAdmin(t ? "/servicios" : null);
+  const opciones = servicios.datos ?? [];
+  // El servicio o el peluquero del turno pueden estar dados de baja: igual tienen que aparecer.
+  const conElServicio = t && !opciones.some((s) => s.id === t.servicio.id)
+    ? [{ id: t.servicio.id, nombre: t.servicio.nombre }, ...opciones] : opciones;
+  const conElPeluquero = t && !equipo.some((b) => b.id === t.barbero.id)
+    ? [{ id: t.barbero.id, nombre: t.barbero.nombre, apellido: "" }, ...equipo] : equipo;
+
+  const cambiar = (campo) => (e) => {
+    const valor = e.target.value;
+    setForm((f) => {
+      const nuevo = { ...f, [campo]: valor };
+      // Al cambiar el servicio, el importe pasa a ser el precio de lista (se puede ajustar).
+      const elegido = opciones.find((s) => s.id === Number(valor));
+      if (campo === "idServicio" && elegido) nuevo.precio = String(Number(elegido.precio));
+      return nuevo;
+    });
+  };
+
+  const precio = Number(form?.precio);
+  const precioValido = form?.precio !== "" && Number.isFinite(precio) && precio >= 0;
+
+  async function guardar(e) {
+    e.preventDefault();
+    if (!precioValido) return;
+    setGuardando(true);
+    setError(null);
+    try {
+      await alGuardar({
+        idServicio: Number(form.idServicio),
+        idBarbero: esDueno ? Number(form.idBarbero) : null,
+        precio,
+        medio: form.medio,
+      });
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  return (
+    <Modal abierto={!!t} alCerrar={alCerrar} titulo="Editar turno"
+           bajada={t ? `${t.cliente.nombre} ${t.cliente.apellido} · ${fechaLarga(t.fecha)} ${t.horaInicio}` : ""}>
+      {form && (
+        <form onSubmit={guardar} noValidate>
+          <div className="fila-campos">
+            <label className="campo"><span>Servicio</span>
+              <select value={form.idServicio} onChange={cambiar("idServicio")}>
+                {conElServicio.map((s) => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+              </select>
+            </label>
+            {esDueno && (
+              <label className="campo"><span>Peluquero</span>
+                <select value={form.idBarbero} onChange={cambiar("idBarbero")}>
+                  {conElPeluquero.map((b) => <option key={b.id} value={b.id}>{b.nombre} {b.apellido}</option>)}
+                </select>
+              </label>
+            )}
+          </div>
+          <label className="campo"><span>{t.pago ? "Importe cobrado" : "Importe"}</span>
+            <input type="number" inputMode="numeric" min="0" step="1" value={form.precio} onChange={cambiar("precio")}
+                   aria-invalid={!precioValido} />
+            {!precioValido && <small className="error-campo">Poné un importe válido</small>}
+          </label>
+          {t.pago && (
+            <div className="campo">
+              <span>¿Cómo pagó?</span>
+              <div className="pastillas grandes" role="radiogroup">
+                {Object.entries(NOMBRE_MEDIO).map(([valor, texto]) => (
+                  <label className="pastilla" key={valor}>
+                    <input type="radio" name="medio-editar" value={valor} checked={form.medio === valor}
+                           onChange={() => setForm((f) => ({ ...f, medio: valor }))} />
+                    <span>{texto}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
+          <p className="texto-ayuda">Los cambios se reflejan en Pagos y en la liquidación de cada peluquero.</p>
+          <AvisoError mensaje={error} />
+          <div className="modal-pie">
+            <button type="button" className="btn btn-secundario" onClick={alCerrar}>Cancelar</button>
+            <button type="submit" className="btn btn-primario" disabled={guardando || !precioValido}>
+              {guardando ? "Guardando…" : "Guardar cambios"}
+            </button>
+          </div>
+        </form>
       )}
     </Modal>
   );

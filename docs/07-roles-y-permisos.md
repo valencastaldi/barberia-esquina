@@ -19,6 +19,7 @@ Idea general: **el barbero ve su trabajo; el dueño maneja el negocio.**
 | … números de arriba | De la barbería | Solo los suyos ("Tus turnos", "Cobraste") |
 | … completar / ausente / cancelar | Cualquier turno | Solo los suyos |
 | … registrar cobros | Cualquier turno | Solo los suyos |
+| … corregir o borrar un turno completado | Cualquier turno (y puede pasarlo a otro peluquero) | Solo los suyos, sin cambiar el peluquero |
 | … bloquear o quitar franjas | Sí | No |
 | **Opiniones** (encuestas de todo el equipo) | Sí | Sí |
 | **Horarios** | Edita el de cualquiera | Ve el suyo ("Mis horarios"), sin editar |
@@ -47,7 +48,7 @@ flowchart LR
 |---|---|---|
 | Ruta | `SeguridadConfig` | Qué es público y qué pide login |
 | Controlador | `@PreAuthorize("hasRole('DUENO')")` | Pagos (listado), clientes, dashboard, equipo, alta y edición de servicios y peluqueros, guardar horarios, bloqueos |
-| Servicio | `SesionActual` en `TurnoServicio`, `PagoServicio`, `HorarioServicio`, `BloqueoServicio` | "Solo los suyos": cambiar estado, cobrar |
+| Servicio | `SesionActual` en `TurnoServicio`, `PagoServicio`, `HorarioServicio`, `BloqueoServicio` | "Solo los suyos": cambiar estado, cobrar, corregir o borrar |
 | Datos | `TurnoServicio.listar()` → `Detalle.sinDatosPrivados()` | Quita contacto, cobro y calificación de turnos ajenos |
 | Panel | `SoloDueno` en las rutas y `esDueno` en el menú y los botones | Qué se muestra |
 

@@ -23,13 +23,18 @@ public final class TurnoDtos {
             @NotBlank @Pattern(regexp = "[0-9 +()-]{8,30}", message = "teléfono inválido") String telefono
     ) {}
 
-    /** idBarbero es opcional: sin él se asigna cualquier peluquero libre. */
+    /**
+     * idBarbero es opcional: sin él se asigna cualquier peluquero libre.
+     * El cliente tiene que aceptar los términos y la política de privacidad para reservar.
+     */
     public record ReservaPedido(
             @NotNull Long idServicio,
             Long idBarbero,
             @NotNull LocalDate fecha,
             @NotNull @JsonFormat(pattern = "HH:mm") LocalTime hora,
-            @NotNull @Valid ClientePedido cliente
+            @NotNull @Valid ClientePedido cliente,
+            @NotNull(message = "Tenés que aceptar los términos y condiciones")
+            @AssertTrue(message = "Tenés que aceptar los términos y condiciones") Boolean aceptaTerminos
     ) {}
 
     public record ReservaRespuesta(
@@ -69,6 +74,17 @@ public final class TurnoDtos {
     ) {}
 
     public record CambioEstadoPedido(@NotNull EstadoTurno estado) {}
+
+    /**
+     * [Extensión] Corrección de un turno completado: el servicio que se hizo, cuánto salió y,
+     * si ya se cobró, con qué medio. El peluquero solo lo cambia el dueño (idBarbero null = no se toca).
+     */
+    public record EdicionPedido(
+            @NotNull Long idServicio,
+            Long idBarbero,
+            @NotNull @DecimalMin("0") @Digits(integer = 8, fraction = 2) BigDecimal precio,
+            MedioPago medio
+    ) {}
 
     public record Ref(Long id, String nombre) {}
 

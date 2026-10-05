@@ -512,6 +512,26 @@ body.cliente {
   font-size: 14px;
 }
 .campo input[aria-invalid="true"] { border-color: var(--rojo); }
+/* Aceptar términos (paso 3) */
+.acepto {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 16px;
+  font-size: 14px;
+  color: var(--texto-2);
+  cursor: pointer;
+}
+.acepto input {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  accent-color: var(--azul);
+  cursor: pointer;
+}
+.acepto a { color: var(--azul-claro); text-underline-offset: 3px; }
+
 .error-campo { display: block; margin-top: 6px; font-size: 12.5px; color: #FF8983; }
 
 .vacio.cargando { border-style: solid; color: var(--texto-3); }

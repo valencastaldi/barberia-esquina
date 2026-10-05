@@ -53,6 +53,8 @@ Con varios peluqueros candidatos se bloquean en orden de id, para no generar *de
 - No tienen cuenta. Se identifican por **email**: si vuelve a reservar con el mismo email (sin importar mayúsculas), es el
   mismo cliente y se actualizan su nombre y teléfono.
 - Se registran solos al reservar.
+- Para reservar tienen que **aceptar los Términos y condiciones y la Política de privacidad** (checkbox en el paso 3; sin
+  tildarlo el botón queda deshabilitado y la API rechaza la reserva con 400).
 
 ## Ciclo del turno
 
@@ -83,6 +85,9 @@ Un turno cerrado no vuelve a cambiar.
 - Solo se cobran turnos **completados**, uno por turno.
 - El monto arranca en el precio del turno y se puede ajustar (propina, descuento).
 - **Liquidación:** a cada peluquero le toca `monto × comisión %`; el resto es "para la casa". El dueño tiene comisión 0.
+- **Correcciones:** un turno completado (cobrado o no) se puede editar (servicio, importe, medio de pago y, solo el dueño,
+  peluquero) o borrar desde la Agenda. Al editar, el monto del cobro pasa a ser el importe nuevo. Al borrar se van el turno,
+  su cobro y su encuesta, así un turno cargado por error no queda sumando en Pagos y las cuentas del mes cierran.
 
 ## Bloqueos (RF-12)
 

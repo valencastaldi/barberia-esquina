@@ -109,7 +109,18 @@ class FlujoDeTurnosTest extends PruebaDeIntegracion {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.errores['cliente.nombre']").exists())
                 .andExpect(jsonPath("$.errores['cliente.email']").exists())
-                .andExpect(jsonPath("$.errores['cliente.telefono']").exists());
+                .andExpect(jsonPath("$.errores['cliente.telefono']").exists())
+                .andExpect(jsonPath("$.errores.aceptaTerminos").exists());   // ni siquiera vino
+    }
+
+    @Test
+    void sinAceptarLosTerminosNoSeReserva() throws Exception {
+        String sinAceptar = reserva(corte.getId(), agustin.getId(), DIA, "15:00", "a@test.com")
+                .replace("\"aceptaTerminos\": true", "\"aceptaTerminos\": false");
+        mvc.perform(json(post("/api/v1/turnos"), sinAceptar))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.errores.aceptaTerminos").exists());
+        assertThat(turnos.count()).isZero();
     }
 
     @Test

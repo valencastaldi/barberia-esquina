@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api, ErrorApi } from "../../api/api.js";
 import { VIGENCIA_CATALOGO, VIGENCIA_DISPONIBILIDAD } from "../../api/cache.js";
 import { adelantarDias, claveDia, claveDias, olvidarDisponibilidad, pedirDia, pedirDias } from "../../api/disponibilidad.js";
@@ -374,6 +374,7 @@ function validar(c) {
 function PasoDatos({ servicio, barbero, fecha, hora, alHorarioOcupado, alConfirmar }) {
   const [cliente, setCliente] = useState(() => ({ ...VACIO, ...clienteRecordado() }));
   const [errores, setErrores] = useState({});
+  const [aceptaTerminos, setAceptaTerminos] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [falla, setFalla] = useState(null);
 
@@ -392,6 +393,7 @@ function PasoDatos({ servicio, barbero, fecha, hora, alHorarioOcupado, alConfirm
 
   async function confirmar(e) {
     e.preventDefault();
+    if (!aceptaTerminos) return;
     const encontrados = validar(cliente);
     setErrores(encontrados);
     const primero = Object.keys(encontrados)[0];
@@ -406,7 +408,7 @@ function PasoDatos({ servicio, barbero, fecha, hora, alHorarioOcupado, alConfirm
     try {
       const reserva = await api("/turnos", {
         metodo: "POST",
-        cuerpo: { idServicio: servicio.id, idBarbero: barbero?.id ?? null, fecha, hora, cliente: datos },
+        cuerpo: { idServicio: servicio.id, idBarbero: barbero?.id ?? null, fecha, hora, cliente: datos, aceptaTerminos },
       });
       alConfirmar(reserva, datos);
     } catch (error) {
@@ -444,12 +446,19 @@ function PasoDatos({ servicio, barbero, fecha, hora, alHorarioOcupado, alConfirm
         {campo("email", "Email", { type: "email", inputMode: "email", autoComplete: "email", placeholder: "tuemail@gmail.com" })}
         {campo("telefono", "Celular", { type: "tel", inputMode: "tel", autoComplete: "tel", placeholder: "351 555-1234" })}
         <p className="nota-maqueta">Usamos tus datos solo para confirmarte el turno y enviarte la encuesta.</p>
+        <label className="acepto">
+          <input type="checkbox" checked={aceptaTerminos} onChange={(e) => setAceptaTerminos(e.target.checked)} />
+          <span>
+            Acepto los <Link to="/terminos" target="_blank">Términos y condiciones</Link> y
+            la <Link to="/privacidad" target="_blank">Política de privacidad</Link>.
+          </span>
+        </label>
       </form>
 
       {falla && <div className="aviso-error" role="alert">{falla}</div>}
 
       <BarraCta>
-        <button className="btn btn-primario btn-block" type="submit" form="form-datos" disabled={enviando}>
+        <button className="btn btn-primario btn-block" type="submit" form="form-datos" disabled={enviando || !aceptaTerminos}>
           {enviando ? "Reservando…" : "Confirmar turno"}
         </button>
       </BarraCta>
