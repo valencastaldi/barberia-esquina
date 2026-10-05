@@ -548,7 +548,8 @@ function ModalEditar({ turno: t, equipo, esDueno, alCerrar, alGuardar }) {
   return (
     <Modal abierto={!!t} alCerrar={alCerrar} titulo="Editar turno"
            bajada={t ? `${t.cliente.nombre} ${t.cliente.apellido} · ${fechaLarga(t.fecha)} ${t.horaInicio}` : ""}>
-      {form && (
+      {/* Al cerrar, t ya es null pero form se limpia recién en el próximo dibujo: sin t no hay formulario. */}
+      {form && t && (
         <form onSubmit={guardar} noValidate>
           <div className="fila-campos">
             <label className="campo"><span>Servicio</span>
