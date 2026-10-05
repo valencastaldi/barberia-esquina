@@ -17,10 +17,12 @@ export const BARBERIA = {
  */
 export const LEGAL = {
   razonSocial: "Barbería Esquina 1290",
-  cuit: "",   // todavía no lo pasaron: mientras esté vacío no se muestra
+  cuit: "27-23078030-2",
   domicilio: "Av. San Martín 992",
-  emailDatos: "franbossana@gmail.com",
-  actualizado: "30 de septiembre de 2026",
+  // Contacto del titular (también para pedidos sobre datos personales). El del local para los clientes es BARBERIA.telefono.
+  telefono: "+54 9 351 809-5168",
+  emailDatos: "mczamarreno@gmail.com",
+  actualizado: "5 de octubre de 2026",
   // Cuánto se guardan los datos de un cliente que no vuelve. Lo decide el dueño.
   conservacion: "[plazo, por ejemplo 2 años]",
   // Los mismos valores que app.turnos en el application.yml del backend.

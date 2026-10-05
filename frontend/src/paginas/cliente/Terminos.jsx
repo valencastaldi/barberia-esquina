@@ -23,7 +23,7 @@ export default function Terminos() {
           {LEGAL.cuit && <li><span>CUIT</span>{LEGAL.cuit}</li>}
           <li><span>Domicilio</span>{LEGAL.domicilio}</li>
           <li><span>Local</span>{BARBERIA.direccion}</li>
-          <li><span>Teléfono</span>{BARBERIA.telefono}</li>
+          <li><span>Teléfono</span>{LEGAL.telefono}</li>
           <li><span>Email</span>{LEGAL.emailDatos}</li>
         </ul>
 

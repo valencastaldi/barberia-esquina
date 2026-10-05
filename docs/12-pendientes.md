@@ -4,7 +4,7 @@
 
 | Tarea | Detalle |
 |---|---|
-| **Datos reales de la barbería** | Precios y duraciones reales (se cargan desde el panel → Servicios). En `LEGAL` de `frontend/src/config.js` faltan el CUIT, cuánto se guardan los datos de un cliente y la tolerancia si llega tarde (dirección, teléfono, WhatsApp, Instagram y titular ya están). |
+| **Datos reales de la barbería** | Precios y duraciones reales (se cargan desde el panel → Servicios). En `LEGAL` de `frontend/src/config.js` faltan cuánto se guardan los datos de un cliente y la tolerancia si llega tarde (dirección, teléfono, WhatsApp, Instagram, CUIT y contacto del titular ya están). |
 | **Verificar la trazabilidad** | Revisar la redacción de los RF contra la Etapa 1, completar RF-07 y RF-13 y unificar si son 24 o 29 RF ([9. Trazabilidad](09-trazabilidad.md)). |
 | **Documentar las diferencias en la tesis** | Varios peluqueros, pagos, bloqueos, endpoints agregados, paleta azul. |
 | **Diagrama ER final** | Exportarlo desde Workbench (*Reverse Engineer*) para la entrega. |
