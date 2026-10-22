@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { useSesion } from "../sesion.jsx";
 import { Logo } from "../../componentes/Logo.jsx";
+import { BotonTema } from "../../componentes/BotonTema.jsx";
 
 /** RF-08: ingreso al panel. */
 export default function Login() {
@@ -15,7 +16,7 @@ export default function Login() {
 
   useEffect(() => {
     document.body.className = "admin login";
-    document.title = "Ingresar — Barbería Esquina";
+    document.title = "Ingresar — Neck's Hair Salon";
   }, []);
 
   if (sesion) return <Navigate to={state?.desde ?? "/admin/agenda"} replace />;
@@ -39,7 +40,8 @@ export default function Login() {
 
   return (
     <main className="caja-login">
-      <Logo tamano={78} className="sello" alt="Barbería Esquina 1290" />
+      <BotonTema className="boton-tema boton-tema-flotante" />
+      <Logo ancho={176} className="sello" alt="Neck's Hair Salon" />
       <h1>Panel de gestión</h1>
       <p>Ingresá con tu cuenta para ver la agenda del día.</p>
 
@@ -48,7 +50,7 @@ export default function Login() {
       <form onSubmit={ingresar} noValidate>
         <label className="campo">
           <span>Email</span>
-          <input type="email" autoComplete="username" placeholder="tu@barberiaesquina.com" autoFocus
+          <input type="email" autoComplete="username" placeholder="tu@email.com" autoFocus
                  value={email} onChange={(e) => setEmail(e.target.value)} />
         </label>
         <label className="campo">

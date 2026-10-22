@@ -2,6 +2,7 @@ import { useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { IconoVolver } from "../Iconos.jsx";
+import { BotonTema } from "../BotonTema.jsx";
 import { Logo } from "../Logo.jsx";
 import { BARBERIA } from "../../config.js";
 
@@ -17,7 +18,7 @@ export function LayoutCliente({ titulo, children }) {
   return <main className="app">{children}</main>;
 }
 
-/** Barra superior: con botón de volver, o con la marca que lleva al inicio. */
+/** Barra superior: con botón de volver, o con la marca que lleva al inicio. Siempre con el cambio de tema. */
 export function Topbar({ titulo, alVolver }) {
   if (alVolver) {
     return (
@@ -26,15 +27,16 @@ export function Topbar({ titulo, alVolver }) {
           <IconoVolver />
         </button>
         <span className="titulo">{titulo}</span>
+        <BotonTema />
       </header>
     );
   }
   return (
     <header className="topbar">
-      <Link className="marca" to="/">
-        <Logo tamano={32} />
-        <strong>{BARBERIA.nombre}</strong>
+      <Link className="marca" to="/" aria-label={`${BARBERIA.nombre}, inicio`}>
+        <Logo ancho={62} />
       </Link>
+      <BotonTema />
     </header>
   );
 }

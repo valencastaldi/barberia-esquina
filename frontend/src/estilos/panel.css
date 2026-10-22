@@ -16,10 +16,10 @@ body.admin {
   color: var(--texto-2);
   text-align: left;
 }
-.nav .nav-boton:hover { background: rgba(255,255,255,.05); color: var(--texto); }
+.nav .nav-boton:hover { background: rgba(var(--tinte), .05); color: var(--texto); }
 .nav a:focus-visible, .nav .nav-boton:focus-visible,
 .mini:focus-visible, .btn:focus-visible, .segmentos button:focus-visible {
-  outline: 2px solid var(--azul-claro);
+  outline: 2px solid var(--acento-2);
   outline-offset: 2px;
 }
 
@@ -31,16 +31,16 @@ body.admin {
   gap: 12px;
   margin-bottom: 18px;
   padding: 12px 14px;
-  border: 1px solid rgba(228, 50, 43, .4);
+  border: 1px solid rgba(var(--rojo-rgb), .4);
   border-radius: var(--r-sm);
   background: var(--rojo-tenue);
-  color: #FF8983;
+  color: var(--rojo-texto);
   font-size: 14px;
 }
-.aviso-panel.ok { border-color: rgba(47,191,113,.35); background: var(--verde-tenue); color: #6FE0A6; }
+.aviso-panel.ok { border-color: rgba(var(--verde-rgb), .35); background: var(--verde-tenue); color: var(--verde-texto); }
 .aviso-panel .cerrar { float: none; margin: 0; color: inherit; }
 .modal .aviso-panel { margin: 4px 0 0; }
-.aviso-error-login { background: var(--rojo-tenue); border-color: rgba(228,50,43,.4); color: #FF8983; }
+.aviso-error-login { background: var(--rojo-tenue); border-color: rgba(var(--rojo-rgb), .4); color: var(--rojo-texto); }
 
 /* Navegación de fechas en la agenda */
 .navegador { display: flex; gap: 6px; align-items: center; }
@@ -50,7 +50,7 @@ body.admin {
 .separador-dia {
   padding: 12px 20px 8px;
   border-bottom: 1px solid var(--borde);
-  background: rgba(255,255,255,.02);
+  background: rgba(var(--tinte), .02);
   font-size: 12px;
   font-weight: 600;
   letter-spacing: .12em;
@@ -60,7 +60,7 @@ body.admin {
 
 /* Franja bloqueada dentro de la lista de turnos */
 .turno.bloqueo {
-  background: repeating-linear-gradient(135deg, rgba(255,255,255,.025) 0 8px, transparent 8px 16px);
+  background: repeating-linear-gradient(135deg, rgba(var(--tinte), .025) 0 8px, transparent 8px 16px);
 }
 .turno.bloqueo .hora, .turno.bloqueo .quien b { color: var(--texto-2); }
 .turno .quien .calif { color: var(--ambar); letter-spacing: 1px; }
@@ -82,7 +82,7 @@ body.admin {
 .nota-grande { font-family: var(--numeros); font-size: 26px; font-weight: 500; font-variant-numeric: lining-nums tabular-nums; color: var(--ambar); }
 .texto-ayuda { margin-bottom: 14px; font-size: 13.5px; line-height: 1.55; color: var(--texto-2); }
 .texto-ambar { color: var(--ambar); }
-.nota-maqueta a { color: var(--azul-claro); }
+.nota-maqueta a { color: var(--acento-2); }
 
 /* Horarios: el nombre del día va dentro del interruptor. Con poco ancho,
    las columnas se apilan para que los horarios no se corten. */
@@ -108,20 +108,20 @@ body.admin {
   }
   .tarjeta-opinion:hover { border-color: var(--borde-fuerte); }
   .tarjeta-opinion[aria-pressed="true"] {
-    border-color: var(--azul-claro);
-    background: linear-gradient(180deg, var(--azul-tenue), var(--superficie));
+    border-color: var(--acento-2);
+    background: linear-gradient(180deg, var(--acento-tenue), var(--superficie));
   }
-  .tarjeta-opinion:focus-visible { outline: 2px solid var(--azul-claro); outline-offset: 2px; }
+  .tarjeta-opinion:focus-visible { outline: 2px solid var(--acento-2); outline-offset: 2px; }
   .tarjeta-opinion .nombre { font-size: 13.5px; color: var(--texto-2); }
   .tarjeta-opinion .promedio { font-family: var(--numeros); font-size: 32px; font-weight: 500; font-variant-numeric: lining-nums tabular-nums; line-height: 1.1; color: var(--ambar); }
   .tarjeta-opinion .promedio small { font-size: 18px; }
   .tarjeta-opinion .cantidad { font-size: 12.5px; color: var(--texto-3); }
   .mini-dist { display: grid; gap: 3px; margin-top: 10px; }
-  .mini-dist span { height: 4px; border-radius: 2px; background: rgba(255,255,255,.07); overflow: hidden; }
+  .mini-dist span { height: 4px; border-radius: 2px; background: rgba(var(--tinte), .07); overflow: hidden; }
   .mini-dist i { display: block; height: 100%; background: var(--ambar); }
 
   .lista-opiniones { padding-top: 4px; }
-  .comentario .puntaje .apagadas { color: rgba(255,255,255,.15); }
+  .comentario .puntaje .apagadas { color: rgba(var(--tinte), .15); }
   .comentario .sin-comentario { font-style: italic; color: var(--texto-3); }
 }
 
@@ -145,5 +145,5 @@ body.admin {
   /* El input de archivo queda escondido; se ve el botón y se puede usar con teclado. */
   .boton-archivo { position: relative; display: inline-flex; align-items: center; cursor: pointer; }
   .boton-archivo input { position: absolute; width: 1px; height: 1px; opacity: 0; }
-  .boton-archivo:focus-within { outline: 2px solid var(--azul-claro); outline-offset: 2px; }
+  .boton-archivo:focus-within { outline: 2px solid var(--acento-2); outline-offset: 2px; }
 }

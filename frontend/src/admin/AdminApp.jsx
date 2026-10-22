@@ -44,7 +44,7 @@ export default function AdminApp() {
 function Layout() {
   useEffect(() => {
     document.body.className = "admin";
-    document.title = "Panel — Barbería Esquina";
+    document.title = "Panel — Neck's Hair Salon";
   }, []);
   return (
     <div className="panel">

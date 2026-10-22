@@ -9,6 +9,7 @@ import { estadoDelLocal, semanaResumida } from "../../lib/horarios.js";
 import { BarraCta, EstadoPedido, LayoutCliente } from "../../componentes/cliente/LayoutCliente.jsx";
 import { TarjetaServicio } from "../../componentes/cliente/TarjetaServicio.jsx";
 import { Logo } from "../../componentes/Logo.jsx";
+import { BotonTema } from "../../componentes/BotonTema.jsx";
 
 /** Lo de la home se guarda un rato: "Reservar" usa los mismos servicios sin volver a pedirlos. */
 const catalogo = (ruta) => ({ clave: ruta, vigencia: VIGENCIA_CATALOGO });
@@ -34,10 +35,9 @@ export default function Inicio() {
   return (
     <LayoutCliente>
       <header className="hero">
-        <Logo tamano={132} className="sello" alt="Escudo de Barbería Esquina 1290" />
+        <BotonTema className="boton-tema hero-tema" />
         <h1>
-          {BARBERIA.nombre}
-          <em>{BARBERIA.rotulo}</em>
+          <Logo ancho={232} className="sello" alt={BARBERIA.nombre} />
         </h1>
         <p>Reservá tu turno en 3 pasos. Sin llamadas, sin cuenta, sin esperar respuesta.</p>
         {!horarios.error && (
@@ -125,7 +125,7 @@ function Resto({ resenas, horarios }) {
       </section>
 
       <footer className="pie">
-        <p>{BARBERIA.nombre} · {BARBERIA.rotulo}</p>
+        <p>{BARBERIA.nombre}</p>
         <p className="pie-links">
           <Link to="/terminos">Términos y condiciones</Link>
           <Link to="/privacidad">Política de privacidad</Link>

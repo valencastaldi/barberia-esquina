@@ -50,8 +50,8 @@ body.admin {
   border-left: 1px solid var(--borde);
   /* Líneas cada media hora; la de la hora en punto, un poco más marcada. */
   background-image:
-    repeating-linear-gradient(to bottom, rgba(255,255,255,.07) 0 1px, transparent 1px calc(var(--media-hora) * 2)),
-    repeating-linear-gradient(to bottom, rgba(255,255,255,.035) 0 1px, transparent 1px var(--media-hora));
+    repeating-linear-gradient(to bottom, rgba(var(--tinte), .07) 0 1px, transparent 1px calc(var(--media-hora) * 2)),
+    repeating-linear-gradient(to bottom, rgba(var(--tinte), .035) 0 1px, transparent 1px var(--media-hora));
 }
 
 /* ---------- Turno ---------- */
@@ -74,7 +74,7 @@ body.admin {
   transition: filter .12s ease, box-shadow .12s ease;
 }
 .crono-turno:hover { filter: brightness(1.15); z-index: 2; box-shadow: var(--sombra-elev); }
-.crono-turno:focus-visible { outline: 2px solid var(--azul-claro); outline-offset: 1px; z-index: 2; }
+.crono-turno:focus-visible { outline: 2px solid var(--acento-2); outline-offset: 1px; z-index: 2; }
 .crono-turno b { font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .crono-turno .crono-hora { font-family: var(--numeros); font-size: 12.5px; color: var(--texto-2); font-variant-numeric: lining-nums tabular-nums; }
 .crono-turno .crono-servicio { color: var(--texto-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -100,13 +100,13 @@ body.admin {
 .crono-turno.mini .crono-marca { position: static; margin-left: auto; }
 
 /* Colores por estado (mismos tonos que los chips de la lista) */
-.crono-turno.estado-pendiente  { background: rgba(30,70,210,.18); border-color: rgba(75,120,255,.45); }
-.crono-turno.estado-completado { background: rgba(47,191,113,.12); border-color: rgba(47,191,113,.35); }
-.crono-turno.estado-completado .crono-marca { color: #6FE0A6; }
-.crono-turno.sin-cobrar        { background: rgba(224,169,59,.12); border-color: rgba(224,169,59,.45); }
+.crono-turno.estado-pendiente  { background: rgba(var(--acento-rgb), .18); border-color: rgba(var(--acento-rgb), .45); }
+.crono-turno.estado-completado { background: rgba(var(--verde-rgb), .12); border-color: rgba(var(--verde-rgb), .35); }
+.crono-turno.estado-completado .crono-marca { color: var(--verde-texto); }
+.crono-turno.sin-cobrar        { background: rgba(var(--ambar-rgb), .12); border-color: rgba(var(--ambar-rgb), .45); }
 .crono-turno.sin-cobrar .crono-marca { color: var(--ambar); }
-.crono-turno.estado-ausente    { background: rgba(228,50,43,.10); border-color: rgba(228,50,43,.3); opacity: .8; }
-.crono-turno.estado-ausente .crono-marca { color: #FF8983; }
+.crono-turno.estado-ausente    { background: rgba(var(--rojo-rgb), .10); border-color: rgba(var(--rojo-rgb), .3); opacity: .8; }
+.crono-turno.estado-ausente .crono-marca { color: var(--rojo-texto); }
 
 /* ---------- Bloqueo ---------- */
 .crono-bloqueo {
@@ -120,7 +120,7 @@ body.admin {
   padding: 6px 9px;
   border: 1px dashed var(--borde-fuerte);
   border-radius: 8px;
-  background: repeating-linear-gradient(135deg, rgba(255,255,255,.05) 0 8px, transparent 8px 16px);
+  background: repeating-linear-gradient(135deg, rgba(var(--tinte), .05) 0 8px, transparent 8px 16px);
   font-size: 12px;
   color: var(--texto-2);
   overflow: hidden;
@@ -131,12 +131,12 @@ body.admin {
   display: grid; place-items: center;
   border: 0;
   border-radius: 50%;
-  background: rgba(255,255,255,.08);
+  background: rgba(var(--tinte), .08);
   color: var(--texto-2);
   font-size: 15px;
   line-height: 1;
 }
-.crono-quitar:hover { background: rgba(255,255,255,.16); color: var(--texto); }
+.crono-quitar:hover { background: rgba(var(--tinte), .16); color: var(--texto); }
 
 /* ---------- Línea de "ahora" ---------- */
 .crono-ahora {
@@ -164,11 +164,11 @@ body.admin {
 .crono-leyenda { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; color: var(--texto-2); }
 .crono-leyenda li { display: flex; align-items: center; gap: 6px; }
 .crono-leyenda i { width: 10px; height: 10px; border-radius: 3px; }
-.crono-leyenda .estado-pendiente  { background: var(--azul-claro); }
+.crono-leyenda .estado-pendiente  { background: var(--acento-2); }
 .crono-leyenda .estado-completado { background: var(--verde); }
 .crono-leyenda .sin-cobrar        { background: var(--ambar); }
 .crono-leyenda .estado-ausente    { background: var(--rojo); }
-.crono-leyenda .bloqueado { border: 1px dashed var(--borde-fuerte); background: repeating-linear-gradient(135deg, rgba(255,255,255,.2) 0 2px, transparent 2px 4px); }
+.crono-leyenda .bloqueado { border: 1px dashed var(--borde-fuerte); background: repeating-linear-gradient(135deg, rgba(var(--tinte), .2) 0 2px, transparent 2px 4px); }
 
 /* ---------- Detalle del turno (modal) ---------- */
 .detalle-turno { display: grid; gap: 1px; background: var(--borde); border: 1px solid var(--borde); border-radius: var(--r-sm); overflow: hidden; }
@@ -202,14 +202,14 @@ body.admin {
     transition: border-color .14s ease, background .14s ease;
   }
   .dia-tira:hover { border-color: var(--borde-fuerte); }
-  .dia-tira:focus-visible { outline: 2px solid var(--azul-claro); outline-offset: 2px; }
+  .dia-tira:focus-visible { outline: 2px solid var(--acento-2); outline-offset: 2px; }
   .dia-tira small { display: block; font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--texto-3); }
   .dia-tira b { display: block; margin-top: 2px; font-family: var(--numeros); font-size: 20px; font-weight: 500; font-variant-numeric: lining-nums tabular-nums; }
-  .dia-tira i { display: block; margin-top: 2px; font-style: normal; font-size: 11.5px; color: var(--azul-claro); }
+  .dia-tira i { display: block; margin-top: 2px; font-style: normal; font-size: 11.5px; color: var(--acento-2); }
   .dia-tira i.vacio-dia { color: var(--texto-3); }
-  .dia-tira[aria-pressed="true"] { background: var(--azul); border-color: var(--azul-claro); }
+  .dia-tira[aria-pressed="true"] { background: var(--acento); border-color: var(--acento); color: var(--sobre-acento); }
   .dia-tira[aria-pressed="true"] small,
-  .dia-tira[aria-pressed="true"] i { color: rgba(255,255,255,.85); }
+  .dia-tira[aria-pressed="true"] i { color: rgba(var(--sobre-acento-rgb), .85); }
 
   /* Cantidad de turnos al lado del día en la lista agrupada */
   .separador-dia { display: flex; justify-content: space-between; }

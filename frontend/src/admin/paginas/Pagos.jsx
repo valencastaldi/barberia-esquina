@@ -9,7 +9,7 @@ const PERIODOS = [
   { valor: 6, texto: "7 días" },
   { valor: 29, texto: "30 días" },
 ];
-const COLOR_MEDIO = { efectivo: "var(--verde)", transferencia: "var(--azul-claro)", mercadopago: "var(--celeste)" };
+const COLOR_MEDIO = { efectivo: "var(--verde)", transferencia: "var(--acento-2)", mercadopago: "var(--celeste)" };
 
 /** [Extensión] Cobros, reparto por medio de pago y liquidación por peluquero. Solo dueño. */
 export default function Pagos() {

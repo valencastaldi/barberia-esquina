@@ -1,14 +1,15 @@
 /**
  * Datos fijos del local. No están en la base porque no los define la documentación.
- * ⚠ El Instagram es de relleno: falta el real de la barbería.
+ * ⚠ Dirección, teléfono, WhatsApp e Instagram siguen siendo los de Barbería Esquina:
+ * faltan los reales de Neck's.
  */
 export const BARBERIA = {
-  nombre: "Barbería Esquina",
-  rotulo: "Esquina 1290",
+  nombre: "Neck's Hair Salon",
+  rotulo: "Hair Salon",
   direccion: "Av. San Martín 992",
   telefono: "+54 9 3517 59-0663",
   whatsapp: "5493517590663",
-  instagram: "barberiaesquina",
+  instagram: "",   // falta el usuario real
 };
 
 /**
@@ -17,7 +18,7 @@ export const BARBERIA = {
  * y los textos finales conviene que los revise un abogado.
  */
 export const LEGAL = {
-  razonSocial: "Barbería Esquina 1290",
+  razonSocial: "Neck's Hair Salon",
   cuit: "",   // todavía no lo pasaron: mientras esté vacío no se muestra
   domicilio: "Av. San Martín 992",
   emailDatos: "franbossana@gmail.com",

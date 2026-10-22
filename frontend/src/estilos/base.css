@@ -1,37 +1,57 @@
 /* =========================================================
-   BARBERÍA ESQUINA — Design System
-   Identidad tomada del logo: negro profundo, blanco hueso,
-   azul royal del cintillo y rojo como acento puntual.
+   NECK'S HAIR SALON — Design System
+   Identidad tomada del logo: negro tinta sobre blanco hueso,
+   con un marrón arena muy suave como único acento de color.
+
+   Dos temas: claro (el de siempre) y oscuro. El tema lo fija
+   el script de index.html en <html data-tema="…"> antes de pintar
+   (lo elegido por la persona o, si no eligió, el del sistema).
+   Todo color de la app sale de estos tokens: nada de hex sueltos
+   en el resto de las hojas, así los dos temas quedan parejos.
    ========================================================= */
 
 :root {
+  color-scheme: light;
+
   /* --- Color --- */
-  --negro:        #08090B;
-  --negro-2:      #0E1013;
-  --superficie:   #14171C;
-  --superficie-2: #1B1F26;
-  --borde:        rgba(255, 255, 255, 0.09);
-  --borde-fuerte: rgba(255, 255, 255, 0.18);
+  --fondo:        #F6F3EE;
+  --fondo-2:      #EFEAE3;
+  --fondo-rgb:    246, 243, 238;
+  --superficie:   #FFFFFF;
+  --superficie-2: #FBF9F6;
+  --borde:        rgba(22, 20, 18, 0.10);
+  --borde-fuerte: rgba(22, 20, 18, 0.22);
+  --tinte:        22, 20, 18;         /* rgba(var(--tinte), x): velos y rellenos sutiles */
+  --velo:         rgba(22, 20, 18, 0.45);
 
-  --azul:         #1E46D2;
-  --azul-claro:   #4B78FF;
-  --azul-tenue:   rgba(30, 70, 210, 0.16);
+  --acento:         #161412;          /* botones y elementos elegidos */
+  --acento-hover:   #2E2A26;
+  --sobre-acento:   #FFFFFF;          /* texto sobre --acento */
+  --sobre-acento-rgb: 255, 255, 255;
+  --acento-2:       #7A5C3E;          /* marrón para textos destacados, links y foco */
+  --acento-rgb:     176, 141, 100;    /* marrón arena, para fondos tenues */
+  --acento-tenue:   rgba(176, 141, 100, 0.16);
+  --arena:          #D9C7AE;          /* marrón muy clarito, solo decorativo */
 
-  --rojo:         #E4322B;
-  --rojo-tenue:   rgba(228, 50, 43, 0.14);
+  --rojo:         #C2372C;
+  --rojo-texto:   #A82A20;
+  --rojo-rgb:     194, 55, 44;
+  --rojo-tenue:   rgba(194, 55, 44, 0.10);
 
-  --verde:        #2FBF71;
-  --verde-tenue:  rgba(47, 191, 113, 0.14);
+  --verde:        #1E8A4F;
+  --verde-texto:  #17703F;
+  --verde-rgb:    30, 138, 79;
+  --verde-tenue:  rgba(30, 138, 79, 0.11);
 
-  --ambar:        #E0A93B;
-  --ambar-tenue:  rgba(224, 169, 59, 0.14);
+  --ambar:        #9A6508;
+  --ambar-rgb:    200, 140, 30;
+  --ambar-tenue:  rgba(200, 140, 30, 0.13);
 
-  --celeste:      #3FB8E6; /* solo Mercado Pago, en los cobros */
+  --celeste:      #1A85B8; /* solo Mercado Pago, en los cobros */
 
-  --blanco:       #F3F1ED;
-  --texto:        #F3F1ED;
-  --texto-2:      #A7ADB8;
-  --texto-3:      #8A909C;
+  --texto:        #161412;
+  --texto-2:      #4E4943;
+  --texto-3:      #6B645C;
 
   /* --- Tipografía --- */
   --display: "Oswald", "Arial Narrow", sans-serif;   /* títulos, nombres y marca */
@@ -44,11 +64,63 @@
   --r-lg: 20px;
   --r-full: 999px;
 
-  --sombra: 0 18px 40px -18px rgba(0, 0, 0, 0.9);
-  --sombra-elev: 0 10px 24px -12px rgba(0, 0, 0, 0.85);
+  --sombra: 0 18px 40px -20px rgba(60, 45, 30, 0.28);
+  --sombra-elev: 0 10px 24px -14px rgba(60, 45, 30, 0.38);
 
   --app: 430px; /* ancho de la columna mobile del cliente */
 }
+
+/* Oscuro: fondos casi negros con un dejo cálido, texto blanco hueso y el acento
+   invertido (botones claros con letra oscura). Los grises de texto están medidos
+   para pasar 4.5:1 sobre las superficies. */
+:root[data-tema="oscuro"] {
+  color-scheme: dark;
+
+  --fondo:        #0F0E0D;
+  --fondo-2:      #151412;
+  --fondo-rgb:    15, 14, 13;
+  --superficie:   #1C1A18;
+  --superficie-2: #25221F;
+  --borde:        rgba(255, 255, 255, 0.10);
+  --borde-fuerte: rgba(255, 255, 255, 0.20);
+  --tinte:        255, 255, 255;
+  --velo:         rgba(0, 0, 0, 0.65);
+
+  --acento:         #EEE7DD;
+  --acento-hover:   #FFFFFF;
+  --sobre-acento:   #161412;
+  --sobre-acento-rgb: 22, 20, 18;
+  --acento-2:       #D4B691;
+  --acento-rgb:     212, 182, 145;
+  --acento-tenue:   rgba(212, 182, 145, 0.14);
+  --arena:          #8C7458;
+
+  --rojo:         #E5524A;
+  --rojo-texto:   #FF948E;
+  --rojo-rgb:     229, 82, 74;
+  --rojo-tenue:   rgba(229, 82, 74, 0.14);
+
+  --verde:        #3CC47E;
+  --verde-texto:  #7BE0AC;
+  --verde-rgb:    60, 196, 126;
+  --verde-tenue:  rgba(60, 196, 126, 0.14);
+
+  --ambar:        #E3B04B;
+  --ambar-rgb:    227, 176, 75;
+  --ambar-tenue:  rgba(227, 176, 75, 0.14);
+
+  --celeste:      #4FC0EA;
+
+  --texto:        #F3EFE9;
+  --texto-2:      #BDB5AA;
+  --texto-3:      #9A9287;
+
+  --sombra: 0 18px 40px -18px rgba(0, 0, 0, 0.9);
+  --sombra-elev: 0 10px 24px -12px rgba(0, 0, 0, 0.85);
+}
+
+/* El logo es un SVG en línea que pinta con currentColor */
+.logo-marca { display: block; color: var(--texto); }
 
 * { box-sizing: border-box; }
 
@@ -61,7 +133,7 @@ html, body {
 }
 
 body {
-  background: var(--negro);
+  background: var(--fondo);
   color: var(--texto);
   font-family: var(--sans);
   font-size: 15px;
@@ -112,25 +184,25 @@ ul { margin: 0; padding: 0; list-style: none; }
 .btn:active { transform: scale(0.985); }
 
 .btn-primario {
-  background: var(--azul);
-  color: #fff;
+  background: var(--acento);
+  color: var(--sobre-acento);
   box-shadow: var(--sombra-elev);
 }
-.btn-primario:hover { background: #2450E8; }
+.btn-primario:hover { background: var(--acento-hover); }
 
 .btn-secundario {
   background: transparent;
   border-color: var(--borde-fuerte);
   color: var(--texto);
 }
-.btn-secundario:hover { background: rgba(255,255,255,0.05); }
+.btn-secundario:hover { background: rgba(var(--tinte), 0.05); }
 
 .btn-peligro {
   background: var(--rojo-tenue);
-  border-color: rgba(228, 50, 43, 0.4);
-  color: #FF8983;
+  border-color: rgba(var(--rojo-rgb), 0.4);
+  color: var(--rojo-texto);
 }
-.btn-peligro:hover { background: rgba(228, 50, 43, 0.22); }
+.btn-peligro:hover { background: rgba(var(--rojo-rgb), 0.22); }
 
 .btn-block { width: 100%; }
 
@@ -160,12 +232,12 @@ ul { margin: 0; padding: 0; list-style: none; }
   border-radius: 50%;
   background: currentColor;
 }
-.estado-pendiente  { background: var(--azul-tenue);  color: #8FAAFF; }
-.estado-completado { background: var(--verde-tenue); color: #6FE0A6; }
-.estado-ausente    { background: var(--rojo-tenue);  color: #FF8983; }
-.estado-cancelado  { background: rgba(255,255,255,.07); color: var(--texto-3); }
-.estado-activo     { background: var(--verde-tenue); color: #6FE0A6; }
-.estado-inactivo   { background: rgba(255,255,255,.07); color: var(--texto-3); }
+.estado-pendiente  { background: var(--acento-tenue);  color: var(--acento-2); }
+.estado-completado { background: var(--verde-tenue); color: var(--verde-texto); }
+.estado-ausente    { background: var(--rojo-tenue);  color: var(--rojo-texto); }
+.estado-cancelado  { background: rgba(var(--tinte), .07); color: var(--texto-3); }
+.estado-activo     { background: var(--verde-tenue); color: var(--verde-texto); }
+.estado-inactivo   { background: rgba(var(--tinte), .07); color: var(--texto-3); }
 
 /* --- Campos --- */
 .campo { display: block; margin-bottom: 14px; }
@@ -193,7 +265,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 .campo input:focus,
 .campo select:focus,
 .campo textarea:focus {
-  border-color: var(--azul-claro);
+  border-color: var(--acento-2);
   background: var(--superficie-2);
 }
 
@@ -217,3 +289,19 @@ ul { margin: 0; padding: 0; list-style: none; }
   color: var(--texto-3);
   font-size: 14px;
 }
+
+/* --- Cambio de tema (claro / oscuro) --- */
+.boton-tema {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 38px; height: 38px;
+  padding: 0;
+  border: 1px solid var(--borde);
+  border-radius: 50%;
+  background: var(--superficie);
+  color: var(--texto-2);
+  transition: color .15s ease, border-color .15s ease;
+}
+.boton-tema:hover { color: var(--texto); border-color: var(--borde-fuerte); }
+.boton-tema:focus-visible { outline: 2px solid var(--acento-2); outline-offset: 2px; }

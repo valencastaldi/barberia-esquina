@@ -1,6 +1,7 @@
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useSesion } from "../sesion.jsx";
 import { Logo } from "../../componentes/Logo.jsx";
+import { BotonTema } from "../../componentes/BotonTema.jsx";
 
 const ICONOS = {
   agenda: "M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z",
@@ -51,8 +52,8 @@ export function Lateral() {
   return (
     <aside className="lateral">
       <Link className="marca" to="/">
-        <Logo tamano={38} />
-        <span><b>Barbería Esquina</b><small>Panel de gestión</small></span>
+        <Logo ancho={66} />
+        <span><b className="sr-only">Neck's Hair Salon</b><small>Panel de gestión</small></span>
       </Link>
       <nav className="nav">
         {GRUPOS.map((g) => ({ ...g, secciones: g.secciones.filter((s) => !s.soloDueno || esDueno) }))
@@ -78,6 +79,7 @@ export function Lateral() {
           </span>
         </div>
         <nav className="nav">
+          <BotonTema className="nav-boton" conTexto />
           <button type="button" className="nav-boton" onClick={salir}><Icono nombre="salir" />Cerrar sesión</button>
         </nav>
       </div>
