@@ -342,7 +342,10 @@ body.cliente {
   left: 0; right: 0; bottom: 0;
   z-index: 30;
   padding: 14px 20px calc(16px + env(safe-area-inset-bottom));
-  background: linear-gradient(180deg, rgba(var(--fondo-rgb), 0) 0%, rgba(var(--fondo-rgb), .92) 38%, var(--fondo) 100%);
+  /* Como la barra de arriba: casi opaca y con borde, así lo que pasa por detrás no se mezcla con el texto */
+  background: rgba(var(--fondo-rgb), .94);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--borde);
 }
 .barra-cta > div {
   max-width: var(--app);
@@ -467,6 +470,8 @@ body.cliente {
     border-right: 1px solid var(--borde);
     background: var(--fondo);
   }
+  /* La barra fija queda dentro de la columna, sin tapar sus bordes ni pintar afuera */
+  .barra-cta { width: calc(var(--app) - 2px); margin: 0 auto; }
 }
 
 /* =========================================================
