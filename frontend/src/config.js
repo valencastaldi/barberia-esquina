@@ -1,14 +1,14 @@
 /**
  * Datos fijos del local. No están en la base porque no los define la documentación.
- * ⚠ Dirección, teléfono, WhatsApp e Instagram siguen siendo los de Barbería Esquina:
- * faltan los reales de Neck's.
+ * Dirección y teléfono sacados de la página de reservas del local (AgendaPro) y su Facebook.
+ * ⚠ Falta el Instagram real.
  */
 export const BARBERIA = {
   nombre: "Neck's Hair Salon",
   rotulo: "Hair Salon",
-  direccion: "Av. San Martín 992",
-  telefono: "+54 9 3517 59-0663",
-  whatsapp: "5493517590663",
+  direccion: "Av. Goycoechea 977, Villa Allende",
+  telefono: "+54 9 3543 69-2777",
+  whatsapp: "5493543692777",
   instagram: "",   // falta el usuario real
 };
 
@@ -20,7 +20,7 @@ export const BARBERIA = {
 export const LEGAL = {
   razonSocial: "Neck's Hair Salon",
   cuit: "",   // todavía no lo pasaron: mientras esté vacío no se muestra
-  domicilio: "Av. San Martín 992",
+  domicilio: "Av. Goycoechea 977, Villa Allende, Córdoba",
   emailDatos: "franbossana@gmail.com",
   actualizado: "30 de septiembre de 2026",
   // Cuánto se guardan los datos de un cliente que no vuelve. Lo decide el dueño.

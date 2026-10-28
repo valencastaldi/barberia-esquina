@@ -84,7 +84,7 @@ public class EmailServicio {
             var helper = new MimeMessageHelper(mensaje, "UTF-8");
             helper.setFrom(props.mail().remitente());
             helper.setTo(datos.email());
-            helper.setSubject(asunto + " · Barbería Esquina");
+            helper.setSubject(asunto + " · Neck's Hair Salon");
             helper.setText(plantilla(cuerpo), true);
             sender.send(mensaje);
             log.info("Email '{}' enviado a {}", asunto, datos.email());
@@ -110,7 +110,7 @@ public class EmailServicio {
 
     private static String plantilla(String cuerpo) {
         return "<div style=\"font-family:Arial,sans-serif;font-size:15px;color:#111;max-width:520px\">"
-                + "<h2 style=\"margin:0 0 12px\">Barbería Esquina</h2>" + cuerpo
+                + "<h2 style=\"margin:0 0 12px\">Neck's Hair Salon</h2>" + cuerpo
                 + "<p style=\"color:#888;font-size:12px\">Este es un email automático, no hace falta responderlo.</p>"
                 + "</div>";
     }
